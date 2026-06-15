@@ -14,7 +14,32 @@ class Profile(Base):
     extracurriculars = Column(String, nullable=True)
     resume_text = Column(String, nullable=True)
     
+    # New Subsections for Scholarship details
+    hobbies = Column(String, nullable=True)
+    volunteer_work = Column(String, nullable=True)
+    projects = Column(String, nullable=True)
+    experience = Column(String, nullable=True)
+    awards = Column(String, nullable=True)
+    languages = Column(String, nullable=True)
+    publications = Column(String, nullable=True)
+    financial_need = Column(String, nullable=True)
+    career_goals = Column(String, nullable=True)
+    
     requirements = relationship("UserRequirement", back_populates="profile")
+    documents = relationship("ProfileDocument", back_populates="profile", cascade="all, delete-orphan")
+
+class ProfileDocument(Base):
+    __tablename__ = "profile_documents"
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id"))
+    doc_type = Column(String)  # 'cv', 'recommendation_letter_1', 'recommendation_letter_2', 'recommendation_letter_3', 'bachelor_diploma'
+    filename = Column(String)
+    filepath = Column(String)
+    is_uploaded = Column(Boolean, default=False)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    parsed_text = Column(String, nullable=True)
+    
+    profile = relationship("Profile", back_populates="documents")
 
 class UserRequirement(Base):
     __tablename__ = "user_requirements"
