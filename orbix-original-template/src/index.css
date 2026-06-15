@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Orbix Studio Health Dashboard design system */
+
+@layer base {
+  :root {
+    --background: 40 20% 96%;
+    --foreground: 0 0% 6%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 6%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 6%;
+
+    /* Signature lime green */
+    --primary: 75 95% 60%;
+    --primary-foreground: 0 0% 6%;
+    --primary-glow: 75 100% 70%;
+
+    --secondary: 40 15% 92%;
+    --secondary-foreground: 0 0% 6%;
+
+    --muted: 40 12% 90%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 75 95% 60%;
+    --accent-foreground: 0 0% 6%;
+
+    --info: 200 95% 88%;
+    --info-foreground: 210 60% 25%;
+
+    --dark: 0 0% 8%;
+    --dark-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 40 10% 88%;
+    --input: 40 10% 88%;
+    --ring: 75 95% 60%;
+
+    --radius: 1.25rem;
+
+    --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.04), 0 8px 24px -8px hsl(0 0% 0% / 0.06);
+    --shadow-glow: 0 8px 32px -8px hsl(var(--primary) / 0.45);
+
+    --sidebar-background: 40 20% 96%;
+    --sidebar-foreground: 0 0% 30%;
+    --sidebar-primary: 75 95% 60%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 40 15% 92%;
+    --sidebar-accent-foreground: 0 0% 6%;
+    --sidebar-border: 40 10% 88%;
+    --sidebar-ring: 75 95% 60%;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 75 95% 60%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 75 95% 60%;
+    --accent-foreground: 0 0% 6%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 75 95% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body, #root {
+    @apply h-full;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+}
+
+@layer utilities {
+  .card-surface {
+    @apply bg-card rounded-3xl;
+    box-shadow: var(--shadow-card);
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@keyframes pulse-bar {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.05); }
+}
+@keyframes breath {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes ping-soft {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
