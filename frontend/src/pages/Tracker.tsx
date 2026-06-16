@@ -2,12 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Tracker() {
   const queryClient = useQueryClient();
   const [selectedEssay, setSelectedEssay] = useState<string | null>(null);
 
-  const { data: scholarships = [] } = useQuery({
+  const { data: scholarships = [], isLoading } = useQuery({
     queryKey: ['scholarships'],
     queryFn: api.getScholarships
   });
@@ -52,30 +53,40 @@ export default function Tracker() {
               <div key={index} className="w-[340px] bg-secondary/30 rounded-2xl border border-border/50 flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-border/50 bg-card/50 backdrop-blur-sm font-bold text-card-foreground flex justify-between items-center">
                   {col}
-                  <span className="bg-background text-muted-foreground text-xs font-semibold px-2.5 py-1 rounded-full border border-border/50">
-                    {colItems.length}
+                  <span className="bg-background text-muted-foreground text-xs font-semibold px-2.5 py-1 rounded-full border border-border/50 min-w-[24px] text-center">
+                    {isLoading ? "..." : colItems.length}
                   </span>
                 </div>
                 <div className="p-4 flex-1 overflow-y-auto space-y-4">
-                  {colItems.map((s: any) => (
-                    <div key={s.id} className="bg-card p-5 rounded-xl shadow-sm border border-border hover:border-primary/50 transition-all cursor-grab group relative overflow-hidden">
-                      {s.status === "Drafting" && <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>}
-                      <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors">{s.title}</h3>
-                      <div className="flex items-center text-sm text-muted-foreground mt-2 font-medium">
-                        <span className="text-3xl font-display tracking-tight text-foreground">{s.amount || "Varies"}</span>
+                  {isLoading ? (
+                    Array.from({ length: 2 }).map((_, i) => (
+                      <div key={i} className="bg-card p-5 rounded-xl border border-border space-y-4">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-8 w-1/3" />
+                        <Skeleton className="h-8 w-full rounded-lg" />
                       </div>
-                      
-                      {col !== "Drafting" && col !== "Applied" && (
-                        <button 
-                          onClick={() => draftMutation.mutate(s.id)}
-                          disabled={draftMutation.isPending}
-                          className="mt-5 w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 text-xs font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center border border-blue-500/20"
-                        >
-                          <span className="mr-2">✨</span> {draftMutation.isPending ? "Generating..." : "Open AI Drafter"}
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    colItems.map((s: any) => (
+                      <div key={s.id} className="bg-card p-5 rounded-xl shadow-sm border border-border hover:border-primary/50 transition-all cursor-grab group relative overflow-hidden">
+                        {s.status === "Drafting" && <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>}
+                        <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors">{s.title}</h3>
+                        <div className="flex items-center text-sm text-muted-foreground mt-2 font-medium">
+                          <span className="text-3xl font-display tracking-tight text-foreground">{s.amount || "Varies"}</span>
+                        </div>
+                        
+                        {col !== "Drafting" && col !== "Applied" && (
+                          <button 
+                            onClick={() => draftMutation.mutate(s.id)}
+                            disabled={draftMutation.isPending}
+                            className="mt-5 w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 text-xs font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center border border-blue-500/20"
+                          >
+                            <span className="mr-2">✨</span> {draftMutation.isPending ? "Generating..." : "Open AI Drafter"}
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )

@@ -26,6 +26,13 @@ The agent is building "Scholarship Hunter": an AI-powered scholarship discovery,
 * Aligned the Profile outer layout wrapper width with other dashboard pages to ensure identical left grid margins.
 * Configured and installed Playwright E2E testing framework (`frontend/playwright.config.ts`, `frontend/e2e/profile.spec.ts`).
 * Optimized network requests from ~7.5 seconds to ~75ms by using explicit IPv4 loopbacks (`127.0.0.1`) instead of `localhost` (resolving IPv6 lookup timeouts).
+* Implemented layout-matching skeleton loader screens across the Profile overview, Dashboard matching lists, and Kanban Tracker boards to replace page-level spinners and empty states. Added skeleton standard guidelines to README.md.
+
+## Phase 5 State (In Progress)
+* Added a unified, cross-platform dev menu runner (`menu.js`) and a root `Makefile` to simplify running both frontend and backend concurrently, merging colored logs in the same console.
+* Refined logging: avoided false-positive `ERR` labels for standard Uvicorn/Vite status logs printed to `stderr` by dynamically detecting actual `error` / `exception` keywords and color-coding them in red while keeping normal status logs labeled standard.
+* Handled automatic python virtual environment path mapping and robust process-tree termination for Windows and Unix, preventing orphan processes from locking dev ports.
+* Added a root `package.json` to expose npm scripts for developer menu launch (`npm start`, `npm run dev`, `npm run backend`, etc.).
 
 ## Current Objective (Phase 5 - Pending)
 * Build Python web scraper to feed the `scholarships` table.

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -48,7 +49,18 @@ export default function Dashboard() {
           </h2>
           <p className="text-sm text-muted-foreground mb-6">Opportunities aligned strictly with your specified fields and preferences.</p>
           <div className="space-y-4">
-            {desireMatches.length === 0 && !isLoading ? (
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 border border-border/50 bg-background rounded-xl space-y-3">
+                  <div className="flex justify-between items-start">
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-5 w-16" />
+                  </div>
+                  <Skeleton className="h-3.5 w-1/3" />
+                  <Skeleton className="h-6 w-24 mt-2" />
+                </div>
+              ))
+            ) : desireMatches.length === 0 ? (
               <div className="p-4 border border-border/50 bg-secondary/30 rounded-xl">
                 <p className="text-sm text-muted-foreground italic text-center py-4">No matches yet. Run a scan!</p>
               </div>
@@ -74,7 +86,18 @@ export default function Dashboard() {
           </h2>
           <p className="text-sm text-muted-foreground mb-6">Opportunities where you have the highest statistical chance of winning based on your profile.</p>
           <div className="space-y-4">
-             {probMatches.length === 0 && !isLoading ? (
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 border border-border/50 bg-background rounded-xl space-y-3">
+                  <div className="flex justify-between items-start">
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-5 w-16" />
+                  </div>
+                  <Skeleton className="h-3.5 w-1/3" />
+                  <Skeleton className="h-6 w-24 mt-2" />
+                </div>
+              ))
+            ) : probMatches.length === 0 ? (
               <div className="p-4 border border-border/50 bg-secondary/30 rounded-xl">
                 <p className="text-sm text-muted-foreground italic text-center py-4">No matches yet. Run a scan!</p>
               </div>

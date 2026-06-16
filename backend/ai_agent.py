@@ -3,6 +3,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
+from typing import Optional
 
 class ScoreResponse(BaseModel):
     probability_score: float = Field(description="Score out of 100 on how likely the user is to win based on requirements vs profile")
@@ -13,7 +14,7 @@ def get_llm():
     if not api_key:
         print("Warning: No GEMINI_API_KEY found in environment variables.")
         return None
-    return ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key)
+    return ChatGoogleGenerativeAI(model="gemini-3.5-flash", google_api_key=api_key)
 
 def score_scholarship(profile_data: dict, scholarship_data: dict):
     llm = get_llm()

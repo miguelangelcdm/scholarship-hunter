@@ -1,0 +1,14 @@
+{
+  "name": "scholarship-hunter-root",
+  "version": "1.0.0",
+  "description": "Root automation and workspace script runner for Scholarship Hunter",
+  "main": "menu.js",
+  "scripts": {
+    "start": "node menu.js",
+    "dev": "node menu.js",
+    "backend": "node menu.js --run-backend",
+    "frontend": "node menu.js --run-frontend",
+    "test:e2e": "node menu.js --run-tests"
+  },
+  "private": true
+}

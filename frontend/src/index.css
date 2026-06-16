@@ -82,19 +82,60 @@
   * {
     @apply border-border;
   }
+  html {
+    background-color: hsl(var(--background));
+  }
   html, body, #root {
     @apply h-full;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-transparent text-foreground antialiased relative;
     font-feature-settings: "ss01", "cv11";
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    opacity: 0.10;
+    pointer-events: none;
+    z-index: -1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.98' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mask-image: linear-gradient(to top left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to top left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+  }
+
+  /* Global smooth interactive transition defaults */
+  button, a, input, textarea, select {
+    transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
 
 @layer utilities {
+  .bg-card {
+    background-color: hsl(var(--card) / 0.65) !important;
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    border: 1px solid hsl(var(--border) / 0.4) !important;
+    transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
   .card-surface {
     @apply bg-card rounded-3xl;
     box-shadow: var(--shadow-card);
+    transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium;
@@ -128,4 +169,19 @@
 @keyframes ping-soft {
   0% { transform: scale(1); opacity: 0.6; }
   100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tab-content {
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

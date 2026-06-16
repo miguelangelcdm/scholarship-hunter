@@ -1,6 +1,12 @@
 import os
 import shutil
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from the backend/.env file
+dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+load_dotenv(dotenv_path)
+
 from fastapi import FastAPI, Depends, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session

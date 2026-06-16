@@ -20,6 +20,7 @@ import {
   ArrowRight,
   TrendingUp
 } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Profile() {
   const queryClient = useQueryClient();
@@ -44,6 +45,7 @@ export default function Profile() {
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [parsingDoc, setParsingDoc] = useState<string | null>(null);
   const [overviewProcessing, setOverviewProcessing] = useState<string | null>(null);
+  const [isAutofilling, setIsAutofilling] = useState(false);
   
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const overviewInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
@@ -143,6 +145,7 @@ export default function Profile() {
       
       // If uploading CV from Overview, run AI autofill immediately in 1 click
       if (isOverview && docType === 'cv') {
+        setIsAutofilling(true);
         toast.loading("Analyzing resume text with Gemini AI & auto-filling profile...", { id: toastId });
         await api.parseDocument('cv');
         toast.success("Resume uploaded and profile successfully auto-filled!", { id: toastId });
@@ -159,11 +162,13 @@ export default function Profile() {
     } finally {
       setUploadingDoc(null);
       setOverviewProcessing(null);
+      setIsAutofilling(false);
     }
   };
 
   const handleParseDocument = async (docType: string) => {
     setParsingDoc(docType);
+    setIsAutofilling(true);
     const toastId = toast.loading("Gemini AI is parsing document text and auto-filling profile...");
     try {
       await api.parseDocument(docType);
@@ -173,6 +178,7 @@ export default function Profile() {
       toast.error(`Failed to parse: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
     } finally {
       setParsingDoc(null);
+      setIsAutofilling(false);
     }
   };
 
@@ -209,7 +215,7 @@ export default function Profile() {
   ];
 
   const DOCUMENT_SLOTS = [
-    { id: 'cv', label: 'CV / Resume', description: 'Required for matching. Parses academic background, work experience, projects, and skills.' },
+    { id: 'cv', label: 'CV, Resume, or LinkedIn PDF', description: 'Required for matching. Parses academic background, work experience, projects, and skills.' },
     { id: 'recommendation_letter_1', label: 'Recommendation Letter 1', description: 'Academic recommendation from professor or project advisor.' },
     { id: 'recommendation_letter_2', label: 'Recommendation Letter 2', description: 'Academic or professional recommendation.' },
     { id: 'recommendation_letter_3', label: 'Recommendation Letter 3', description: 'Optional third recommendation letter.' },
@@ -218,9 +224,58 @@ export default function Profile() {
 
   if (isProfileLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground font-semibold">Loading Profile...</span>
+      <div className="space-y-8 animate-fade-in pb-12">
+        <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-4 w-96 max-w-full" />
+          </div>
+          <Skeleton className="h-10 w-40 rounded-xl" />
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+          {/* Navigation Sidebar Skeleton */}
+          <aside className="lg:col-span-1 space-y-2">
+            <div className="flex lg:flex-col gap-2 bg-card/50 p-2 rounded-2xl border border-border/40">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-transparent">
+                  <Skeleton className="w-4 h-4 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          {/* Form Content Panel Skeleton */}
+          <main className="lg:col-span-3 bg-card p-6 sm:p-8 rounded-3xl border border-border/50 space-y-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-3xl bg-muted/10 border border-border/60 gap-6">
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-7 w-64" />
+                <Skeleton className="h-3 w-80 max-w-full" />
+              </div>
+              <Skeleton className="w-24 h-24 rounded-full" />
+            </div>
+
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-28" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 rounded-2xl border border-dashed border-border/80 space-y-4">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-8 w-full" />
+                </div>
+                <div className="p-6 rounded-2xl border border-dashed border-border/80 space-y-4">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-8 w-full" />
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
@@ -244,8 +299,8 @@ export default function Profile() {
         {docMap['cv']?.is_uploaded && (
           <button
             onClick={() => handleParseDocument('cv')}
-            disabled={parsingDoc !== null}
-            className="flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-foreground px-5 py-2.5 rounded-xl font-semibold border border-border/80 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            disabled={parsingDoc !== null || isAutofilling}
+            className="flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-foreground px-5 py-2.5 rounded-xl font-semibold border border-border/80 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {parsingDoc === 'cv' ? (
               <>
@@ -294,11 +349,35 @@ export default function Profile() {
         </aside>
 
         {/* Form Content Panel */}
-        <main className="lg:col-span-3 bg-card p-6 sm:p-8 rounded-3xl border border-border/50 shadow-sm transition-all hover:shadow-md">
+        <main className="relative lg:col-span-3 bg-card p-6 sm:p-8 rounded-3xl border border-border/50 shadow-sm transition-all hover:shadow-md">
+          
+          {isAutofilling && ['academic', 'experience', 'highlights'].includes(activeTab) && (
+            <div className="absolute inset-0 bg-background/40 backdrop-blur-[1.5px] rounded-3xl z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+              <div className="bg-card/90 border border-border/80 p-8 rounded-2xl shadow-xl max-w-md space-y-4 flex flex-col items-center">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center border border-primary/30 relative z-10 animate-bounce">
+                    <Sparkles className="w-8 h-8 text-primary-foreground animate-pulse" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <span>Gemini AI Autofilling</span>
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Gemini is analyzing your CV to extract and structure your profile details. 
+                  Form fields are temporarily locked during this process.
+                </p>
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Processing document text...</span>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* TAB 0: OVERVIEW LANDING SECTION */}
           {activeTab === 'overview' && (
-            <div className="space-y-10">
+            <div className="space-y-10 animate-tab-content">
               
               {/* Profile Health Score */}
               <section className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-3xl bg-muted/10 border border-border/60 gap-6">
@@ -411,7 +490,7 @@ export default function Profile() {
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">Documents</h4>
-                      <p className="text-[10px] text-muted-foreground">CV & Diploma</p>
+                      <p className="text-[10px] text-muted-foreground">Resume/LinkedIn & Diploma</p>
                     </div>
                   </button>
 
@@ -438,14 +517,14 @@ export default function Profile() {
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-muted-foreground uppercase">Upload Resume</span>
+                        <span className="text-xs font-bold text-muted-foreground uppercase">Upload Resume or LinkedIn PDF</span>
                         {docMap['cv']?.is_uploaded && (
                           <span className="flex items-center gap-1 text-[10px] text-primary font-bold">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Uploaded
                           </span>
                         )}
                       </div>
-                      <h4 className="text-lg font-bold text-foreground">CV / Resume</h4>
+                      <h4 className="text-lg font-bold text-foreground">CV, Resume, or LinkedIn PDF</h4>
                       <p className="text-xs text-muted-foreground">Uploading parses your entire educational history, skills, work experience, and honors automatically using Gemini.</p>
                       {docMap['cv']?.is_uploaded && (
                         <div className="text-[10px] font-mono text-muted-foreground border border-border/60 rounded px-2 py-0.5 inline-block bg-background">
@@ -562,7 +641,7 @@ export default function Profile() {
 
           {/* TAB 1: ACADEMIC & CORE */}
           {activeTab === 'academic' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-tab-content">
               <div className="border-b border-border/50 pb-4">
                 <h2 className="text-xl font-bold text-card-foreground">Academic Core & Profile Details</h2>
                 <p className="text-xs text-muted-foreground mt-1">Fundamental information used for matching and application headers.</p>
@@ -575,7 +654,8 @@ export default function Profile() {
                     type="text" 
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
+                    disabled={isAutofilling}
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="e.g. Jane Doe" 
                   />
                 </div>
@@ -586,7 +666,8 @@ export default function Profile() {
                     type="text" 
                     value={formData.major}
                     onChange={e => setFormData({...formData, major: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
+                    disabled={isAutofilling}
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="e.g. Computer Science" 
                   />
                 </div>
@@ -598,7 +679,8 @@ export default function Profile() {
                     step="0.01" 
                     value={formData.gpa}
                     onChange={e => setFormData({...formData, gpa: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
+                    disabled={isAutofilling}
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="e.g. 3.82" 
                   />
                 </div>
@@ -609,7 +691,8 @@ export default function Profile() {
                     type="text" 
                     value={formData.demographics}
                     onChange={e => setFormData({...formData, demographics: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
+                    disabled={isAutofilling}
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="e.g. First-generation, Woman in Tech, Hispanic" 
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">Comma-separated traits like minority background, first-gen status, state, etc.</p>
@@ -620,7 +703,7 @@ export default function Profile() {
 
           {/* TAB 2: EXPERIENCE & GOALS */}
           {activeTab === 'experience' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-tab-content">
               <div className="border-b border-border/50 pb-4">
                 <h2 className="text-xl font-bold text-card-foreground">Experience & Aspirations</h2>
                 <p className="text-xs text-muted-foreground mt-1">Professional background and goals crucial for writing compelling personal statements.</p>
@@ -635,8 +718,9 @@ export default function Profile() {
                   <textarea 
                     value={formData.experience}
                     onChange={e => setFormData({...formData, experience: e.target.value})}
+                    disabled={isAutofilling}
                     rows={4}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide" 
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="Describe internships, jobs, research assistantships, or roles you have held. List company, duration, and key projects." 
                   />
                 </div>
@@ -649,8 +733,9 @@ export default function Profile() {
                   <textarea 
                     value={formData.career_goals}
                     onChange={e => setFormData({...formData, career_goals: e.target.value})}
+                    disabled={isAutofilling}
                     rows={4}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide" 
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="Describe your long-term research or career goals. Why are you pursuing this field of study?" 
                   />
                 </div>
@@ -663,8 +748,9 @@ export default function Profile() {
                   <textarea 
                     value={formData.financial_need}
                     onChange={e => setFormData({...formData, financial_need: e.target.value})}
+                    disabled={isAutofilling}
                     rows={3}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide" 
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="Provide details about your financial situation, student loans, or circumstances that highlight your need for financial assistance." 
                   />
                 </div>
@@ -674,7 +760,7 @@ export default function Profile() {
 
           {/* TAB 3: HIGHLIGHTS & ACTIVITIES */}
           {activeTab === 'highlights' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-tab-content">
               <div className="border-b border-border/50 pb-4">
                 <h2 className="text-xl font-bold text-card-foreground">Personal Highlights & Activities</h2>
                 <p className="text-xs text-muted-foreground mt-1">Hobbies, activities, publications, and accomplishments that showcase your well-rounded personality.</p>
@@ -687,8 +773,9 @@ export default function Profile() {
                     <textarea 
                       value={formData.volunteer_work}
                       onChange={e => setFormData({...formData, volunteer_work: e.target.value})}
+                      disabled={isAutofilling}
                       rows={3}
-                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide" 
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
                       placeholder="e.g. Volunteered at local shelter, Tutored STEM to underrepresented middle schoolers." 
                     />
                   </div>
@@ -698,8 +785,9 @@ export default function Profile() {
                     <textarea 
                       value={formData.hobbies}
                       onChange={e => setFormData({...formData, hobbies: e.target.value})}
+                      disabled={isAutofilling}
                       rows={3}
-                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide" 
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
                       placeholder="e.g. Competitive chess, playing violin, hiking, baking sourdough bread." 
                     />
                   </div>
@@ -710,8 +798,9 @@ export default function Profile() {
                   <textarea 
                     value={formData.projects}
                     onChange={e => setFormData({...formData, projects: e.target.value})}
+                    disabled={isAutofilling}
                     rows={3}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide" 
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="Describe relevant projects. E.g. Capstone design project, open-source contributions, portfolio projects." 
                   />
                 </div>
@@ -721,8 +810,9 @@ export default function Profile() {
                   <textarea 
                     value={formData.awards}
                     onChange={e => setFormData({...formData, awards: e.target.value})}
+                    disabled={isAutofilling}
                     rows={2}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide" 
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="Dean's List (2024), Academic Merit Scholarship, Math Olympiad 3rd place." 
                   />
                 </div>
@@ -737,7 +827,8 @@ export default function Profile() {
                       type="text" 
                       value={formData.publications}
                       onChange={e => setFormData({...formData, publications: e.target.value})}
-                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
+                      disabled={isAutofilling}
+                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                       placeholder="e.g. Co-authored IEEE paper on CV algorithms." 
                     />
                   </div>
@@ -748,7 +839,8 @@ export default function Profile() {
                       type="text" 
                       value={formData.languages}
                       onChange={e => setFormData({...formData, languages: e.target.value})}
-                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
+                      disabled={isAutofilling}
+                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                       placeholder="e.g. English (Native), Spanish (C1), IELTS 8.5" 
                     />
                   </div>
@@ -759,7 +851,7 @@ export default function Profile() {
 
           {/* TAB 4: REQUIRED DOCUMENTS CHECKLIST */}
           {activeTab === 'documents' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-tab-content">
               <div className="border-b border-border/50 pb-4">
                 <h2 className="text-xl font-bold text-card-foreground">Required Documents Checklist</h2>
                 <p className="text-xs text-muted-foreground mt-1">Upload files required for scholarship validation. We extract profile text dynamically from PDF and text documents.</p>
@@ -870,8 +962,8 @@ export default function Profile() {
             <div className="pt-6 mt-8 flex justify-end border-t border-border/50">
               <button 
                 onClick={() => updateMutation.mutate(formData)}
-                disabled={updateMutation.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 flex items-center gap-2"
+                disabled={updateMutation.isPending || isAutofilling}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {updateMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                 <span>{updateMutation.isPending ? "Saving..." : "Save Profile"}</span>

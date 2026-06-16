@@ -40,4 +40,6 @@ package-lock.json
 frontend/e2e-screenshots/
 frontend/test-results/
 backend/uploads/
-
+.venv
+.memanto
+backend/.env

@@ -4,7 +4,7 @@ import { Sidebar, MobileSidebar } from "@/components/dashboard/Sidebar";
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-transparent text-foreground">
       <Header />
       <div className="flex">
         <Sidebar />
