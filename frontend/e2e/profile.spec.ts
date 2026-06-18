@@ -18,7 +18,7 @@ test.describe('Profile Manager Performance & Visual Checks', () => {
     page.on('pageerror', err => console.error('  [BROWSER ERROR]', err.message));
 
     // 1. Warm up the page (Vite compiles JSX/TSX modules on the fly on first load)
-    await page.goto('/profile');
+    await page.goto('/profile?bypass_wizard=true');
     await page.waitForSelector('text=Loading Profile...', { state: 'detached', timeout: 15000 });
 
     // 2. Measure actual reload and API response latency
@@ -49,6 +49,6 @@ test.describe('Profile Manager Performance & Visual Checks', () => {
 
     // 4. Navigate back to Overview tab
     await page.locator('nav >> text=Profile Overview').click();
-    await expect(page.locator('h2:has-text("Scholarship Preparedness")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Pathfinder Preparedness")')).toBeVisible();
   });
 });

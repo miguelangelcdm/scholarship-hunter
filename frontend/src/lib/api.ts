@@ -1,4 +1,6 @@
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = typeof window !== 'undefined'
+  ? `http://${window.location.hostname}:8000`
+  : "http://127.0.0.1:8000";
 
 export const api = {
   getProfile: () => fetch(`${API_BASE}/profile`).then(res => res.json()),
@@ -10,6 +12,7 @@ export const api = {
   getScholarships: () => fetch(`${API_BASE}/scholarships`).then(res => res.json()),
   scanScholarships: () => fetch(`${API_BASE}/scholarships/scan`, { method: 'POST' }).then(res => res.json()),
   draftEssay: (id: number) => fetch(`${API_BASE}/scholarships/${id}/draft`, { method: 'POST' }).then(res => res.json()),
+  draftOutreach: (id: number) => fetch(`${API_BASE}/scholarships/${id}/outreach`, { method: 'POST' }).then(res => res.json()),
   uploadDocument: (docType: string, file: File) => {
     const formData = new FormData();
     formData.append('doc_type', docType);

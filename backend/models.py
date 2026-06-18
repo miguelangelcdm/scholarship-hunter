@@ -9,8 +9,9 @@ class Profile(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, default="My Profile")
     major = Column(String, nullable=True)
-    gpa = Column(Float, nullable=True)
+    gpa = Column(String, nullable=True)
     demographics = Column(String, nullable=True)
+    nationalities = Column(String, nullable=True)
     extracurriculars = Column(String, nullable=True)
     resume_text = Column(String, nullable=True)
     
@@ -24,6 +25,20 @@ class Profile(Base):
     publications = Column(String, nullable=True)
     financial_need = Column(String, nullable=True)
     career_goals = Column(String, nullable=True)
+    
+    # Wizard Preferences
+    target_countries = Column(String, nullable=True)
+    target_areas = Column(String, nullable=True)
+    target_tags = Column(String, nullable=True)
+    experience_level = Column(String, nullable=True)
+    target_universities = Column(String, nullable=True)
+    
+    # New Modality & Psychology Preferences
+    has_dependents = Column(Boolean, default=False)
+    primary_goal = Column(String, nullable=True) # Migrate, Local Growth, Entrepreneurship, Brain-Circulation
+    preferred_modality = Column(String, nullable=True) # Online, Hybrid, In-Person (Local), In-Person (Abroad)
+    relocation_feasibility_score = Column(Integer, nullable=True) # 0-100
+    target_diaspora_regions = Column(String, nullable=True) # JSON array string
     
     requirements = relationship("UserRequirement", back_populates="profile")
     documents = relationship("ProfileDocument", back_populates="profile", cascade="all, delete-orphan")
@@ -65,6 +80,12 @@ class Scholarship(Base):
     
     status = Column(String, default="Discovered") # Discovered, To Apply, Drafting, Applied, Rejected, Won
     
+    # Research metrics
+    benefits_summary = Column(String, nullable=True)
+    prestige_tier = Column(Integer, nullable=True)
+    award_count = Column(Integer, nullable=True)
+    requires_outreach = Column(Boolean, default=False)
+    
     requirements = relationship("ScholarshipRequirement", back_populates="scholarship")
 
 class ScholarshipRequirement(Base):
@@ -74,3 +95,17 @@ class ScholarshipRequirement(Base):
     description = Column(String)
     
     scholarship = relationship("Scholarship", back_populates="requirements")
+
+class TargetProgram(Base):
+    __tablename__ = "target_programs"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    university = Column(String)
+    country = Column(String)
+    url = Column(String, nullable=True)
+    
+    is_online = Column(Boolean, default=False)
+    is_hybrid = Column(Boolean, default=False)
+    accepts_international = Column(Boolean, default=True)
+    
+    status = Column(String, default="Discovered") # Discovered, Preparing, Applied, Rejected, Accepted

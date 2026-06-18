@@ -18,13 +18,15 @@ import {
   Target,
   Compass,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Globe
 } from 'lucide-react';
+import PreferencesTab from "@/components/profile/PreferencesTab";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'experience' | 'highlights' | 'documents'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'experience' | 'highlights' | 'documents' | 'preferences'>('overview');
   
   const [formData, setFormData] = useState({
     name: "Default User",
@@ -37,9 +39,15 @@ export default function Profile() {
     experience: "",
     awards: "",
     languages: "",
+    nationalities: "",
     publications: "",
     financial_need: "",
-    career_goals: ""
+    career_goals: "",
+    target_countries: "",
+    target_tags: "",
+    preferred_modality: "",
+    primary_goal: "",
+    target_diaspora_regions: ""
   });
 
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
@@ -68,9 +76,15 @@ export default function Profile() {
         experience: profile.experience || "",
         awards: profile.awards || "",
         languages: profile.languages || "",
+        nationalities: profile.nationalities || "",
         publications: profile.publications || "",
         financial_need: profile.financial_need || "",
-        career_goals: profile.career_goals || ""
+        career_goals: profile.career_goals || "",
+        target_countries: profile.target_countries || "",
+        target_tags: profile.target_tags || "",
+        preferred_modality: profile.preferred_modality || "",
+        primary_goal: profile.primary_goal || "",
+        target_diaspora_regions: profile.target_diaspora_regions || ""
       });
     }
   }, [profile]);
@@ -116,6 +130,20 @@ export default function Profile() {
     // Documents (2 key docs, 10% each = 20%)
     if (docMap['cv']?.is_uploaded) score += 10;
     if (docMap['bachelor_diploma']?.is_uploaded) score += 10;
+    
+    // Preferences (Modality and Target Countries)
+    const hasModality = !!formData.preferred_modality;
+    const hasTargets = !!(formData.target_countries && formData.target_countries !== "[]" && formData.target_countries !== "");
+    
+    if (hasModality) score += 10;
+    if (hasTargets) score += 10;
+    
+    score = Math.min(score, 100);
+    
+    // Cap score at 60% if critical matching preferences are missing
+    if (!hasModality || !hasTargets) {
+      score = Math.min(score, 60);
+    }
     
     return score;
   };
@@ -201,8 +229,23 @@ export default function Profile() {
         return !!(formData.volunteer_work && formData.projects);
       case 'documents':
         return !!(docMap['cv']?.is_uploaded && docMap['bachelor_diploma']?.is_uploaded);
+      case 'preferences':
+        return !!(formData.preferred_modality && formData.primary_goal);
       default:
         return false;
+    }
+  };
+
+  const handleDemographicClick = (trait: string) => {
+    const traits = formData.demographics
+      ? formData.demographics.split(",").map((t: string) => t.trim()).filter(Boolean)
+      : [];
+    
+    if (traits.includes(trait)) {
+      const filtered = traits.filter(t => t !== trait);
+      setFormData({ ...formData, demographics: filtered.join(", ") });
+    } else {
+      setFormData({ ...formData, demographics: [...traits, trait].join(", ") });
     }
   };
 
@@ -211,15 +254,19 @@ export default function Profile() {
     { id: 'academic', label: 'Academic Core', icon: GraduationCap },
     { id: 'experience', label: 'Experience & Goals', icon: Briefcase },
     { id: 'highlights', label: 'Highlights & Projects', icon: Award },
+    { id: 'preferences', label: 'Preferences & Goals', icon: Globe },
     { id: 'documents', label: 'Documents Checklist', icon: FileText, badge: profile?.documents?.length },
   ];
 
   const DOCUMENT_SLOTS = [
-    { id: 'cv', label: 'CV, Resume, or LinkedIn PDF', description: 'Required for matching. Parses academic background, work experience, projects, and skills.' },
+    { id: 'linkedin_pdf', label: 'LinkedIn PDF Export', description: 'Export your profile as PDF from LinkedIn. Highly structured, excellent for extracting professional experience and skills.' },
+    { id: 'cv', label: 'CV or Formal Resume', description: 'Formal resume for sending out applications. Can also be parsed by AI.' },
     { id: 'recommendation_letter_1', label: 'Recommendation Letter 1', description: 'Academic recommendation from professor or project advisor.' },
     { id: 'recommendation_letter_2', label: 'Recommendation Letter 2', description: 'Academic or professional recommendation.' },
     { id: 'recommendation_letter_3', label: 'Recommendation Letter 3', description: 'Optional third recommendation letter.' },
-    { id: 'bachelor_diploma', label: 'Bachelor\'s Diploma / Transcript', description: 'Proof of degree/transcript for qualification checks.' },
+    { id: 'bachelor_diploma', label: 'Bachelor\'s Diploma / Transcript', description: 'Proof of degree/transcript for qualification checks. Note: Native language diplomas may require official translation for foreign institutions.' },
+    { id: 'semester_transcripts', label: 'Semester Transcripts / List of Marks', description: 'Upload cycle or semester marks. Note: Even if you provide a diploma now, an official list of marks/transcript WILL be required later in the application process for most universities.' },
+    { id: 'language_certifications', label: 'Language Certifications', description: 'Upload TOEFL, IELTS, DELE, or other language proficiency certificates.' },
   ];
 
   if (isProfileLoading) {
@@ -282,18 +329,22 @@ export default function Profile() {
 
   // Calculate score rating text and styling
   const getRating = (s: number) => {
-    if (s < 35) return { label: 'Initiated', color: 'text-destructive', bg: 'bg-destructive/10' };
-    if (s < 70) return { label: 'Intermediate', color: 'text-amber-500', bg: 'bg-amber-500/10' };
-    return { label: 'Scholar Ready!', color: 'text-primary-foreground bg-primary', bg: 'bg-primary' };
+    const isPrefComplete = formData.preferred_modality && formData.target_countries && formData.target_countries !== "[]" && formData.target_countries !== "";
+    if (!isPrefComplete) {
+      return { label: 'Awaiting Preferences', color: 'text-amber-500', bg: 'bg-amber-500/10' };
+    }
+    if (s < 50) return { label: 'Initiated', color: 'text-destructive', bg: 'bg-destructive/10' };
+    if (s < 80) return { label: 'Pathfinder Active', color: 'text-amber-500', bg: 'bg-amber-500/10' };
+    return { label: 'Pathfinder Ready!', color: 'text-primary-foreground bg-primary', bg: 'bg-primary' };
   };
   const rating = getRating(score);
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
-      <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <header className="sticky top-[72px] z-30 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-background/40 backdrop-blur-md py-4 mb-8 border-b border-border/30 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 transition-all duration-200">
         <div>
           <h1 className="text-4xl sm:text-5xl font-display tracking-tight text-foreground">Profile Manager</h1>
-          <p className="text-muted-foreground mt-1">Provide comprehensive profile details and documents to maximize scholarship matching and essay quality.</p>
+          <p className="text-muted-foreground mt-1">Provide comprehensive profile details and preferences to maximize academic matching and career migration paths.</p>
         </div>
         
         {docMap['cv']?.is_uploaded && (
@@ -320,7 +371,7 @@ export default function Profile() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
         
         {/* Navigation Sidebar */}
-        <aside className="lg:col-span-1 space-y-2">
+        <aside className="lg:col-span-1 space-y-2 lg:sticky lg:top-[220px]">
           <nav className="flex lg:flex-col overflow-x-auto lg:overflow-visible gap-2 bg-card/50 p-2 rounded-2xl border border-border/40 scrollbar-hide">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -385,8 +436,8 @@ export default function Profile() {
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <TrendingUp className="w-3.5 h-3.5 text-primary" /> Profile Setup Health
                   </span>
-                  <h2 className="text-2xl font-bold text-foreground">Scholarship Preparedness</h2>
-                  <p className="text-xs text-muted-foreground max-w-md">Complete your profile to unlock premium matches and context-rich outlines for your essay drafting.</p>
+                  <h2 className="text-2xl font-bold text-foreground">Pathfinder Preparedness</h2>
+                  <p className="text-xs text-muted-foreground max-w-md">Complete your profile and preferences to unlock the Discovery Engine matches and calculate your Relocation Feasibility score.</p>
                 </div>
                 
                 <div className="flex flex-col items-center justify-center text-center p-4 min-w-[150px]">
@@ -475,7 +526,26 @@ export default function Profile() {
                     </div>
                   </button>
 
-                  {/* Step 4: Documents */}
+                  {/* Step 4: Preferences */}
+                  <button 
+                    onClick={() => setActiveTab('preferences')} 
+                    className="flex md:flex-col items-center gap-4 md:gap-2 text-left md:text-center z-10 group cursor-pointer focus:outline-none hidden lg:flex"
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 border shadow-sm select-none
+                      ${isStepComplete('preferences')
+                        ? 'bg-primary border-primary text-primary-foreground scale-105'
+                        : 'bg-background border-border text-muted-foreground group-hover:border-primary/50'
+                      }`}
+                    >
+                      {isStepComplete('preferences') ? <CheckCircle2 className="w-5 h-5" /> : <span className="text-xs font-bold">4</span>}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">Preferences</h4>
+                      <p className="text-[10px] text-muted-foreground">Location & Modality</p>
+                    </div>
+                  </button>
+
+                  {/* Step 5: Documents */}
                   <button 
                     onClick={() => setActiveTab('documents')} 
                     className="flex md:flex-col items-center gap-4 md:gap-2 text-left md:text-center z-10 group cursor-pointer focus:outline-none"
@@ -486,7 +556,7 @@ export default function Profile() {
                         : 'bg-background border-border text-muted-foreground group-hover:border-primary/50'
                       }`}
                     >
-                      {isStepComplete('documents') ? <CheckCircle2 className="w-5 h-5" /> : <span className="text-xs font-bold">4</span>}
+                      {isStepComplete('documents') ? <CheckCircle2 className="w-5 h-5" /> : <span className="text-xs font-bold">5</span>}
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">Documents</h4>
@@ -673,16 +743,29 @@ export default function Profile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">Cumulative GPA</label>
+                  <label className="block text-sm font-semibold text-foreground mb-2">Cumulative GPA / Class Rank</label>
                   <input 
-                    type="number" 
-                    step="0.01" 
+                    type="text" 
                     value={formData.gpa}
                     onChange={e => setFormData({...formData, gpa: e.target.value})}
                     disabled={isAutofilling}
                     className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                    placeholder="e.g. 3.82" 
+                    placeholder="e.g. 3.82 or Top 5%" 
                   />
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {["Top 5%", "Top 10%", "Top 20%", "1st Class Honours", "Summa Cum Laude"].map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        disabled={isAutofilling}
+                        onClick={() => setFormData({ ...formData, gpa: suggestion })}
+                        className="chip bg-secondary/80 hover:bg-muted text-muted-foreground hover:text-foreground text-[10px] py-1 px-2.5 rounded-lg border border-border transition-all active:scale-[0.98]"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">If your country uses a different grading system, select or type your relative class rank or academic honors.</p>
                 </div>
 
                 <div>
@@ -695,7 +778,43 @@ export default function Profile() {
                     className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="e.g. First-generation, Woman in Tech, Hispanic" 
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1">Comma-separated traits like minority background, first-gen status, state, etc.</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {["First-Gen", "Woman in STEM", "Minority Background", "LGBTQ+", "Low-Income", "Bilingual", "Rural Area", "Disabled", "First-Generation College", "Neurodivergent"].map((trait) => {
+                      const isActive = formData.demographics
+                        ?.split(",")
+                        .map((t: string) => t.trim())
+                        .includes(trait);
+                      return (
+                        <button
+                          key={trait}
+                          type="button"
+                          disabled={isAutofilling}
+                          onClick={() => handleDemographicClick(trait)}
+                          className={`chip text-[10px] py-1 px-2.5 rounded-lg border transition-all active:scale-[0.98] ${
+                            isActive
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-secondary/80 hover:bg-muted text-muted-foreground hover:text-foreground border-border"
+                          }`}
+                        >
+                          {trait}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">Select demographic chips or type custom traits separated by commas.</p>
+                </div>
+
+                <div className="mt-6">
+                  <label className="block text-sm font-semibold text-foreground mb-2">Nationalities / Citizenships</label>
+                  <input 
+                    type="text" 
+                    value={formData.nationalities}
+                    onChange={e => setFormData({...formData, nationalities: e.target.value})}
+                    disabled={isAutofilling}
+                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                    placeholder="e.g. Colombian, Italian" 
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Comma-separated list of your official citizenships. Crucial for matching regional or bilateral scholarships.</p>
                 </div>
               </div>
             </div>
@@ -711,18 +830,164 @@ export default function Profile() {
 
               <div className="space-y-5">
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
-                    <Briefcase className="w-4 h-4 text-muted-foreground" />
-                    <span>Work & Research Experience</span>
-                  </label>
-                  <textarea 
-                    value={formData.experience}
-                    onChange={e => setFormData({...formData, experience: e.target.value})}
-                    disabled={isAutofilling}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
-                    placeholder="Describe internships, jobs, research assistantships, or roles you have held. List company, duration, and key projects." 
-                  />
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <Briefcase className="w-4 h-4 text-muted-foreground" />
+                      <span>Work & Research Experience</span>
+                    </label>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                         try {
+                           let arr = formData.experience ? JSON.parse(formData.experience) : [];
+                           if (!Array.isArray(arr)) arr = [];
+                           setFormData({...formData, experience: JSON.stringify([...arr, { company: '', role: '', dates: '', location: '', multinational_roots: '', description: '' }])});
+                         } catch(e) {
+                           setFormData({...formData, experience: JSON.stringify([{ company: 'Previous Experience', role: '', dates: '', location: '', multinational_roots: '', description: formData.experience||'' }, { company: '', role: '', dates: '', location: '', multinational_roots: '', description: '' }])});
+                         }
+                      }}
+                      disabled={isAutofilling}
+                      className="text-[10px] bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1.5 rounded-lg border border-border/80 transition-colors font-semibold shadow-sm active:scale-95"
+                    >
+                      + Add Experience
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {(() => {
+                       let arr: any[] = [];
+                       try {
+                         if (formData.experience) {
+                           const p = JSON.parse(formData.experience);
+                           arr = Array.isArray(p) ? p : [];
+                         }
+                       } catch (e) {
+                         if (formData.experience) {
+                           arr = [{ company: 'Legacy Entry', role: '', dates: '', location: '', multinational_roots: '', description: formData.experience }];
+                         }
+                       }
+
+                       if (arr.length === 0) {
+                         return <div className="p-4 border border-dashed border-border rounded-xl bg-muted/10 flex items-center justify-center"><p className="text-xs text-muted-foreground italic">No experience added yet. Click above to add.</p></div>;
+                       }
+
+                       return arr.map((item, idx) => (
+                         <div key={idx} className="flex flex-col gap-3 p-4 bg-muted/20 border border-border/60 rounded-xl transition-all relative">
+                           <button 
+                             type="button"
+                             onClick={() => {
+                               const newArr = [...arr];
+                               newArr.splice(idx, 1);
+                               setFormData({...formData, experience: JSON.stringify(newArr)});
+                             }}
+                             disabled={isAutofilling}
+                             className="absolute top-3 right-3 flex items-center justify-center w-6 h-6 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600 transition-colors"
+                             title="Remove experience"
+                           >
+                             <span className="text-sm leading-none font-medium mb-0.5">&times;</span>
+                           </button>
+
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-8">
+                             <div>
+                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Company / Organization</label>
+                               <input 
+                                 type="text" 
+                                 value={item.company || ''} 
+                                 onChange={(e) => {
+                                   const newArr = [...arr];
+                                   newArr[idx] = { ...newArr[idx], company: e.target.value };
+                                   setFormData({...formData, experience: JSON.stringify(newArr)});
+                                 }}
+                                 disabled={isAutofilling}
+                                 placeholder="e.g. Paysafe"
+                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                               />
+                             </div>
+                             <div>
+                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Role / Title</label>
+                               <input 
+                                 type="text" 
+                                 value={item.role || ''} 
+                                 onChange={(e) => {
+                                   const newArr = [...arr];
+                                   newArr[idx] = { ...newArr[idx], role: e.target.value };
+                                   setFormData({...formData, experience: JSON.stringify(newArr)});
+                                 }}
+                                 disabled={isAutofilling}
+                                 placeholder="e.g. IT Ops System Engineer"
+                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                               />
+                             </div>
+                           </div>
+
+                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                             <div>
+                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Dates</label>
+                               <input 
+                                 type="text" 
+                                 value={item.dates || ''} 
+                                 onChange={(e) => {
+                                   const newArr = [...arr];
+                                   newArr[idx] = { ...newArr[idx], dates: e.target.value };
+                                   setFormData({...formData, experience: JSON.stringify(newArr)});
+                                 }}
+                                 disabled={isAutofilling}
+                                 placeholder="e.g. June 2024 - Present"
+                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                               />
+                             </div>
+                             <div>
+                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Location</label>
+                               <input 
+                                 type="text" 
+                                 value={item.location || ''} 
+                                 onChange={(e) => {
+                                   const newArr = [...arr];
+                                   newArr[idx] = { ...newArr[idx], location: e.target.value };
+                                   setFormData({...formData, experience: JSON.stringify(newArr)});
+                                 }}
+                                 disabled={isAutofilling}
+                                 placeholder="e.g. Lima, Peru"
+                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                               />
+                             </div>
+                             <div>
+                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Company Origins / Roots</label>
+                               <input 
+                                 type="text" 
+                                 value={item.multinational_roots || ''} 
+                                 onChange={(e) => {
+                                   const newArr = [...arr];
+                                   newArr[idx] = { ...newArr[idx], multinational_roots: e.target.value };
+                                   setFormData({...formData, experience: JSON.stringify(newArr)});
+                                 }}
+                                 disabled={isAutofilling}
+                                 placeholder="e.g. United Kingdom"
+                                 title="The origin country or headquarters of the company. Vital for matching bilateral scholarships."
+                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                               />
+                             </div>
+                           </div>
+
+                           <div>
+                             <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Description</label>
+                             <textarea 
+                               value={item.description || ''} 
+                               onChange={(e) => {
+                                 const newArr = [...arr];
+                                 newArr[idx] = { ...newArr[idx], description: e.target.value };
+                                 setFormData({...formData, experience: JSON.stringify(newArr)});
+                               }}
+                               disabled={isAutofilling}
+                               rows={3}
+                               placeholder="- Monitoreo de la infraestructura TI..."
+                               className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none scrollbar-hide"
+                             />
+                           </div>
+                         </div>
+                       ));
+                    })()}
+                  </div>
                 </div>
 
                 <div>
@@ -834,19 +1099,123 @@ export default function Profile() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-2">Languages & Test Scores</label>
-                    <input 
-                      type="text" 
-                      value={formData.languages}
-                      onChange={e => setFormData({...formData, languages: e.target.value})}
-                      disabled={isAutofilling}
-                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                      placeholder="e.g. English (Native), Spanish (C1), IELTS 8.5" 
-                    />
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-foreground">Languages</label>
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                           try {
+                             let arr = formData.languages ? JSON.parse(formData.languages) : [];
+                             if (!Array.isArray(arr)) arr = [];
+                             setFormData({...formData, languages: JSON.stringify([...arr, { language: '', is_native: false, level: 'B2' }])});
+                           } catch(e) {
+                             setFormData({...formData, languages: JSON.stringify([{ language: formData.languages||'', is_native: true, level: 'Native' }, { language: '', is_native: false, level: 'B2' }])});
+                           }
+                        }}
+                        disabled={isAutofilling}
+                        className="text-[10px] bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1.5 rounded-lg border border-border/80 transition-colors font-semibold shadow-sm active:scale-95"
+                      >
+                        + Add Language
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                      {(() => {
+                         let arr: any[] = [];
+                         try {
+                           if (formData.languages) {
+                             const p = JSON.parse(formData.languages);
+                             arr = Array.isArray(p) ? p : [];
+                           }
+                         } catch (e) {
+                           if (formData.languages) {
+                             arr = [{ language: formData.languages, is_native: true, level: 'Native' }];
+                           }
+                         }
+
+                         if (arr.length === 0) {
+                           return <div className="p-4 border border-dashed border-border rounded-xl bg-muted/10 flex items-center justify-center"><p className="text-xs text-muted-foreground italic">No languages added yet. Click above to add.</p></div>;
+                         }
+
+                         return arr.map((item, idx) => (
+                           <div key={idx} className="flex items-center gap-2 p-2 bg-muted/20 border border-border/60 rounded-lg transition-all hover:bg-muted/30">
+                             <input 
+                               type="text" 
+                               value={item.language} 
+                               onChange={(e) => {
+                                 const newArr = [...arr];
+                                 newArr[idx] = { ...newArr[idx], language: e.target.value };
+                                 setFormData({...formData, languages: JSON.stringify(newArr)});
+                               }}
+                               disabled={isAutofilling}
+                               placeholder="e.g. English"
+                               className="w-28 flex-1 px-2 py-1.5 bg-background border border-border rounded text-xs focus:ring-1 focus:ring-primary/20 outline-none"
+                             />
+                             <div className="flex items-center gap-1.5">
+                               <label className="text-[10px] font-medium flex items-center gap-1 cursor-pointer bg-background border border-border px-2 py-1.5 rounded select-none">
+                                 <input 
+                                   type="checkbox" 
+                                   checked={item.is_native}
+                                   disabled={isAutofilling}
+                                   onChange={(e) => {
+                                      const newArr = [...arr];
+                                      newArr[idx] = { ...newArr[idx], is_native: e.target.checked, level: e.target.checked ? 'Native' : 'B2' };
+                                      setFormData({...formData, languages: JSON.stringify(newArr)});
+                                   }}
+                                   className="rounded text-primary focus:ring-primary/20 h-3 w-3"
+                                 />
+                                 Native
+                               </label>
+                               {!item.is_native && (
+                                 <select
+                                   value={item.level}
+                                   onChange={(e) => {
+                                      const newArr = [...arr];
+                                      newArr[idx] = { ...newArr[idx], level: e.target.value };
+                                      setFormData({...formData, languages: JSON.stringify(newArr)});
+                                   }}
+                                   disabled={isAutofilling}
+                                   className="text-[10px] font-semibold px-1 py-1 bg-background border border-border rounded outline-none cursor-pointer"
+                                 >
+                                   <option value="A1">A1</option>
+                                   <option value="A2">A2</option>
+                                   <option value="B1">B1</option>
+                                   <option value="B2">B2</option>
+                                   <option value="C1">C1</option>
+                                   <option value="C2">C2</option>
+                                 </select>
+                               )}
+                               <button 
+                                 type="button"
+                                 onClick={() => {
+                                   const newArr = [...arr];
+                                   newArr.splice(idx, 1);
+                                   setFormData({...formData, languages: JSON.stringify(newArr)});
+                                 }}
+                                 disabled={isAutofilling}
+                                 className="flex items-center justify-center w-6 h-6 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600 transition-colors ml-auto"
+                                 title="Remove language"
+                               >
+                                 <span className="text-sm leading-none font-medium mb-0.5">&times;</span>
+                               </button>
+                             </div>
+                           </div>
+                         ));
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          )}
+
+          {/* TAB: PREFERENCES & GOALS */}
+          {activeTab === 'preferences' && (
+            <PreferencesTab 
+              formData={formData} 
+              setFormData={setFormData} 
+              isAutofilling={isAutofilling} 
+            />
           )}
 
           {/* TAB 4: REQUIRED DOCUMENTS CHECKLIST */}
@@ -855,6 +1224,13 @@ export default function Profile() {
               <div className="border-b border-border/50 pb-4">
                 <h2 className="text-xl font-bold text-card-foreground">Required Documents Checklist</h2>
                 <p className="text-xs text-muted-foreground mt-1">Upload files required for scholarship validation. We extract profile text dynamically from PDF and text documents.</p>
+                
+                <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-3">
+                  <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    <strong>Translation Advisory:</strong> If your Bachelor's Diploma or Transcript is in your native language, it is highly recommended to obtain an official certified translation (e.g., into English) early. Most international institutions will require translated transcripts for admissions and financial aid matching.
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -929,11 +1305,11 @@ export default function Profile() {
                           )}
                         </button>
 
-                        {slot.id === 'cv' && isUploaded && (
+                        {(slot.id === 'cv' || slot.id === 'linkedin_pdf' || slot.id === 'bachelor_diploma') && isUploaded && (
                           <button
-                            onClick={() => handleParseDocument('cv')}
+                            onClick={() => handleParseDocument(slot.id)}
                             disabled={isUploading || isParsing}
-                            title="Analyze this resume with Gemini and auto-fill your profile details."
+                            title={`Analyze this ${slot.id === 'cv' ? 'resume' : slot.id === 'linkedin_pdf' ? 'LinkedIn export' : 'diploma'} with Gemini and auto-fill your profile details.`}
                             className="flex items-center gap-1 bg-secondary hover:bg-secondary/80 text-foreground px-4 py-2 rounded-xl text-xs font-bold border border-border/80 transition-all select-none active:scale-95 disabled:opacity-50"
                           >
                             {isParsing ? (

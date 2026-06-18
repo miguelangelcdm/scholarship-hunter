@@ -1,9 +1,11 @@
-# Scholarship Hunter
+# Educational Pathfinder (formerly Scholarship Hunter)
 
-An AI-powered scholarship discovery, matching, and tracking platform built on top of the Orbix Health Dashboard architecture.
+An AI-powered academic program discovery, financial aid matching, and career migration platform built on the Orbix Dashboard architecture.
 
 ## What We Are Doing
-We are transforming a robust dashboard base into a personalized AI assistant. The system uses a Python (FastAPI) backend for scraping and LLM logic, paired with a Vite (React) frontend. 
+We have pivoted the project from a simple "Scholarship Hunter" into a holistic **Educational Pathfinder**. The platform now embraces "Brain-Circulation", supports local, hybrid, and online study alternatives (not just emigration), and acts as a reality check for adult learners by calculating Relocation Feasibility scores based on their CVs.
+
+The system uses a Python (FastAPI) backend for scraping and LLM logic, paired with a Vite (React) frontend. 
 
 Crucially, the UI/UX development is guided by a specific suite of AI agent personas to ensure a premium, non-generic aesthetic.
 
@@ -13,6 +15,7 @@ graph TD;
     A[App.tsx / Layout] --> B[Dashboard /];
     A --> C[Profile /profile];
     A --> D[Tracker /tracker];
+    A --> O[Onboarding Wizard Modal];
     B --> E[Desire Matches];
     B --> F[Probability Matches];
     C --> G[Academic Core];
@@ -22,6 +25,8 @@ graph TD;
     C --> L[Documents Checklist];
     L --> M[Gemini AI Resume Parser];
     D --> I[Kanban Board];
+    I --> P[AI Essay Drafter];
+    I --> Q[Educational Outreach Module];
 ```
 
 ## Directory Scaffold
@@ -37,7 +42,10 @@ Scholarship-hunter/
 │   ├── main.py               # API Endpoints (Upload, Parse, Scan, Draft, etc.)
 │   └── ai_agent.py           # LangChain + Gemini LLM integration for scoring, parsing, drafting
 ├── docs/
-│   └── agents/               # AI Persona Rules (Taste, Impeccable, Memanto, etc.)
+│   ├── agents/                   # AI Persona Rules (Taste, Impeccable, Memanto, etc.)
+│   ├── database_schema.md        # Data Dictionary and Entity Relationship Diagram
+│   ├── token_cost_analysis.md    # Cost projections for Gemini AI token usage
+│   └── research_foundation.md    # Academic research justifying the Educational Pathfinder pivot
 ├── frontend/                 # Vite + React (Orbix Base)
 │   ├── src/
 │   │   ├── components/       # Reusable UI components
@@ -164,7 +172,23 @@ The frontend uses Vite for fast development builds.
 
 ---
 
-## Profile & Documents Feature (New)
+## 1. Profile Manager & Dashboard Safeguards
+Rather than forcing users through a fragmented wizard, all first-time onboarding is consolidated directly into the **Profile Manager**. 
+
+### Preferences & Goals Tab
+The Profile Manager features a dedicated "Preferences & Goals" tab that captures:
+1. **Delivery Modality**: Online, Hybrid, In-Person (Local), or In-Person (Abroad).
+2. **Primary Goals**: Local Growth, Entrepreneurship, Emigrate, or Brain-Circulation.
+3. **Interactive Target Countries Map**: A fully interactive SVG world map (`react-svg-worldmap`) that renders all global countries. Users can click to select the specific countries they wish to target.
+4. **Interests & Tags**: Keywords (e.g., Sustainability, AI, Business) to align the AI scraping process.
+
+### Dashboard Safelocks & Reality Checks
+To ensure the Discovery Engine generates high-quality matches, the Dashboard acts as a strict gatekeeper:
+- **Locked Overlay**: If a user's profile lacks critical data (e.g., Modality or Geographic Targets), the "Program Matches" and "Financial Aid" lanes are visually obscured behind a frosted glass layer.
+- **CTA Modal**: Clicking the disabled "Run Discovery Scan" button triggers a modal with a direct CTA to complete the Profile.
+- **Relocation Feasibility Score**: For users targeting programs abroad, the AI analyzes their CV (looking for language proficiency and multinational experience) and displays a Feasibility Score (0-100%). This provides a realistic "visa check" (represented by Shield or Warning icons) directly on the Program Match cards.
+
+## 2. Profile & Documents Feature
 The Profile section features a premium **Interactive Overview Landing Dashboard**:
 - **Profile Strength Gauge**: Dynamically calculates setup completeness (0% to 100%) based on filled inputs and documents.
 - **Interactive Progress Stepper**: Displays a clickable stepper line with dots and checks (Academic Core, Experience & Goals, Personal Highlights, Documents Checklist). Clicking any step navigates directly to that section.
@@ -179,17 +203,25 @@ The Profile details can also be managed manually across four subcategories:
    - **Recommendation Letters (1, 2, 3)**
    - **Bachelor's Diploma / Transcript**
 
+### 3. Application Strategy & Outreach (Tracker)
+The app uses a Kanban-style board in the Tracker page to mirror the real-life application journey: *Discovered, To Apply, Drafting, Applied, Rejected, Won*. 
+From the Tracker, users can trigger AI actions:
+- **AI Essay Drafter**: Generates personalized essays.
+- **Educational Outreach Module**: Instead of just generating an email blindly, this module first educates the user on *why* contacting the university financial aid office is important, lists the typical steps to follow, and *then* provides an AI-generated professional inquiry email using their profile context.
+
 ### Gemini-Powered AI Autofill
 When a user uploads their CV/Resume, they can click the **AI Extract** button. The backend extracts text from the document (using `pypdf`) and prompts Gemini (`gemini-3.5-flash`) to parse all details. The database profile is automatically populated, and the UI values update instantly.
 
 - **Form Integrity Lock**: During the AI extraction process, all input fields, textareas, and save buttons are programmatically disabled to prevent conflict. On the input-centric tabs (*Academic Core*, *Experience & Goals*, and *Highlights & Projects*), a translucent glassmorphic loader overlay is displayed, visually blocking edits while keeping the inputs underneath readable. Users can freely navigate through all tabs to monitor the AI autofill progress in real-time.
+- **Robust API Type Coercion**: To prevent FastAPI `ResponseValidationError` when GPA values are stored or parsed as floats/integers, the backend response schemas utilize a custom Pydantic `field_validator` (`coerce_gpa`) to dynamically cast any numeric GPAs to string formats before returning them to the client.
 
-These profile categories are passed to the AI drafting agent to compile rich, context-aware scholarship essays.
+The wizard leverages the project's standard Radix-based `Select` component framework rather than external React UI libraries (like `@heroui/react`). This avoids dependency version conflicts with Tailwind CSS v3 and ensures seamless styling integration.
 
 ### E2E Testing & Performance Tuning
 To ensure maximum UI responsiveness and prevent regressions:
 - **Playwright E2E Suite**: Tests Profile Manager tab transitions, stepper node redirects, and captures visual screenshots under `frontend/e2e-screenshots/`.
 - **Latency Optimization**: Configured the frontend and tests to query the backend via explicit IPv4 loopback (`127.0.0.1`) instead of `localhost`. This bypassed IPv6 resolution timeouts, reducing page load latency from ~7.5 seconds to **sub-100ms** (75ms).
+- **Onboarding Wizard Bypass**: To prevent the onboarding wizard modal overlay from blocking UI interactions during test runs, the component detects automated runs via `window.navigator.webdriver` (and support for `?bypass_wizard=true` parameter), allowing Playwright tests to access and test the underlying profile tabs seamlessly.
 
 To run the E2E tests:
 ```bash
@@ -227,14 +259,30 @@ To maintain a fluid, premium tactile feel, all page transitions, tab switches, a
 - [x] Migrated the custom Scholarship UI (Desire vs Probability matches, Kanban Tracker) into the Orbix layout.
 - [x] Added Dark Mode toggle and horizontal scrolling to the Kanban tracker.
 - [x] Setup Memanto memory logging.
+- [x] Implemented automatic SQLite schema migrations in `backend/database.py` to seamlessly add new columns (e.g. Wizard Preferences, Research metrics, and modality/psychology preferences like `has_dependents`, `primary_goal`, `preferred_modality`, `relocation_feasibility_score`, and `target_diaspora_regions`) on app startup.
 - [x] Created advanced profile subsections (hobbies, volunteer, projects, experience, awards, publications, goals, financial need).
-- [x] Created `ProfileDocument` table & logic to handle CV, recommendations, and diploma uploads.
+- [x] Created `ProfileDocument` table & logic to handle CV, recommendations, diploma uploads, and language certifications.
 - [x] Added PDF text extractor (`pypdf`) and python-multipart server dependencies.
-- [x] Created Gemini-powered structured extraction endpoint to parse CVs and auto-populate user profiles.
+- [x] Created Gemini-powered structured extraction endpoint to parse CVs and auto-populate user profiles, including nationalities, structured language tracking, and detailed professional experience (inferring multinational roots from companies).
 - [x] Integrated all extended profile fields into the AI essay drafting context.
-- [x] Redesigned the Profile manager with tabs, upload cards, status badges, and autofill actions.
+- [x] Redesigned the Profile manager with tabs, upload cards, status badges, autofill actions, and a comprehensive **Matching Preferences** suite.
+- [x] Implemented a Continent -> Country -> Region hierarchical geoselector querying the CountriesNow API dynamically.
+- [x] Built a real-time global university selector querying the Hipolabs Universities API with debounced autocomplete suggestions.
+- [x] Enhanced global card layout glassmorphism (transparency, frosted blur, and border intensity) and added ambient top-right viewport glowing elements.
+- [x] Overhauled the Onboarding Wizard to feature a fully interactive, high-fidelity world map using the `react-svg-worldmap` package (fully themed with custom CSS overrides for dark/light modes), dynamic country/region state loading via CountriesNow, and real-time university auto-suggestions via Hipolabs (saving structured targets directly to the profile database).
 - [x] Installed Playwright and created performance & visual E2E tests.
 - [x] Resolved IPv6 DNS loopback resolution lag to bring page load speeds down to sub-100ms.
+- [x] Built the Onboarding Wizard UI to capture user target preferences and tags upon first visit.
+- [x] Expanded the Database Models (Profile & Scholarships) to store user preferences, prestige, and benefits.
+- [x] Implemented the Educational Outreach Module in the Tracker to educate users on university contact and generate inquiry emails via Gemini.
+- [x] Added automatic geographic region zooming when selecting continents, manual scale controls, and click-and-drag panning on the world map to make selecting small countries easy.
+- [x] Implemented sticky stacked desktop layouts for page headers, action buttons, and sidebar tabs in both Profile and Dashboard views.
+- [x] Enhanced sticky layouts: reduced header background opacity from 80% to 40% for better ambient glow blending, increased Profile tabs sticky top offset to 220px to prevent overlapping, and made the main application sidebar sticky (`top-[72px] h-[calc(100vh-72px)]`) to remain fixed when scrolling.
+- [x] Glitch-free Preferences State: Refactored the `PreferencesTab` state model to derive tags and locations directly from parent form props (removing the synchronization `useEffect` hooks), completely resolving the loop re-rendering flickering bug when adding or removing targets.
+- [x] Extended Academic Core & Demographics suggestions: Converted cumulative GPA to a text input to accept relative class rank strings (e.g. `Top 5%`), added class rank suggestions chips (`Top 5%`, `Top 10%`, `Summa Cum Laude`, etc.), and added toggleable demographic chip selections that append or remove traits in a comma-separated format.
+- [x] Relaxed AuthGuard restrictions to allow navigating to Discover and Tracker without forcing a prior resume/CV upload.
+- [x] Updated the Profile Setup Health metric to Pathfinder Preparedness and capped it at 60% with an "Awaiting Preferences" status if matching criteria are incomplete, aligning it with the dashboard safeguards.
+- [x] Designed ultra-premium, high-contrast, glowing gradient CTA buttons in both light/dark modes for the locked overlays and modals.
 
 ### TODOs
 - [ ] Build the Python web scraper to feed the `scholarships` table.

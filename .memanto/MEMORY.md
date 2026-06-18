@@ -28,13 +28,20 @@ The agent is building "Scholarship Hunter": an AI-powered scholarship discovery,
 * Optimized network requests from ~7.5 seconds to ~75ms by using explicit IPv4 loopbacks (`127.0.0.1`) instead of `localhost` (resolving IPv6 lookup timeouts).
 * Implemented layout-matching skeleton loader screens across the Profile overview, Dashboard matching lists, and Kanban Tracker boards to replace page-level spinners and empty states. Added skeleton standard guidelines to README.md.
 
-## Phase 5 State (In Progress)
+## Phase 5 State (Completed/Refined)
 * Added a unified, cross-platform dev menu runner (`menu.js`) and a root `Makefile` to simplify running both frontend and backend concurrently, merging colored logs in the same console.
 * Refined logging: avoided false-positive `ERR` labels for standard Uvicorn/Vite status logs printed to `stderr` by dynamically detecting actual `error` / `exception` keywords and color-coding them in red while keeping normal status logs labeled standard.
 * Handled automatic python virtual environment path mapping and robust process-tree termination for Windows and Unix, preventing orphan processes from locking dev ports.
 * Added a root `package.json` to expose npm scripts for developer menu launch (`npm start`, `npm run dev`, `npm run backend`, etc.).
+* Fixed the backend SQLite startup migration bug by adding the new profile columns (`has_dependents`, `primary_goal`, `preferred_modality`, `relocation_feasibility_score`, `target_diaspora_regions`) into the manual schema migrations script.
+* Fixed the frontend runtime crash by importing the missing `Globe` icon in `Profile.tsx`.
+* Redesigned layout scroll clipping: replaced `overflow-x-hidden` with `overflow-x-clip` on the layout wrapper so `position: sticky` works correctly in chromium web browsers.
+* Created stacked sticky desktop headers for page headers (sticky at `top-[72px]`) and navigation sidebars (sticky at `top-[170px]`) in both the Profile Manager and Discovery Engine.
+* Relaxed `AuthGuard` constraints to allow direct browsing of the Discover dashboard and Kanban Tracker without being forced to upload a CV/resume first.
+* Aligned profile health calculation: renamed the score card to "Pathfinder Preparedness" and capped the score at `60%` (returning an orange `Awaiting Preferences` status) if critical matching criteria like Modality or target locations are missing.
+* Created ultra-premium, high-contrast, glowing gradient CTA buttons in both light and dark modes for the locked results overlay and incomplete profile modals.
+* Updated Playwright E2E visual tests to reflect the new `Pathfinder Preparedness` title.
 
-## Current Objective (Phase 5 - Pending)
+## Current Objective (Phase 6 - Pending)
 * Build Python web scraper to feed the `scholarships` table.
 * Connect the remaining frontend pages (Dashboard match listings and Kanban Tracker board) to their respective FastAPI endpoints.
-

@@ -15,7 +15,7 @@ from database import init_db, get_db
 from models import Profile, Scholarship, ProfileDocument
 from schemas import ProfileUpdate, ProfileResponse, ScholarshipResponse, ProfileDocumentResponse
 from scraper import fetch_scholarships
-from ai_agent import score_scholarship, draft_essay, parse_profile_from_document
+from ai_agent import score_scholarship, draft_essay, draft_outreach_email, parse_profile_from_document
 
 app = FastAPI(title="Scholarship Hunter API")
 
@@ -236,3 +236,24 @@ def generate_draft(scholarship_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"essay_draft": essay}
+
+@app.post("/scholarships/{scholarship_id}/outreach")
+def generate_outreach(scholarship_id: int, db: Session = Depends(get_db)):
+    profile = db.query(Profile).first()
+    scholarship = db.query(Scholarship).filter(Scholarship.id == scholarship_id).first()
+    
+    if not profile or not scholarship:
+        raise HTTPException(status_code=404, detail="Not found")
+        
+    profile_dict = {
+        "major": profile.major,
+        "gpa": profile.gpa,
+        "demographics": profile.demographics,
+        "experience": profile.experience,
+        "career_goals": profile.career_goals
+    }
+    scholarship_dict = {"title": scholarship.title, "description": scholarship.description}
+    
+    email = draft_outreach_email(profile_dict, scholarship_dict)
+    
+    return {"email_draft": email}

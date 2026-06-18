@@ -3,10 +3,12 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import OutreachModule from "@/components/scholarship/OutreachModule";
 
 export default function Tracker() {
   const queryClient = useQueryClient();
   const [selectedEssay, setSelectedEssay] = useState<string | null>(null);
+  const [selectedOutreach, setSelectedOutreach] = useState<{id: number, title: string} | null>(null);
 
   const { data: scholarships = [], isLoading } = useQuery({
     queryKey: ['scholarships'],
@@ -44,6 +46,14 @@ export default function Tracker() {
         </div>
       )}
 
+      {selectedOutreach && (
+        <OutreachModule 
+          scholarshipId={selectedOutreach.id} 
+          scholarshipTitle={selectedOutreach.title} 
+          onClose={() => setSelectedOutreach(null)} 
+        />
+      )}
+
       <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
         <div className="flex space-x-6 min-w-max h-full">
           {columns.map((col, index) => {
@@ -76,13 +86,21 @@ export default function Tracker() {
                         </div>
                         
                         {col !== "Drafting" && col !== "Applied" && (
-                          <button 
-                            onClick={() => draftMutation.mutate(s.id)}
-                            disabled={draftMutation.isPending}
-                            className="mt-5 w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 text-xs font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center border border-blue-500/20"
-                          >
-                            <span className="mr-2">✨</span> {draftMutation.isPending ? "Generating..." : "Open AI Drafter"}
-                          </button>
+                          <div className="mt-5 space-y-2">
+                            <button 
+                              onClick={() => draftMutation.mutate(s.id)}
+                              disabled={draftMutation.isPending}
+                              className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 text-xs font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center border border-blue-500/20"
+                            >
+                              <span className="mr-2">✨</span> {draftMutation.isPending ? "Generating..." : "Open AI Drafter"}
+                            </button>
+                            <button 
+                              onClick={() => setSelectedOutreach({id: s.id, title: s.title})}
+                              className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-xs font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center border border-emerald-500/20"
+                            >
+                              <span className="mr-2">✉️</span> Contact University
+                            </button>
+                          </div>
                         )}
                       </div>
                     ))

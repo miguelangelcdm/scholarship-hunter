@@ -12,7 +12,7 @@ const pythonPath = isWin
   ? path.join(backendDir, 'venv', 'Scripts', 'python.exe')
   : path.join(backendDir, 'venv', 'bin', 'python');
 
-const backendArgs = ['-m', 'uvicorn', 'main:app', '--reload', '--host', '127.0.0.1', '--port', '8000'];
+const backendArgs = ['-m', 'uvicorn', 'main:app', '--reload', '--host', '0.0.0.0', '--port', '8000'];
 
 const frontendCmd = isWin ? 'npm.cmd' : 'npm';
 const frontendArgs = ['run', 'dev'];

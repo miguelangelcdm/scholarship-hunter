@@ -14,7 +14,7 @@ export const Sidebar = () => {
   const active = location.pathname;
 
   return (
-    <aside className="hidden md:flex flex-col items-center justify-between py-6 w-16 lg:w-20 shrink-0">
+    <aside className="hidden md:flex flex-col items-center justify-between py-6 w-16 lg:w-20 shrink-0 sticky top-[72px] h-[calc(100vh-72px)]">
       <nav className="flex flex-col items-center gap-4">
         {items.map((it) => {
           const Icon = it.icon;
