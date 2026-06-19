@@ -22,6 +22,7 @@ import {
   Globe
 } from 'lucide-react';
 import PreferencesTab from "@/components/profile/PreferencesTab";
+import LanguageManager from "@/components/profile/LanguageManager";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Profile() {
@@ -44,6 +45,9 @@ export default function Profile() {
     financial_need: "",
     career_goals: "",
     target_countries: "",
+    undesired_countries: "",
+    target_continents: "",
+    undesired_continents: "",
     target_tags: "",
     preferred_modality: "",
     primary_goal: "",
@@ -81,6 +85,9 @@ export default function Profile() {
         financial_need: profile.financial_need || "",
         career_goals: profile.career_goals || "",
         target_countries: profile.target_countries || "",
+        undesired_countries: profile.undesired_countries || "",
+        target_continents: profile.target_continents || "",
+        undesired_continents: profile.undesired_continents || "",
         target_tags: profile.target_tags || "",
         preferred_modality: profile.preferred_modality || "",
         primary_goal: profile.primary_goal || "",
@@ -368,7 +375,7 @@ export default function Profile() {
         )}
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
         
         {/* Navigation Sidebar */}
         <aside className="lg:col-span-1 space-y-2 lg:sticky lg:top-[220px]">
@@ -400,7 +407,7 @@ export default function Profile() {
         </aside>
 
         {/* Form Content Panel */}
-        <main className="relative lg:col-span-3 bg-card p-6 sm:p-8 rounded-3xl border border-border/50 shadow-sm transition-all hover:shadow-md">
+        <main className="relative lg:col-span-4 bg-card p-6 sm:p-8 rounded-3xl border border-border/50 shadow-sm transition-all hover:shadow-md -mr-4 sm:-mr-6 lg:-mr-8">
           
           {isAutofilling && ['academic', 'experience', 'highlights'].includes(activeTab) && (
             <div className="absolute inset-0 bg-background/40 backdrop-blur-[1.5px] rounded-3xl z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
@@ -1068,9 +1075,7 @@ export default function Profile() {
                     className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="Describe relevant projects. E.g. Capstone design project, open-source contributions, portfolio projects." 
                   />
-                </div>
-
-                <div>
+                </div>                <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">Awards & Honors</label>
                   <textarea 
                     value={formData.awards}
@@ -1082,7 +1087,7 @@ export default function Profile() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
                   <div>
                     <label className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
                       <BookOpen className="w-4 h-4 text-muted-foreground" />
@@ -1098,111 +1103,12 @@ export default function Profile() {
                     />
                   </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-semibold text-foreground">Languages</label>
-                      <button 
-                        type="button" 
-                        onClick={() => {
-                           try {
-                             let arr = formData.languages ? JSON.parse(formData.languages) : [];
-                             if (!Array.isArray(arr)) arr = [];
-                             setFormData({...formData, languages: JSON.stringify([...arr, { language: '', is_native: false, level: 'B2' }])});
-                           } catch(e) {
-                             setFormData({...formData, languages: JSON.stringify([{ language: formData.languages||'', is_native: true, level: 'Native' }, { language: '', is_native: false, level: 'B2' }])});
-                           }
-                        }}
-                        disabled={isAutofilling}
-                        className="text-[10px] bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1.5 rounded-lg border border-border/80 transition-colors font-semibold shadow-sm active:scale-95"
-                      >
-                        + Add Language
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-                      {(() => {
-                         let arr: any[] = [];
-                         try {
-                           if (formData.languages) {
-                             const p = JSON.parse(formData.languages);
-                             arr = Array.isArray(p) ? p : [];
-                           }
-                         } catch (e) {
-                           if (formData.languages) {
-                             arr = [{ language: formData.languages, is_native: true, level: 'Native' }];
-                           }
-                         }
-
-                         if (arr.length === 0) {
-                           return <div className="p-4 border border-dashed border-border rounded-xl bg-muted/10 flex items-center justify-center"><p className="text-xs text-muted-foreground italic">No languages added yet. Click above to add.</p></div>;
-                         }
-
-                         return arr.map((item, idx) => (
-                           <div key={idx} className="flex items-center gap-2 p-2 bg-muted/20 border border-border/60 rounded-lg transition-all hover:bg-muted/30">
-                             <input 
-                               type="text" 
-                               value={item.language} 
-                               onChange={(e) => {
-                                 const newArr = [...arr];
-                                 newArr[idx] = { ...newArr[idx], language: e.target.value };
-                                 setFormData({...formData, languages: JSON.stringify(newArr)});
-                               }}
-                               disabled={isAutofilling}
-                               placeholder="e.g. English"
-                               className="w-28 flex-1 px-2 py-1.5 bg-background border border-border rounded text-xs focus:ring-1 focus:ring-primary/20 outline-none"
-                             />
-                             <div className="flex items-center gap-1.5">
-                               <label className="text-[10px] font-medium flex items-center gap-1 cursor-pointer bg-background border border-border px-2 py-1.5 rounded select-none">
-                                 <input 
-                                   type="checkbox" 
-                                   checked={item.is_native}
-                                   disabled={isAutofilling}
-                                   onChange={(e) => {
-                                      const newArr = [...arr];
-                                      newArr[idx] = { ...newArr[idx], is_native: e.target.checked, level: e.target.checked ? 'Native' : 'B2' };
-                                      setFormData({...formData, languages: JSON.stringify(newArr)});
-                                   }}
-                                   className="rounded text-primary focus:ring-primary/20 h-3 w-3"
-                                 />
-                                 Native
-                               </label>
-                               {!item.is_native && (
-                                 <select
-                                   value={item.level}
-                                   onChange={(e) => {
-                                      const newArr = [...arr];
-                                      newArr[idx] = { ...newArr[idx], level: e.target.value };
-                                      setFormData({...formData, languages: JSON.stringify(newArr)});
-                                   }}
-                                   disabled={isAutofilling}
-                                   className="text-[10px] font-semibold px-1 py-1 bg-background border border-border rounded outline-none cursor-pointer"
-                                 >
-                                   <option value="A1">A1</option>
-                                   <option value="A2">A2</option>
-                                   <option value="B1">B1</option>
-                                   <option value="B2">B2</option>
-                                   <option value="C1">C1</option>
-                                   <option value="C2">C2</option>
-                                 </select>
-                               )}
-                               <button 
-                                 type="button"
-                                 onClick={() => {
-                                   const newArr = [...arr];
-                                   newArr.splice(idx, 1);
-                                   setFormData({...formData, languages: JSON.stringify(newArr)});
-                                 }}
-                                 disabled={isAutofilling}
-                                 className="flex items-center justify-center w-6 h-6 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600 transition-colors ml-auto"
-                                 title="Remove language"
-                               >
-                                 <span className="text-sm leading-none font-medium mb-0.5">&times;</span>
-                               </button>
-                             </div>
-                           </div>
-                         ));
-                      })()}
-                    </div>
+                  <div className="pt-6 border-t border-border/40">
+                    <LanguageManager 
+                      languages={formData.languages} 
+                      onChange={(newLangs) => setFormData({...formData, languages: newLangs})}
+                      isAutofilling={isAutofilling}
+                    />
                   </div>
                 </div>
               </div>

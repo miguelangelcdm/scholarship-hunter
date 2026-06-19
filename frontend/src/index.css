@@ -47,14 +47,14 @@
     --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.04), 0 8px 24px -8px hsl(0 0% 0% / 0.06);
     --shadow-glow: 0 8px 32px -8px hsl(var(--primary) / 0.45);
 
-    --sidebar-background: 40 20% 96%;
-    --sidebar-foreground: 0 0% 30%;
-    --sidebar-primary: 75 95% 60%;
-    --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 40 15% 92%;
-    --sidebar-accent-foreground: 0 0% 6%;
-    --sidebar-border: 40 10% 88%;
-    --sidebar-ring: 75 95% 60%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -75,6 +75,20 @@
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 75 95% 60%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .maplibregl-popup-content {
+    @apply bg-transparent! shadow-none! p-0! rounded-none!;
+  }
+  .maplibregl-popup-tip {
+    @apply hidden!;
   }
 }
 
@@ -145,7 +159,7 @@
   }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-  
+
   .custom-scrollbar::-webkit-scrollbar {
     height: 8px;
     width: 8px;

@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { WorldMap, regions } from "react-svg-worldmap";
+import { useState } from "react";
+import { InteractiveMap } from "./InteractiveMap";
 import { toast } from "sonner";
 import { Globe, MapPin, X, Laptop, Building2, Plane, Plus, Trash2, Search, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -30,33 +30,39 @@ const CATEGORIZED_TAGS: Record<string, { tags: string[]; color: string }> = {
   }
 };
 
-const EXPANDED_TAGS: string[] = [
-  "Data Science", "Robotics", "Marine Biology", "Fine Arts", "Cybersecurity", "Blockchain", "Economics", "Law & Human Rights", "Psychology", "Sustainable Agriculture", "Creative Coding", "Architecture"
-];
-
-// Simplified continent list for brevity
-const CONTINENTS: Record<string, string[]> = {
-  "North America": ["United States", "Canada", "Mexico", "Cuba", "Jamaica"],
-  "Europe": ["United Kingdom", "Germany", "France", "Spain", "Italy", "Netherlands", "Switzerland", "Sweden", "Norway"],
-  "Asia": ["Japan", "China", "India", "South Korea", "Singapore", "Malaysia", "Indonesia", "Vietnam", "Taiwan"],
-  "South America": ["Brazil", "Argentina", "Colombia", "Chile", "Peru"],
-  "Oceania": ["Australia", "New Zealand", "Fiji"],
-  "Africa": ["South Africa", "Egypt", "Nigeria", "Kenya", "Morocco", "Ghana"]
-};
-
 export default function PreferencesTab({ formData, setFormData, isAutofilling }: any) {
   const { theme, resolvedTheme } = useTheme();
   const isDarkMode = resolvedTheme === "dark" || theme === "dark";
 
-  const selectedLocations = (() => {
-    if (!formData.target_countries) return [];
+  // Parse Locations
+  const getParsedLocations = (field: string) => {
+    if (!formData[field]) return [];
     try {
-      const parsed = JSON.parse(formData.target_countries);
+      const parsed = JSON.parse(formData[field]);
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
-  })();
+  };
+
+  const selectedLocations = getParsedLocations("target_countries");
+  const undesiredLocations = getParsedLocations("undesired_countries");
+  
+  const getParsedContinents = (field: string) => {
+    if (!formData[field]) return [];
+    try {
+      const parsed = JSON.parse(formData[field]);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const selectedContinents = getParsedContinents("target_continents");
+  const undesiredContinents = getParsedContinents("undesired_continents");
+
+  const desiredCountryNames = selectedLocations.map((l: any) => l.country);
+  const undesiredCountryNames = undesiredLocations.map((l: any) => l.country);
 
   const selectedTags = formData.target_tags
     ? formData.target_tags.split(",").map((t: string) => t.trim()).filter((t: string) => t.length > 0)
@@ -64,12 +70,11 @@ export default function PreferencesTab({ formData, setFormData, isAutofilling }:
 
   const [tempLoc, setTempLoc] = useState({ continent: '', country: '', region: '' });
   const [customTagInput, setCustomTagInput] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false);
 
-  const updateLocations = (newLocs: any[]) => {
+  const updateField = (field: string, newValue: any) => {
     setFormData((prev: any) => ({
       ...prev,
-      target_countries: JSON.stringify(newLocs)
+      [field]: typeof newValue === "string" ? newValue : JSON.stringify(newValue)
     }));
   };
 
@@ -80,22 +85,60 @@ export default function PreferencesTab({ formData, setFormData, isAutofilling }:
     }));
   };
 
-  const mapData = regions.map(r => ({
-    country: r.code.toLowerCase(),
-    value: selectedLocations.some(l => l.country.toLowerCase() === r.name.toLowerCase()) ? 1 : 0
-  }));
+  const handleToggleCountry = (countryName: string, desiredStatus?: "desired" | "undesired" | "neutral") => {
+    let newDesired = [...selectedLocations];
+    let newUndesired = [...undesiredLocations];
 
-  const handleCountryStyle = (context: any) => {
-    const isSelected = selectedLocations.some(l => l.country.toLowerCase() === context.countryName.toLowerCase()) || 
-                       (tempLoc.country && tempLoc.country.toLowerCase() === context.countryName.toLowerCase());
-    if (isSelected) return { fill: "#84cc16", stroke: "#4d7c0f", strokeWidth: 1.5, opacity: 1 };
-    return { fill: isDarkMode ? "#27272a" : "#e4e4e7", stroke: isDarkMode ? "#52525b" : "#a1a1aa", strokeWidth: 1.0, opacity: 1 };
+    // Remove from both first
+    newDesired = newDesired.filter((l: any) => l.country.toLowerCase() !== countryName.toLowerCase());
+    newUndesired = newUndesired.filter((l: any) => l.country.toLowerCase() !== countryName.toLowerCase());
+
+    if (desiredStatus === "desired") {
+      newDesired.push({ continent: "Other / All", country: countryName, region: "" });
+      toast.success(`Marked ${countryName} as Desired.`);
+    } else if (desiredStatus === "undesired") {
+      newUndesired.push({ continent: "Other / All", country: countryName, region: "" });
+      toast.info(`Marked ${countryName} as Undesired.`);
+    } else {
+      toast.info(`Removed ${countryName} from preferences.`);
+    }
+
+    updateField("target_countries", newDesired);
+    updateField("undesired_countries", newUndesired);
   };
 
-  const handleCountryClick = (context: any) => {
-    const countryName = context.countryName;
-    setTempLoc({ continent: "Other / All", country: countryName, region: "" });
-    toast.info(`Selected ${countryName}. Click 'Add Location' to save.`);
+  const handleToggleContinent = (continentName: string, desiredStatus?: "desired" | "undesired" | "neutral") => {
+    let newDesired = [...selectedContinents];
+    let newUndesired = [...undesiredContinents];
+
+    newDesired = newDesired.filter((c: string) => c.toLowerCase() !== continentName.toLowerCase());
+    newUndesired = newUndesired.filter((c: string) => c.toLowerCase() !== continentName.toLowerCase());
+
+    if (desiredStatus === "desired") {
+      newDesired.push(continentName);
+      toast.success(`Marked continent ${continentName} as Desired.`);
+    } else if (desiredStatus === "undesired") {
+      newUndesired.push(continentName);
+      toast.info(`Marked continent ${continentName} as Undesired.`);
+    } else {
+      toast.info(`Removed continent ${continentName} from preferences.`);
+    }
+
+    updateField("target_continents", newDesired);
+    updateField("undesired_continents", newUndesired);
+  };
+
+  const handleLegacyToggleCountry = (countryName: string) => {
+    const isDesired = desiredCountryNames.some((c: string) => c.toLowerCase() === countryName.toLowerCase());
+    const isUndesired = undesiredCountryNames.some((c: string) => c.toLowerCase() === countryName.toLowerCase());
+
+    if (isDesired) {
+      handleToggleCountry(countryName, "undesired");
+    } else if (isUndesired) {
+      handleToggleCountry(countryName, "neutral");
+    } else {
+      handleToggleCountry(countryName, "desired");
+    }
   };
 
   return (
@@ -165,77 +208,18 @@ export default function PreferencesTab({ formData, setFormData, isAutofilling }:
       <section className="space-y-6 pt-4 border-t border-border/50">
         <div className="border-b border-border/50 pb-4">
           <h2 className="text-xl font-bold text-card-foreground">Geographic Targets</h2>
-          <p className="text-xs text-muted-foreground mt-1">Select the countries you are targeting for studies or relocation.</p>
+          <p className="text-xs text-muted-foreground mt-1">Select the countries and continents you are targeting (Pros) and the ones you want to avoid (Cons).</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          <div className="bg-muted/5 border border-border/40 rounded-2xl p-3 overflow-hidden flex items-center justify-center min-h-[300px]">
-            <WorldMap
-              color="#84cc16"
-              backgroundColor="transparent"
-              borderColor={isDarkMode ? "#3f3f46" : "#d4d4d8"}
-              size="responsive"
-              data={mapData}
-              onClickFunction={handleCountryClick}
-              styleFunction={handleCountryStyle}
-            />
-          </div>
-
-          <div className="space-y-4 bg-background/30 p-4 rounded-2xl border border-border/30 flex flex-col">
-            <div className="flex flex-col gap-2">
-              <label className="block text-[10px] font-bold text-muted-foreground uppercase">Add Location manually</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={tempLoc.country}
-                  onChange={e => setTempLoc({ continent: 'Other / All', country: e.target.value, region: '' })}
-                  disabled={isAutofilling}
-                  placeholder="e.g. Canada"
-                  className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm outline-none disabled:opacity-50"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!tempLoc.country) return;
-                    if (selectedLocations.some(l => l.country.toLowerCase() === tempLoc.country.toLowerCase())) {
-                      toast.error("Location already added.");
-                      return;
-                    }
-                    updateLocations([...selectedLocations, { continent: tempLoc.continent, country: tempLoc.country, region: '' }]);
-                    setTempLoc({ continent: '', country: '', region: '' });
-                    toast.success("Added target location.");
-                  }}
-                  disabled={!tempLoc.country || isAutofilling}
-                  className="bg-primary hover:bg-primary/95 text-primary-foreground px-4 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-4 flex-1">
-              <label className="block text-[10px] font-bold text-muted-foreground uppercase mb-2">Selected Targets</label>
-              <div className="flex flex-wrap gap-2 max-h-[150px] overflow-y-auto p-3 border border-border/50 rounded-xl bg-background/50 scrollbar-thin min-h-[100px]">
-                {selectedLocations.length === 0 ? (
-                  <span className="text-xs text-muted-foreground italic my-auto">No locations selected.</span>
-                ) : (
-                  selectedLocations.map((loc, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5 bg-secondary/80 text-foreground border border-border/60 px-2.5 py-1 rounded-lg text-xs font-semibold">
-                      <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <span>{loc.country}</span>
-                      <button
-                        type="button"
-                        onClick={() => updateLocations(selectedLocations.filter((_, i) => i !== idx))}
-                        className="hover:text-destructive transition-colors ml-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
+        <div className="w-full">
+          <InteractiveMap 
+            desiredCountries={desiredCountryNames}
+            undesiredCountries={undesiredCountryNames}
+            desiredContinents={selectedContinents}
+            undesiredContinents={undesiredContinents}
+            onToggleCountry={handleToggleCountry}
+            onToggleContinent={handleToggleContinent}
+          />
         </div>
       </section>
 
@@ -251,11 +235,11 @@ export default function PreferencesTab({ formData, setFormData, isAutofilling }:
             {selectedTags.length === 0 ? (
               <span className="text-xs text-muted-foreground italic my-auto">No tags selected. Click topics below.</span>
             ) : (
-              selectedTags.map((tag) => (
+              selectedTags.map((tag: string) => (
                 <div key={tag} className="flex items-center gap-1.5 bg-primary/10 text-foreground border border-primary/20 px-3 py-1.5 rounded-full text-xs font-semibold">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   <span>{tag}</span>
-                  <button onClick={() => updateTags(selectedTags.filter(t => t !== tag))} className="hover:text-destructive ml-1">
+                  <button onClick={() => updateTags(selectedTags.filter((t: string) => t !== tag))} className="hover:text-destructive ml-1">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
@@ -268,14 +252,14 @@ export default function PreferencesTab({ formData, setFormData, isAutofilling }:
               <div key={category} className="space-y-3">
                 <h4 className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-wide border-b border-border/20 pb-1">{category}</h4>
                 <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => {
+                  {tags.map((tag: string) => {
                     const isSelected = selectedTags.includes(tag);
                     return (
                       <button
                         key={tag}
                         type="button"
                         onClick={() => {
-                          if (isSelected) updateTags(selectedTags.filter(t => t !== tag));
+                          if (isSelected) updateTags(selectedTags.filter((t: string) => t !== tag));
                           else updateTags([...selectedTags, tag]);
                         }}
                         className={`flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium border transition duration-200 select-none 

@@ -168,7 +168,45 @@ def run_discovery_scan(db: Session = Depends(get_db)):
     if not profile:
         raise HTTPException(status_code=404, detail="Profile required to scan")
     
-    raw_scholarships = fetch_scholarships()
+    import json
+    try:
+        targets = json.loads(profile.target_countries) if profile.target_countries else []
+        desired_countries = [t.get("country") for t in targets if t.get("country")]
+    except:
+        desired_countries = []
+        
+    try:
+        undesired = json.loads(profile.undesired_countries) if profile.undesired_countries else []
+        undesired_countries = [u.get("country") for u in undesired if u.get("country")]
+    except:
+        undesired_countries = []
+
+    try:
+        target_conts = json.loads(profile.target_continents) if profile.target_continents else []
+    except:
+        target_conts = []
+        
+    try:
+        undesired_conts = json.loads(profile.undesired_continents) if profile.undesired_continents else []
+    except:
+        undesired_conts = []
+
+    try:
+        langs = json.loads(profile.languages) if profile.languages else []
+        spoken_languages = [l.get("language") for l in langs if l.get("language")]
+    except:
+        spoken_languages = ["English"] # Default
+
+    search_params = {
+        "desired_countries": desired_countries,
+        "undesired_countries": undesired_countries,
+        "target_continents": target_conts,
+        "undesired_continents": undesired_conts,
+        "spoken_languages": spoken_languages,
+        "major": profile.major
+    }
+    
+    raw_scholarships = fetch_scholarships(search_params)
     
     new_count = 0
     for s_data in raw_scholarships:

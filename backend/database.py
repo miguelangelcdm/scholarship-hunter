@@ -15,6 +15,9 @@ def run_migrations(engine):
     # Define columns that need to exist on profiles table
     profiles_cols = {
         "target_countries": "VARCHAR",
+        "undesired_countries": "VARCHAR",
+        "target_continents": "VARCHAR",
+        "undesired_continents": "VARCHAR",
         "target_areas": "VARCHAR",
         "target_tags": "VARCHAR",
         "experience_level": "VARCHAR",

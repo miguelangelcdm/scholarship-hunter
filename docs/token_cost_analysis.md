@@ -9,63 +9,69 @@ The Educational Pathfinder relies heavily on `gemini-3.5-flash` for high-through
 
 ## Application Features & Usage Profile
 
-### 1. CV Parsing & Feasibility Scoring
-**Trigger**: When a user uploads a CV and clicks "AI Autofill".
-**Input**: Raw text from PDF (~1,000 - 3,000 tokens). System Prompt with strict JSON schema (~500 tokens).
-**Output**: JSON object mapping to Profile DB fields (~400 tokens).
-**Cost per execution**: 
-- Input: 2,500 * $0.075 / 1M = $0.0001875
-- Output: 400 * $0.30 / 1M = $0.00012
-- **Total**: ~$0.0003 per user onboarding.
+### 1. Multi-Document Onboarding Parsing (CV, LinkedIn, & Diplomas)
+**Trigger**: When a user uploads a document (CV, LinkedIn PDF, or Diploma) and triggers the AI autofill extraction.
+- **LinkedIn PDF Export**: Highly detailed, structured resume containing full roles, dates, company origins, and skills (~2,000 - 4,000 input tokens). Output returns structured JSON arrays containing detailed experience objects and language proficiencies (~600 output tokens).
+- **CV / Resume**: Traditional single-page formats (~1,500 - 3,000 input tokens). Output returns core profile fields (~450 output tokens).
+- **Bachelor's Diploma / Transcript**: Grade/credential details and GPA parsing (~500 - 1,500 input tokens). Output returns verified degree title, graduation date, and grade values (~200 output tokens).
+
+**Cost per average LinkedIn / CV parse execution**: 
+- Input: 3,000 * $0.075 / 1M = $0.000225
+- Output: 600 * $0.30 / 1M = $0.00018
+- **Total**: ~$0.0004 per document parse.
+*(If a user parses both a LinkedIn profile and a diploma during setup, the onboarding cost is ~$0.0006).*
 
 ### 2. Scholarship / Program Scoring (Batch processing)
 **Trigger**: When the discovery engine scans new scholarships/programs.
-**Input**: Compressed User Profile string (~800 tokens) + Target description (~500 tokens).
+**Input**: Comprehensive User Profile including JSON arrays for experience, languages, targeted countries, nationalities, and goals (~1,100 tokens) + Target program/scholarship details (~500 tokens).
 **Output**: JSON object with `desire_score` and `probability_score` (~50 tokens).
 **Cost per execution**:
-- Input: 1,300 * $0.075 / 1M = $0.0000975
+- Input: 1,600 * $0.075 / 1M = $0.00012
 - Output: 50 * $0.30 / 1M = $0.000015
-- **Total**: ~$0.00011 per scholarship scored.
-*(Scanning 100 scholarships costs ~$0.011)*
+- **Total**: ~$0.000135 per scholarship scored.
+*(Scanning 100 scholarships/programs costs ~$0.0135)*
 
 ### 3. AI Essay Drafting
 **Trigger**: Clicking "Draft Essay" in the Kanban tracker.
-**Input**: Full User Profile + Scholarship Context + Tone instructions (~2,000 tokens).
+**Input**: Full User Profile (including structured work history, languages, nationalities, etc.) + Scholarship Context + Prompt instructions (~2,200 tokens).
 **Output**: Full 800-word essay draft (~1,200 tokens).
 **Cost per execution**:
-- Input: 2,000 * $0.075 / 1M = $0.00015
+- Input: 2,200 * $0.075 / 1M = $0.000165
 - Output: 1,200 * $0.30 / 1M = $0.00036
-- **Total**: ~$0.00051 per draft.
+- **Total**: ~$0.000525 per draft.
 
 ### 4. Educational Outreach Emails
-**Trigger**: Generating an inquiry email to a university.
-**Input**: Profile subset + University Program Context (~1,000 tokens).
+**Trigger**: Generating an inquiry email to a university admissions office.
+**Input**: Profile subset + University Program Context (~1,100 tokens).
 **Output**: Short, professional email draft (~250 tokens).
 **Cost per execution**:
-- Input: 1,000 * $0.075 / 1M = $0.000075
+- Input: 1,100 * $0.075 / 1M = $0.0000825
 - Output: 250 * $0.30 / 1M = $0.000075
-- **Total**: ~$0.00015 per email.
+- **Total**: ~$0.0001575 per email.
 
 ---
 
 ## Monthly Projections (per 1,000 Active Users)
 
 Assuming an average user per month:
-- Uploads 1 CV.
+- Uploads and parses 2 documents (e.g. LinkedIn PDF + Diploma).
 - Scans 200 programs/scholarships.
 - Drafts 5 essays.
 - Sends 10 outreach emails.
 
 **Cost Breakdown (Per User):**
-- Onboarding: $0.0003
-- Scanning (200 * 0.00011): $0.022
-- Drafting (5 * 0.00051): $0.00255
-- Outreach (10 * 0.00015): $0.0015
-**Total Estimated Cost per User**: ~$0.026 / month.
+- Onboarding (2 parses): $0.0008
+- Scanning (200 * $0.000135): $0.0270
+- Drafting (5 * $0.000525): $0.0026
+- Outreach (10 * $0.0001575): $0.0016
+**Total Estimated Cost per User**: ~$0.032 / month.
 
-**Total for 1,000 users**: **~$26.00 / month**
+**Total for 1,000 active users**: **HTML/API cost of ~$32.00 / month**
+
+---
 
 ## Optimization Strategies Implemented
 1. **Model Selection**: Using Flash instead of Pro drastically reduces cost without sacrificing JSON structured output quality.
-2. **Field Pruning**: The outreach endpoints only pass relevant fields (name, experience, goal) to the LLM, leaving out heavy arrays like `publications` or `hobbies` if unneeded.
-3. **Caching**: Future improvements should include caching identical program descriptions in a vector DB to prevent re-submitting standard university data repeatedly.
+2. **Field Pruning**: The outreach and scoring endpoints filter out heavy, irrelevant profile fields (like hobbies or publications) from the input prompt payload unless strictly required.
+3. **Structured Inputs**: Standardizing experience and languages into compact JSON database arrays reduces delimiters and prompt formatting overhead, lowering input tokens.
+4. **Caching**: Future improvements should include caching identical program descriptions in a vector DB to prevent re-submitting standard university data repeatedly.

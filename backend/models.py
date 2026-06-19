@@ -28,6 +28,9 @@ class Profile(Base):
     
     # Wizard Preferences
     target_countries = Column(String, nullable=True)
+    undesired_countries = Column(String, nullable=True)
+    target_continents = Column(String, nullable=True)
+    undesired_continents = Column(String, nullable=True)
     target_areas = Column(String, nullable=True)
     target_tags = Column(String, nullable=True)
     experience_level = Column(String, nullable=True)

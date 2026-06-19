@@ -179,7 +179,7 @@ Rather than forcing users through a fragmented wizard, all first-time onboarding
 The Profile Manager features a dedicated "Preferences & Goals" tab that captures:
 1. **Delivery Modality**: Online, Hybrid, In-Person (Local), or In-Person (Abroad).
 2. **Primary Goals**: Local Growth, Entrepreneurship, Emigrate, or Brain-Circulation.
-3. **Interactive Target Countries Map**: A fully interactive SVG world map (`react-svg-worldmap`) that renders all global countries. Users can click to select the specific countries they wish to target.
+3. **Interactive Target Locations Dashboard**: A premium, full-width 3D Globe map (Carto GL/MapLibre) integrated with a filter/search sidebar. Allows users to click countries on the globe or toggle continents/countries directly in the sidebar to classify them as Desired (Pros), Avoided (Cons), or Neutral. Displays real-time statistics (counts for desired, avoided, and target continents) and summaries. **Country-level preferences take priority over continent defaults**, enabling users to target a continent as desired (e.g., Europe) while explicitly avoiding specific countries (e.g., Russia and Belarus) as exceptions. The interface visually highlights explicit overrides.
 4. **Interests & Tags**: Keywords (e.g., Sustainability, AI, Business) to align the AI scraping process.
 
 ### Dashboard Safelocks & Reality Checks
@@ -197,7 +197,7 @@ The Profile section features a premium **Interactive Overview Landing Dashboard*
 The Profile details can also be managed manually across four subcategories:
 1. **Academic Core**: Full name, major, GPA, and demographic traits.
 2. **Experience & Goals**: Text summaries of professional roles, long-term career aspirations, and financial need statements.
-3. **Personal & Highlights**: Volunteer details, personal hobbies/interests, key projects, awards/honors, languages, and publications.
+3. **Personal & Highlights**: Volunteer details, personal hobbies/interests, key projects, awards/honors, a full-width interactive language manager (supporting CEFR & custom inputs), and publications.
 4. **Documents Checklist**: Tracks and accepts uploads for:
    - **CV / Resume** (Supports PDF, TXT, DOCX)
    - **Recommendation Letters (1, 2, 3)**
@@ -283,6 +283,12 @@ To maintain a fluid, premium tactile feel, all page transitions, tab switches, a
 - [x] Relaxed AuthGuard restrictions to allow navigating to Discover and Tracker without forcing a prior resume/CV upload.
 - [x] Updated the Profile Setup Health metric to Pathfinder Preparedness and capped it at 60% with an "Awaiting Preferences" status if matching criteria are incomplete, aligning it with the dashboard safeguards.
 - [x] Designed ultra-premium, high-contrast, glowing gradient CTA buttons in both light/dark modes for the locked overlays and modals.
+- [x] Implemented a premium, full-width 3D Globe target locations selector integrated with a filter/search sidebar showing real-time desired/avoided statistics, customized legends, and continent level quick toggles.
+- [x] Refined target locations dashboard: resolved state synchronization issues, replaced boundary-clipped MapLibre native popups with a floating React card overlay, optimized vertical map space by setting the bottom continent cards panel to a compact h-10 with abbreviations (e.g., S./N. America) and no globe icons, removed separate continent metrics, narrowed the sidebar to lg:w-[250px], simplified counters/summary to track total desired/avoided countries, and implemented smart automatic globe map pan/zoom focusing on a random user-preferred country or continent on load.
+- [x] Map Theme Synchronization: Resolved theme mismatch issues where the world map remained in light mode positron style regardless of the dashboard theme. Implemented a `MutationObserver` on the document root class list to reactively sync `isDarkMode` state inside the map container and disabled MapLibre style diffing (`{ diff: false }`) to cleanly swap map base stylesheets between CartoDB Positron and Dark Matter, rendering deep grey/black country fill colors (`#0a0a0c`) for neutral countries in dark mode.
+- [x] Map Direct Toggles: Configured direct left-click (desired/neutral) and right-click (avoided/neutral) toggling for countries on the map. Intercepted right-click (`contextmenu`) events on the canvas to disable default browser dropdowns, wrapped callbacks in mutable React refs to prevent stale closure bugs in MapLibre event listeners, and added safeguards to alert the user if a clicked country inherits its status from a parent continent setting.
+- [x] Reworked profile languages selector with a full-width, two-dropdown (language & level) Radix Select UI, displaying entries as composite 'Language / Level' chips.
+- [x] Geographic Targets Prioritization & Exceptions: Overrode default continent-level target behavior to prioritize country-level preferences (desired/avoided) over continent defaults. Enabled clicking/toggling countries even when their continent is selected, and added override descriptions in the country detail popup card.
 
 ### TODOs
 - [ ] Build the Python web scraper to feed the `scholarships` table.

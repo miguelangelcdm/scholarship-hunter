@@ -26,6 +26,9 @@ class ProfileBase(BaseModel):
     financial_need: Optional[str] = None
     career_goals: Optional[str] = None
     target_countries: Optional[str] = None
+    undesired_countries: Optional[str] = None
+    target_continents: Optional[str] = None
+    undesired_continents: Optional[str] = None
     target_areas: Optional[str] = None
     target_tags: Optional[str] = None
     experience_level: Optional[str] = None
