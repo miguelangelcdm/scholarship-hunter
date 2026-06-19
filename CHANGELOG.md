@@ -4,7 +4,7 @@ All notable changes to the **Educational Pathfinder (formerly Scholarship Hunter
 
 ---
 
-## [Pending Commit] - Geographic Overrides & Exceptions
+## [6c11620] - Geographic Overrides & Exceptions
 ### Added
 - **Country-level Overrides:** Allowed target country preferences (desired/avoided) to take precedence over continent defaults. Users can mark a continent (e.g. Europe) as Desired, but explicitly mark specific countries (e.g. Russia and Belarus) as Avoided.
 - **Enabled Interaction:** Removed disabled blockers on country selection buttons when their continent is selected, enabling users to click and define overrides.
