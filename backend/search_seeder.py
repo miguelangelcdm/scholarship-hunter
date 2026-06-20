@@ -7,21 +7,29 @@ except ImportError:
     except ImportError:
         pass
 
-def get_seed_urls(profile, offset=0, limit=10):
+def get_seed_urls(profile, offset=0, limit=10, targeted_university=None, targeted_program_title=None):
     """
     Constructs a DuckDuckGo search query based on the user's profile and returns organic result URLs.
+    If targeted_university is provided, it performs a highly specific search for funding at that institution.
     """
     query_parts = []
     
-    # Core academic constraints
-    if profile.major:
-        query_parts.append(f'"{profile.major}"')
-        
-    if profile.degree_level:
-        query_parts.append(f'"{profile.degree_level}"')
-        
-    # We want university portals, financial aid pages, or program details
-    query_parts.append("(scholarship OR financial aid OR admissions OR program OR degree)")
+    if targeted_university:
+        # Targeted search for financial aid / scholarships for a specific university
+        query_parts.append(f'"{targeted_university}"')
+        if targeted_program_title:
+            query_parts.append(f'"{targeted_program_title}"')
+        query_parts.append('(scholarship OR "financial aid" OR "international student funding")')
+    else:
+        # Core academic constraints for generic program discovery
+        if profile.major:
+            query_parts.append(f'"{profile.major}"')
+            
+        if profile.degree_level:
+            query_parts.append(f'"{profile.degree_level}"')
+            
+        # We want university portals, financial aid pages, or program details
+        query_parts.append("(admissions OR program OR degree)")
     
     # Location constraints
     try:

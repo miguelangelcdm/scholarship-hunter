@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, API_BASE } from "@/lib/api";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GraduationCap, Sparkles, Building2, Globe, ShieldCheck, AlertTriangle, Lock, ArrowRight, Radar, CheckCircle2, Database, Search, Loader2 } from "lucide-react";
+import { GraduationCap, Sparkles, Building2, Globe, ShieldCheck, AlertTriangle, Lock, ArrowRight, Radar, CheckCircle2, Database, Search, Loader2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const formatScanTime = (isoString: string) => {
   if (!isoString) return "";
@@ -105,6 +105,20 @@ export default function Dashboard() {
     queryFn: api.getPrograms
   });
 
+  const discardProgramMutation = useMutation({
+    mutationFn: api.discardProgram,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+    }
+  });
+
+  const discardScholarshipMutation = useMutation({
+    mutationFn: api.discardScholarship,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+    }
+  });
+
   const desireMatches = scholarships.filter((s: any) => s.desire_score > 70).sort((a: any, b: any) => b.desire_score - a.desire_score);
   
   const displayPrograms = programs.map((p: any) => ({
@@ -113,10 +127,12 @@ export default function Dashboard() {
     institution: p.university,
     location: p.country,
     modality: p.is_online ? "Online" : p.is_hybrid ? "Hybrid" : "In-Person",
-    matchScore: p.title.includes("Artificial Intelligence") || p.title.includes("Data") ? 94 : 85,
+    desireScore: p.desire_score || 0,
+    probabilityScore: p.probability_score || 0,
+    improvementProjection: p.improvement_projection || null,
     tuition: p.country === "Germany" ? "Free (Public)" : p.country === "Switzerland" ? "CHF 1,500 / yr" : "$25,000 / yr",
     status: p.status
-  }));
+  })).sort((a: any, b: any) => b.desireScore - a.desireScore);
 
   const feasibilityScore = profile?.relocation_feasibility_score || 0;
   
@@ -269,153 +285,159 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* LANE 1: PROGRAM MATCHES */}
-        <section className={`bg-card/40 backdrop-blur-md p-6 rounded-3xl border border-border/50 shadow-sm transition-all flex flex-col relative overflow-hidden ${!isProfileComplete ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+        {/* LANE 1: UNIVERSITY MATCHES */}
+        <section className={`bg-card/40 backdrop-blur-md p-6 rounded-3xl border border-border/50 shadow-sm transition-all flex flex-col relative overflow-hidden lg:col-span-2 ${!isProfileComplete ? 'opacity-40 pointer-events-none select-none' : ''}`}>
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
           
           <h2 className="text-2xl font-display text-card-foreground mb-2 flex items-center">
-            <GraduationCap className="w-6 h-6 text-indigo-500 mr-2" />
-            Program Matches
+            <Building2 className="w-6 h-6 text-indigo-500 mr-2" />
+            University Matches
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">Target university programs filtered by your preferred modality: <strong className="text-foreground">{profile?.preferred_modality || "Pending"}</strong></p>
+          <p className="text-sm text-muted-foreground mb-6">Target universities with matching programs based on your modality: <strong className="text-foreground">{profile?.preferred_modality || "Pending"}</strong></p>
           
-          <div className="space-y-4 flex-1">
+          <div className="space-y-6">
             {isScanning ? (
-              <div className="p-8 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+              <div className="p-12 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
                 <div className="relative flex items-center justify-center w-16 h-16 mb-2">
                   <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 animate-ping" />
                   <div className="absolute inset-2 rounded-full border-2 border-indigo-500/40 animate-pulse" />
                   <Radar className="w-8 h-8 text-indigo-500 animate-[spin_3s_linear_infinite]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">Scanning for Programs</h3>
+                  <h3 className="text-lg font-bold text-foreground">Scanning for Universities</h3>
                   <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
                     Analyzing global databases for your ideal academic matches...
                   </p>
                 </div>
               </div>
             ) : isLoadingPrograms ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="p-5 border border-border/50 bg-background/50 rounded-2xl space-y-3">
-                  <div className="flex justify-between items-start">
-                    <Skeleton className="h-5 w-2/3 bg-muted/60" />
-                    <Skeleton className="h-5 w-16 bg-muted/60" />
-                  </div>
-                  <Skeleton className="h-3.5 w-1/3 bg-muted/60" />
-                  <Skeleton className="h-6 w-24 mt-4 bg-muted/60" />
+              <div className="p-5 border border-border/50 bg-background/50 rounded-2xl space-y-3">
+                <Skeleton className="h-6 w-1/3 bg-muted/60" />
+                <Skeleton className="h-4 w-1/4 bg-muted/60" />
+                <div className="mt-4 space-y-2">
+                  <Skeleton className="h-16 w-full bg-muted/60" />
+                  <Skeleton className="h-16 w-full bg-muted/60" />
                 </div>
-              ))
+              </div>
             ) : displayPrograms.length === 0 ? (
-              <div className="p-8 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+              <div className="p-12 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
                 <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
                   <Search className="w-8 h-8 text-indigo-400 opacity-80" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">No Programs Discovered</h3>
+                  <h3 className="text-lg font-bold text-foreground">No Universities Discovered</h3>
                   <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
                     You haven't run the Discovery Engine yet. Trigger a scan to search the web for your ideal programs.
                   </p>
                 </div>
               </div>
             ) : (
-              displayPrograms.map((p) => (
-                <div key={p.id} className="p-5 border border-border/60 bg-background/80 rounded-2xl hover:border-indigo-500/50 hover:shadow-[0_0_15px_rgba(99,102,241,0.1)] transition-all group">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-foreground text-lg group-hover:text-indigo-400 transition-colors">{p.title}</h3>
-                    <span className="text-xs font-bold bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/20">{p.matchScore}% Match</span>
-                  </div>
+              Object.entries(
+                displayPrograms.reduce((acc: any, curr: any) => {
+                  if (!acc[curr.institution]) acc[curr.institution] = [];
+                  acc[curr.institution].push(curr);
+                  return acc;
+                }, {})
+              ).map(([university, universityPrograms]: [string, any]) => (
+                <div key={university} className="p-6 border border-border/60 bg-background/80 rounded-2xl hover:border-indigo-500/30 transition-all">
                   
-                  <div className="flex flex-col gap-2 mt-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Building2 className="w-4 h-4" />
-                      <span>{p.institution}</span>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold bg-secondary px-2 py-1 rounded-md text-foreground">
-                        <Globe className="w-3 h-3 text-muted-foreground" />
-                        {p.location} ({p.modality})
+                  {/* University Header */}
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="font-bold text-foreground text-xl flex items-center gap-2">
+                        <Building2 className="w-5 h-5 text-indigo-400" />
+                        {university}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1.5">
+                        <Globe className="w-4 h-4" />
+                        {universityPrograms[0].location}
                       </div>
-                      
-                      {/* Feasibility Reality Check Badge */}
-                      {getFeasibilityBadge(p.modality)}
                     </div>
                   </div>
                   
-                  <div className="mt-4 pt-3 border-t border-border/40 flex justify-between items-center">
-                    <span className="text-xs font-semibold text-muted-foreground">Estimated Tuition:</span>
-                    <span className="text-sm font-display text-foreground font-bold">{p.tuition}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-
-        {/* LANE 2: SCHOLARSHIP & AID MATCHES */}
-        <section className={`bg-card/40 backdrop-blur-md p-6 rounded-3xl border border-border/50 shadow-sm transition-all flex flex-col relative overflow-hidden ${!isProfileComplete ? 'opacity-40 pointer-events-none select-none' : ''}`}>
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-600" />
-          
-          <h2 className="text-2xl font-display text-card-foreground mb-2 flex items-center">
-            <span className="w-4 h-4 rounded-full bg-emerald-500 mr-2 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
-            Financial Aid Matches
-          </h2>
-          <p className="text-sm text-muted-foreground mb-6">Funding opportunities based on your academic caliber, demographics, and goals.</p>
-          
-          <div className="space-y-4 flex-1">
-            {isScanning ? (
-              <div className="p-8 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
-                <div className="relative flex items-center justify-center w-16 h-16 mb-2">
-                  <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 animate-ping" />
-                  <div className="absolute inset-2 rounded-full border-2 border-emerald-500/40 animate-pulse" />
-                  <Radar className="w-8 h-8 text-emerald-500 animate-[spin_3s_linear_infinite]" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">Scraping Funding Sources</h3>
-                  <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
-                    Discovering financial aid opportunities suited to your profile...
-                  </p>
-                </div>
-              </div>
-            ) : isLoadingScholarships ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="p-5 border border-border/50 bg-background/50 rounded-2xl space-y-3">
-                  <div className="flex justify-between items-start">
-                    <Skeleton className="h-5 w-2/3 bg-muted/60" />
-                    <Skeleton className="h-5 w-16 bg-muted/60" />
-                  </div>
-                  <Skeleton className="h-3.5 w-1/3 bg-muted/60" />
-                  <Skeleton className="h-6 w-24 mt-4 bg-muted/60" />
-                </div>
-              ))
-            ) : desireMatches.length === 0 ? (
-              <div className="p-8 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                  <Database className="w-8 h-8 text-emerald-400 opacity-80" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">No Financial Aid Found</h3>
-                  <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
-                    Your matches are currently empty. Run the discovery scan to fetch live funding opportunities.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              desireMatches.map((s: any) => (
-                <div key={s.id} className="p-5 border border-border/60 bg-background/80 rounded-2xl hover:border-emerald-500/50 hover:shadow-[0_0_15px_rgba(16,185,129,0.1)] transition-all group">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-foreground text-lg group-hover:text-emerald-400 transition-colors">{s.title}</h3>
-                    <div className="flex flex-col gap-1 items-end">
-                      <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">{s.probability_score}% Win Chance</span>
-                    </div>
+                  {/* Nested Programs */}
+                  <div className="space-y-4">
+                    {universityPrograms.map((p: any) => (
+                      <div key={p.id} className="p-4 rounded-xl bg-secondary/30 border border-border/40 hover:bg-secondary/50 transition-colors group relative">
+                        <button 
+                          onClick={() => discardProgramMutation.mutate(p.id)}
+                          className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground hover:text-destructive flex items-center gap-1"
+                          title="Discard Program"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        
+                        <h4 className="font-semibold text-foreground text-md pr-8">{p.title}</h4>
+                        
+                        <div className="flex flex-wrap items-center gap-2 mt-2 mb-3">
+                          <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-md border border-indigo-500/20">Desire: {p.desireScore}%</span>
+                          <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Probability: {p.probabilityScore}%</span>
+                          <span className="text-[10px] font-semibold bg-secondary px-2 py-0.5 rounded-md text-foreground border border-border/50">{p.modality}</span>
+                          {getFeasibilityBadge(p.modality)}
+                        </div>
+                        
+                        {p.improvementProjection && (
+                          <div className="mb-3 p-2.5 rounded-lg bg-indigo-500/5 border border-indigo-500/20 flex gap-2 items-start">
+                            <AlertTriangle className="w-3.5 h-3.5 text-indigo-400 mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-[10px] font-bold text-indigo-400 mb-0.5">Actionable Advice</p>
+                              <p className="text-xs text-muted-foreground leading-relaxed">{p.improvementProjection}</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/40">
+                          <span className="text-xs font-semibold text-muted-foreground">{p.tuition}</span>
+                          
+                          <button
+                            onClick={async () => {
+                              toast.info(`Scanning funding for ${p.title}...`);
+                              try {
+                                await fetch(`${API_BASE}/programs/${p.id}/find-funding`, { method: 'POST' });
+                                toast.success("Funding scan complete!");
+                                queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+                              } catch (e) {
+                                toast.error("Failed to find funding.");
+                              }
+                            }}
+                            className="text-xs flex items-center gap-1.5 font-bold text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            <Database className="w-3.5 h-3.5" />
+                            Find Funding
+                          </button>
+                        </div>
+                        
+                        {/* Secured Funding List for this program */}
+                        {scholarships.filter((s: any) => s.target_program_id === p.id).length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            <h5 className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Secured Funding</h5>
+                            {scholarships.filter((s: any) => s.target_program_id === p.id).map((s: any) => (
+                              <div key={s.id} className="flex justify-between items-center p-2.5 bg-emerald-500/5 border border-emerald-500/20 rounded-lg">
+                                <div className="flex-1">
+                                  <div className="flex justify-between items-center">
+                                    <p className="text-xs font-semibold text-emerald-400">{s.title}</p>
+                                    <button 
+                                      onClick={() => discardScholarshipMutation.mutate(s.id)}
+                                      className="text-[10px] text-muted-foreground hover:text-destructive"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  <p className="text-[10px] text-muted-foreground line-clamp-1">{s.description}</p>
+                                </div>
+                                <div className="ml-3 shrink-0 text-right">
+                                  <p className="text-xs font-bold text-emerald-500">{s.amount || "Variable"}</p>
+                                  <p className="text-[10px] text-emerald-400/80">{s.probability_score}% Win</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                      </div>
+                    ))}
                   </div>
                   
-                  <p className="text-sm text-muted-foreground mt-1">{s.provider}</p>
-                  
-                  <div className="mt-4 pt-3 border-t border-border/40 flex justify-between items-center">
-                    <span className="text-xs font-semibold text-muted-foreground">Funding Amount:</span>
-                    <span className="text-lg font-display text-emerald-500 font-bold tracking-tight">{s.amount}</span>
-                  </div>
                 </div>
               ))
             )}

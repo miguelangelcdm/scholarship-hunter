@@ -161,12 +161,30 @@ def parse_profile_document(
 # --- Scholarship Endpoints ---
 @app.get("/scholarships", response_model=list[ScholarshipResponse])
 def get_all_scholarships(db: Session = Depends(get_db)):
-    return db.query(Scholarship).all()
+    return db.query(Scholarship).filter(Scholarship.status != "Discarded").all()
+
+@app.patch("/scholarships/{id}/discard")
+def discard_scholarship(id: int, db: Session = Depends(get_db)):
+    item = db.query(Scholarship).filter(Scholarship.id == id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Scholarship not found")
+    item.status = "Discarded"
+    db.commit()
+    return {"status": "discarded"}
 
 # --- Target Program Endpoints ---
 @app.get("/programs", response_model=list[TargetProgramResponse])
 def get_all_programs(db: Session = Depends(get_db)):
-    return db.query(TargetProgram).all()
+    return db.query(TargetProgram).filter(TargetProgram.status != "Discarded").all()
+
+@app.patch("/programs/{id}/discard")
+def discard_program(id: int, db: Session = Depends(get_db)):
+    item = db.query(TargetProgram).filter(TargetProgram.id == id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Program not found")
+    item.status = "Discarded"
+    db.commit()
+    return {"status": "discarded"}
 
 @app.get("/scholarships/last-scan")
 def get_last_scan():
@@ -360,6 +378,7 @@ def run_discovery_scan(db: Session = Depends(get_db)):
                             url=page_data.get("url"),
                             desire_score=sch.get("desire_score", 0),
                             probability_score=sch.get("probability_score", 0),
+                            improvement_projection=sch.get("improvement_projection", ""),
                             requires_outreach=sch.get("requires_outreach", False),
                             benefits_summary=sch.get("benefits_summary", "")
                         )
@@ -383,7 +402,8 @@ def run_discovery_scan(db: Session = Depends(get_db)):
                             important_info=prog.get("important_info", ""),
                             next_steps=prog.get("next_steps", ""),
                             desire_score=prog.get("desire_score", 0),
-                            probability_score=prog.get("probability_score", 0)
+                            probability_score=prog.get("probability_score", 0),
+                            improvement_projection=prog.get("improvement_projection", "")
                         )
                         db.add(new_program)
                         new_program_count += 1
@@ -418,6 +438,108 @@ def run_discovery_scan(db: Session = Depends(get_db)):
         }) + "\n"
         
     return StreamingResponse(scan_generator(), media_type="application/x-ndjson")
+
+@app.post("/programs/{program_id}/find-funding")
+def run_targeted_funding_scan(program_id: int, db: Session = Depends(get_db)):
+    from fastapi.responses import StreamingResponse
+    import json
+    
+    profile = db.query(Profile).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile required to scan")
+        
+    program = db.query(TargetProgram).filter(TargetProgram.id == program_id).first()
+    if not program:
+        raise HTTPException(status_code=404, detail="Target program not found")
+        
+    def funding_generator():
+        yield json.dumps({"step": "init", "message": f"Initializing targeted funding search for {program.university}...", "progress": 5}) + "\n"
+        
+        import os
+        import random
+        offset = random.randint(0, 10)
+        
+        yield json.dumps({"step": "seeding", "message": "Querying for specific financial aid and scholarships...", "progress": 15}) + "\n"
+        
+        search_limit = int(os.getenv("SEARCH_MAX_RESULTS", 5))
+        seed_urls = get_seed_urls(profile, offset=offset, limit=search_limit, targeted_university=program.university, targeted_program_title=program.title)
+        
+        yield json.dumps({"step": "crawling", "message": f"Found {len(seed_urls)} university resources. Crawling...", "progress": 30}) + "\n"
+        
+        profile_dict = {
+            "major": profile.major,
+            "gpa": profile.gpa,
+            "degree_level": getattr(profile, "degree_level", ""),
+            "demographics": profile.demographics,
+            "hobbies": profile.hobbies,
+            "volunteer_work": profile.volunteer_work,
+            "projects": profile.projects,
+            "experience": profile.experience,
+            "awards": profile.awards,
+            "languages": profile.languages,
+            "publications": profile.publications,
+            "financial_need": profile.financial_need,
+            "career_goals": profile.career_goals,
+            "has_dependents": getattr(profile, "has_dependents", False)
+        }
+        
+        scraper_result = fetch_scholarships_real(seed_urls, profile_dict)
+        raw_pages = scraper_result.get("pages", [])
+        
+        new_scholarship_count = 0
+        pages_to_process = len(raw_pages)
+        if pages_to_process > 0:
+            yield json.dumps({"step": "analyzing", "message": f"Scraped {pages_to_process} pages. Analyzing for funding...", "progress": 45}) + "\n"
+        else:
+            yield json.dumps({"step": "analyzing", "message": "No pages scraped.", "progress": 45}) + "\n"
+            
+        target_context = {
+            "university": program.university,
+            "title": program.title
+        }
+            
+        for idx, page_data in enumerate(raw_pages):
+            yield json.dumps({
+                "step": "analyzing", 
+                "message": f"Analyzing page {idx+1} of {pages_to_process}: {page_data.get('title', '')[:30]}...", 
+                "progress": 45 + int(((idx + 1) / pages_to_process) * 45)
+            }) + "\n"
+            
+            extracted = extract_page_content(profile_dict, page_data, target_program_context=target_context)
+            if not extracted or not extracted.get("is_valid"):
+                continue
+                
+            for sch in extracted.get("scholarships", []):
+                existing = db.query(Scholarship).filter(Scholarship.url == page_data["url"], Scholarship.title == sch.get("title")).first()
+                if not existing:
+                    new_scholarship = Scholarship(
+                        title=sch.get("title", page_data["title"]),
+                        provider=sch.get("provider", program.university),
+                        amount=sch.get("amount"),
+                        deadline=None, 
+                        description=sch.get("description", ""),
+                        url=page_data.get("url"),
+                        desire_score=sch.get("desire_score", 0),
+                        probability_score=sch.get("probability_score", 0),
+                        improvement_projection=sch.get("improvement_projection", ""),
+                        requires_outreach=sch.get("requires_outreach", False),
+                        benefits_summary=sch.get("benefits_summary", ""),
+                        target_program_id=program.id
+                    )
+                    db.add(new_scholarship)
+                    new_scholarship_count += 1
+                    
+        yield json.dumps({"step": "saving", "message": "Saving matching funding...", "progress": 95}) + "\n"
+        db.commit()
+        
+        yield json.dumps({
+            "step": "complete", 
+            "message": f"Funding scan complete! Secured {new_scholarship_count} opportunities for this program.", 
+            "progress": 100,
+            "new_count": new_scholarship_count
+        }) + "\n"
+        
+    return StreamingResponse(funding_generator(), media_type="application/x-ndjson")
 
 @app.post("/scholarships/{scholarship_id}/draft")
 def generate_draft(scholarship_id: int, db: Session = Depends(get_db)):

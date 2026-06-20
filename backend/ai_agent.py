@@ -80,6 +80,7 @@ class ExtractedScholarship(BaseModel):
     description: str = Field(description="A 2-3 sentence summary of the grant and its core requirements")
     probability_score: float = Field(description="Score out of 100 on how likely the user is to win based on requirements vs profile")
     desire_score: float = Field(description="Score out of 100 on how much this matches the user's field and interests")
+    improvement_projection: Optional[str] = Field(None, description="Actionable advice on what hard requirement the user must fulfill to bypass the 30% ceiling and boost probability to 90%+.")
     requires_outreach: bool = Field(False, description="True if the details are too vague and the user should email them to ask for clarification")
     benefits_summary: Optional[str] = Field(None, description="Short summary of what it covers (e.g., 'Tuition + Stipend', 'Family Housing Included')")
 
@@ -96,13 +97,14 @@ class ExtractedProgram(BaseModel):
     next_steps: Optional[str] = Field(None, description="Recommended immediate next actions for the user to apply")
     desire_score: float = Field(description="Score out of 100 on how much this matches the user's field and interests")
     probability_score: float = Field(description="Score out of 100 on how likely the user is to be admitted based on requirements vs profile")
+    improvement_projection: Optional[str] = Field(None, description="Actionable advice on what hard requirement the user must fulfill to bypass the 30% ceiling and boost probability to 90%+.")
 
 class ExtractedPageData(BaseModel):
     is_valid: bool = Field(description="True ONLY if this page actually contains ANY relevant university program, scholarship, or financial aid grant. False if it is just a generic article or unrelated page.")
     scholarships: List[ExtractedScholarship] = Field(default_factory=list, description="List of relevant scholarships found on the page")
     programs: List[ExtractedProgram] = Field(default_factory=list, description="List of relevant academic programs/degrees found on the page")
 
-def extract_page_content(profile_data: dict, page_data: dict):
+def extract_page_content(profile_data: dict, page_data: dict, target_program_context: dict = None):
     llm = get_hf_llm()
     if not llm:
         print("Falling back to Gemini for extraction since HF is not configured...")
@@ -111,14 +113,30 @@ def extract_page_content(profile_data: dict, page_data: dict):
             return None
         
     parser = PydanticOutputParser(pydantic_object=ExtractedPageData)
+    
+    if target_program_context:
+        # Targeted funding scan logic
+        target_info = f"TARGET PROGRAM: {target_program_context.get('title')} at {target_program_context.get('university')}"
+        rejection_rule = f"You MUST extract scholarships and financial aid opportunities available at {target_program_context.get('university')}. DO NOT extract new academic programs. Return empty programs list."
+    else:
+        # General scan logic
+        target_info = ""
+        rejection_rule = "You MUST strictly reject and discard ANY program or scholarship that does NOT strongly align with the User's major and career goals. If the user is in 'Systems Engineering', DO NOT extract 'Chemistry' or 'Arts' programs. If there are no highly relevant programs, set 'is_valid' to False and return empty lists."
+
     prompt = PromptTemplate(
         template="""
         You are an expert scholarship and university admissions analyzer.
         You have been given raw text scraped from a university or foundation website.
         
-        Task: If the text describes relevant academic programs or scholarships, extract them.
-        Calculate 'probability_score' and 'desire_score' for each.
-        If no relevant items exist, set 'is_valid' to False.
+        {target_info}
+        
+        CRITICAL REJECTION RULE:
+        {rejection_rule}
+        
+        SCORING FORMULAS:
+        1. 'desire_score' (Compatibility): Calculate this as 40% Academic Field Match + 30% Location/Modality Match + 30% Career Goals Match.
+        2. 'probability_score' (Acceptance Likelihood): Hard requirements act as a ceiling. If the user is missing a mandatory test (like IELTS/GRE) or has a GPA below the minimum, cap the score at a maximum of 30%, regardless of their work experience. If they meet all hard requirements, base the score on their experience and soft factors.
+        3. 'improvement_projection': If the user is capped at 30%, explicitly state what hard requirement (IELTS, GRE, documents) they must upload to bypass the ceiling and reach a 90%+ probability.
         
         User Profile:
         {profile}
@@ -130,7 +148,7 @@ def extract_page_content(profile_data: dict, page_data: dict):
         
         {format_instructions}
         """,
-        input_variables=["profile", "page_title", "page_url", "page_text"],
+        input_variables=["profile", "page_title", "page_url", "page_text", "target_info", "rejection_rule"],
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
     
@@ -139,7 +157,9 @@ def extract_page_content(profile_data: dict, page_data: dict):
             profile=str(profile_data),
             page_title=page_data.get("title", ""),
             page_url=page_data.get("url", ""),
-            page_text=page_data.get("text", "")
+            page_text=page_data.get("text", ""),
+            target_info=target_info,
+            rejection_rule=rejection_rule
         )
         response = llm.invoke(formatted)
         
