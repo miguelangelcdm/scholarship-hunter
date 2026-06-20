@@ -293,6 +293,11 @@ For detailed information on frontend styling, UI components, animation profiles,
 - [x] Refactored Discovery pipeline to use `Scrapling` stealth bypass library and Hugging Face Open-Source models (Qwen2.5) to avoid Cloudflare 403 blocks and rate limits.
 - [x] Rebuilt the `ai_agent` Extractor to perform Parallel Multi-Entity Extraction. The LLM now analyzes webpages and extracts both Scholarships AND Target Academic Programs (degrees, master's) simultaneously into separate lists.
 - [x] Upgraded `TargetProgram` schemas and DB logic to parse actionable application steps, important deadlines, and recommended next actions, alongside personalized desire and probability scores.
+- [x] Implemented Strict AI Scoring Engine: Enforced strict major-alignment rejection rules, a Hard Ceiling (max 30%) on Probability scores if missing hard requirements (tests/GPA), and a 40/30/30 weighting for Desire scores based on academics, location, and career goals.
+- [x] Introduced Actionable Advice UI: The AI generates specific improvement projections telling the user exactly how to bypass the probability ceiling, rendered vividly on Dashboard cards.
+- [x] Added Soft-Delete Discarding & Machine Learning Hook: Users can discard irrelevant programs from the dashboard via a new `PATCH /discard` endpoint. Items are hidden but preserved (`status = "Discarded"`) to eventually train ML ranking models.
+- [x] Implemented University-Centric Dashboard UI: Programs are logically grouped under their host universities, replacing the fragmented global list.
+- [x] Built Targeted Funding Engine: Added `POST /api/programs/{id}/find-funding` endpoint. Each program now has a dedicated "Find Funding" button that launches an isolated SSE scan, searching exclusively for financial aid at that specific university and rendering secured matches nested directly underneath the academic program.
 
 ### TODOs
 - [x] Connect the remaining frontend UI components to the FastAPI backend endpoints (Dashboard and Tracker).

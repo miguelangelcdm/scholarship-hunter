@@ -42,10 +42,22 @@ To prevent getting blocked by modern university portals and burning massive amou
 
 ### Phase 3: Dual-Extraction via Hugging Face
 Because extraction is a token-heavy process running over dozens of pages, we offload this task from Gemini to a free, fast open-source model via Hugging Face (e.g., `Qwen2.5`).
-The AI enforces a strict JSON output representing two parallel lists: `TargetPrograms` (with curriculum details, steps, and deadlines) and `Scholarships` (with amounts and benefits). The LLM calculates 'desire' and 'probability' scores for both entities simultaneously.
+The AI enforces a strict JSON output representing two parallel lists: `TargetPrograms` (with curriculum details, steps, and deadlines) and `Scholarships` (with amounts and benefits). 
 
-### Phase 4: UI Presentation & Feedback Loop
-Financial Aid and Scholarships are displayed in the Dashboard, while Target Programs are surfaced with their application steps.
+#### Strict Scoring Algorithm
+During extraction, the LLM uses highly engineered strict logic to calculate scores and discard irrelevant items:
+- **Major Alignment Rejection**: The AI immediately sets `is_valid=False` if the program completely misses the user's major (e.g., rejecting a "Chemistry" program for a "Systems Engineering" profile).
+- **Desire Score (Compatibility)**: Calculated as **40%** Academic Field Match + **30%** Location/Modality Match + **30%** Career Goals Match.
+- **Probability Score (Acceptance Likelihood)**: Operates with a **Hard Ceiling**. If the user is missing a mandatory document or standardized test (IELTS/GRE) or has a low GPA, their probability is capped at **30%**, regardless of soft factors like work experience.
+- **Actionable Advice (Improvement Projection)**: If a user is capped by the ceiling, the LLM populates the `improvement_projection` field with specific steps to bypass it (e.g., *"Upload an IELTS score of 7.0 to bypass the ceiling and boost probability to 90%+"*).
 
-> **TODO: Machine Learning Feedback Loop**
-> Add functionality for the user to mark a discovered program as "Not Interested". We must log this rejection and eventually learn patterns (e.g., "User consistently rejects programs with tuition > 10k") to refine the Search Seeder logic in future scans.
+### Phase 4: UI Presentation (University-Centric) & Targeted Funding
+To accurately reflect the real-world admissions journey, the UI is heavily **University-Centric**:
+1. **University Clusters**: Target Programs are not listed randomly. They are grouped under their host institution (e.g., *Technical University of Munich*).
+2. **Targeted Funding Scans**: Financial aid is inherently tied to specific institutions and programs. The global scan discovers programs; then, users trigger a highly specific `POST /api/programs/{id}/find-funding` pipeline. 
+   - This explicitly injects the `University` and `Program Title` into the DuckDuckGo seeder and the LLM context.
+   - The LLM runs a secondary extraction pass that completely ignores new programs and solely pulls down scholarships and financial aid tied to that specific university.
+3. **Nested Secured Funding**: Once discovered, targeted scholarships render visually nested under the specific academic program they support, enforcing the dependency that admissions come first, funding follows.
+
+**Machine Learning Feedback Loop & Soft Deletes**:
+Users can click a "Not Interested" (Discard) button on any program card or scholarship. This triggers a `PATCH` request that updates the database item to `status = "Discarded"`. The item is hidden from the UI but preserved in the database (Soft Delete) to train future search-accuracy models on the user's rejection patterns.
