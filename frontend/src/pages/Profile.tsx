@@ -24,7 +24,7 @@ import {
 import PreferencesTab from "@/components/profile/PreferencesTab";
 import LanguageManager from "@/components/profile/LanguageManager";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { Checkbox } from "@heroui/react";
 export default function Profile() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'experience' | 'highlights' | 'documents' | 'preferences'>('overview');
@@ -32,6 +32,8 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     name: "Default User",
     major: "",
+    degree_level: "",
+    has_dependents: false,
     gpa: "",
     demographics: "",
     hobbies: "",
@@ -72,6 +74,8 @@ export default function Profile() {
       setFormData({
         name: profile.name || "",
         major: profile.major || "",
+        degree_level: profile.degree_level || "",
+        has_dependents: profile.has_dependents || false,
         gpa: profile.gpa || "",
         demographics: profile.demographics || "",
         hobbies: profile.hobbies || "",
@@ -739,14 +743,27 @@ export default function Profile() {
 
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">Major / Field of Study</label>
-                  <input 
-                    type="text" 
-                    value={formData.major}
-                    onChange={e => setFormData({...formData, major: e.target.value})}
-                    disabled={isAutofilling}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                    placeholder="e.g. Computer Science" 
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.degree_level}
+                      onChange={e => setFormData({...formData, degree_level: e.target.value})}
+                      disabled={isAutofilling}
+                      className="w-1/3 px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">Degree</option>
+                      <option value="Bachelors">Bachelors</option>
+                      <option value="Masters">Masters</option>
+                      <option value="PhD">PhD</option>
+                    </select>
+                    <input 
+                      type="text" 
+                      value={formData.major}
+                      onChange={e => setFormData({...formData, major: e.target.value})}
+                      disabled={isAutofilling}
+                      className="w-2/3 px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                      placeholder="e.g. Computer Science" 
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -822,6 +839,25 @@ export default function Profile() {
                     placeholder="e.g. Colombian, Italian" 
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">Comma-separated list of your official citizenships. Crucial for matching regional or bilateral scholarships.</p>
+                </div>
+
+                <div className="col-span-1 md:col-span-2 mt-2">
+                  <div className="flex items-center space-x-3 p-4 bg-secondary/50 rounded-xl border border-border">
+                    <Checkbox 
+                      isSelected={formData.has_dependents}
+                      onValueChange={(isSelected) => setFormData({...formData, has_dependents: isSelected})}
+                      isDisabled={isAutofilling}
+                      color="primary"
+                      size="md"
+                    >
+                      <div className="flex flex-col ml-1">
+                        <span className="text-sm font-semibold text-foreground">I have a family or dependents</span>
+                        <span className="text-xs text-muted-foreground mt-0.5">
+                          We will prioritize programs offering family housing, childcare subsidies, and family-friendly financial aid.
+                        </span>
+                      </div>
+                    </Checkbox>
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-06-20T04:48:30.820400Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": false
+  },
+  "search_phase": {
+    "max_results_limit": 5,
+    "offset": 4,
+    "seed_urls": [
+      "https://www.mastersportal.com/studies/391776/systems-engineering-and-engineering-management.html",
+      "https://www.educations.com/m-phil-master-of-philosophy/systems-engineering/asia/full-time",
+      "https://aecom.com/press-releases/first-female-recipient-jcu-engineering-scholarship/",
+      "https://www.summerschoolsineurope.eu/course/fluid-machinery-and-energy-systems-engineering-4/",
+      "https://www.masterstudies.co.za/institutions/rutgers-school-of-engineering/msc-in-industrial-and-systems-engineering"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 0,
+    "pages": []
+  },
+  "extraction_phase": {
+    "processed_pages": []
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cost_usd": 0.0
+  }
+}

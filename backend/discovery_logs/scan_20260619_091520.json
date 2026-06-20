@@ -1,0 +1,123 @@
+{
+  "timestamp": "2026-06-19T09:15:20.740336Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": false
+  },
+  "search_phase": {
+    "max_results_limit": 5,
+    "offset": 11,
+    "seed_urls": [
+      "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+      "https://www.scholarshipsads.com/spain-government-scholarships-march282026",
+      "https://www.study.eu/article/us-students-scholarships-to-study-in-europe",
+      "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+      "https://africanscholars.yale.edu/resources/colleges-universities-europe-give-financial-aid-international-students"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 9,
+    "pages": [
+      {
+        "url": "https://africanscholars.yale.edu/resources/colleges-universities-europe-give-financial-aid-international-students",
+        "title": "Colleges & Universities in Europe that Give Financial Aid to International Students | Yale Young African Scholars"
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly"
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/resources/global-scholarship-competitions",
+        "title": "Global Scholarship Competitions | Yale Young African Scholars"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/admissions/application-timeline-deadlines",
+        "title": "Application Timeline & Deadlines | Yale Young African Scholars"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/resources/colleges-universities-give-financial-aid-and-scholarships-international-students",
+        "title": "Colleges & Universities that Give Financial Aid and Scholarships to International Students | Yale Young African Scholars"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/admissions",
+        "title": "Admissions | Yale Young African Scholars"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/resources/colleges-universities-give-financial-aid-and-scholarships-international-students/united",
+        "title": "United States Colleges & Universities that Give Financial Aid to International Students | Yale Young African Scholars"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea"
+      }
+    ]
+  },
+  "extraction_phase": {
+    "processed_pages": [
+      {
+        "url": "https://africanscholars.yale.edu/resources/colleges-universities-europe-give-financial-aid-international-students",
+        "title": "Colleges & Universities in Europe that Give Financial Aid to International Students | Yale Young African Scholars",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/resources/global-scholarship-competitions",
+        "title": "Global Scholarship Competitions | Yale Young African Scholars",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/admissions/application-timeline-deadlines",
+        "title": "Application Timeline & Deadlines | Yale Young African Scholars",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/resources/colleges-universities-give-financial-aid-and-scholarships-international-students",
+        "title": "Colleges & Universities that Give Financial Aid and Scholarships to International Students | Yale Young African Scholars",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/admissions",
+        "title": "Admissions | Yale Young African Scholars",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/resources/colleges-universities-give-financial-aid-and-scholarships-international-students/united",
+        "title": "United States Colleges & Universities that Give Financial Aid to International Students | Yale Young African Scholars",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea",
+        "status": "failed (LLM error)"
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cost_usd": 0.0
+  }
+}

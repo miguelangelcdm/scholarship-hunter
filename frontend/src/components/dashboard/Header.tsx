@@ -3,15 +3,31 @@ import { toast } from "sonner";
 import { useState, useEffect } from "react";
 
 export const Header = () => {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
+    const storedTheme = localStorage.getItem("theme");
+    const isThemeDark = storedTheme === null ? true : storedTheme === "dark";
+    
+    if (isThemeDark) {
+      document.documentElement.classList.add("dark");
+      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove("dark");
+      setIsDark(false);
+    }
   }, []);
 
   const toggleDark = () => {
-    document.documentElement.classList.toggle("dark");
-    setIsDark(!isDark);
+    const nextDark = !isDark;
+    if (nextDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+    setIsDark(nextDark);
   };
 
   const today = new Date().toLocaleDateString("en-GB", {

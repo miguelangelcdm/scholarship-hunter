@@ -1,41 +1,87 @@
-from datetime import datetime, timedelta
+import os
+import nltk
+from scrapling import StealthyFetcher
+from bs4 import BeautifulSoup
 
-def fetch_scholarships(search_params=None):
+def filter_text_with_nltk(text, profile_dict):
     """
-    Dynamic Scraper Mock: Simulates Google Custom Search API seeding followed by Scrapy crawling.
-    In a real environment, this would:
-    1. Seed URLs using Google Custom Search: e.g., 'Master {major} scholarship in {desired_countries}' or '{target_continents}'
-    2. Exclude results from {undesired_countries} and {undesired_continents}
-    3. Pass URLs to Scrapy.
-    4. Scrapy uses lightweight NLP to filter out pages not in {spoken_languages}.
-    
-    For development, we return a mocked dataset based on the parameters.
+    Extracts only sentences containing relevant keywords to reduce token usage.
     """
-    if search_params is None:
-        search_params = {}
+    keywords = ["tuition", "deadline", "scholarship", "financial aid", "apply", "requirements", "admissions", "grant", "$", "€", "£"]
+    if profile_dict.get("has_dependents", False):
+        keywords.extend(["family", "childcare", "dependents"])
         
-    major = search_params.get("major", "STEM")
-    desired = search_params.get("desired_countries", [])
+    sentences = nltk.tokenize.sent_tokenize(text)
+    relevant_sentences = []
     
-    # Just returning a mock payload to prove integration
-    location_mock = desired[0] if desired else "International"
-    major_mock = major if major else "General"
+    for sent in sentences:
+        sent_lower = sent.lower()
+        if any(k in sent_lower for k in keywords):
+            relevant_sentences.append(sent)
+            
+    filtered_text = " ".join(relevant_sentences)
+    # Drastically reduce max length since we only keep relevant sentences
+    max_len = int(os.getenv('SCRAPER_MAX_TEXT_LENGTH', 2000))
+    return filtered_text[:max_len]
+
+def fetch_scholarships_real(urls, profile_dict):
+    """
+    Uses Scrapling's StealthyFetcher to bypass Cloudflare and fetch seed URLs.
+    Returns a dict with 'pages' and 'errors'.
+    """
+    if not urls:
+        return {"pages": [], "errors": []}
+        
+    print(f"[Scraper] Fetching {len(urls)} seed URLs with Scrapling...")
+    results = []
+    errors = []
     
-    return [
-        {
-            "title": f"{major_mock} Excellence Scholarship",
-            "provider": f"{location_mock} University",
-            "amount": "$5,000",
-            "deadline": datetime.now() + timedelta(days=5),
-            "description": f"A scholarship dedicated to supporting students pursuing degrees in {major_mock}.",
-            "url": f"https://example.com/excellence-{major_mock.lower().replace(' ', '-')}"
-        },
-        {
-            "title": "Global Innovators Grant",
-            "provider": "Tech Foundation",
-            "amount": "$2,500",
-            "deadline": datetime.now() + timedelta(days=12),
-            "description": f"Awarded to majors with a GPA above 3.5 who want to study in {location_mock}.",
-            "url": "https://example.com/global-innovators"
-        }
-    ]
+    try:
+        # Use StealthyFetcher to bypass Cloudflare
+        fetcher = StealthyFetcher()
+        max_pages = int(os.getenv('SCRAPER_MAX_PAGES', 5))
+        
+        for url in urls[:max_pages]:
+            try:
+                print(f"[Scraper] Fetching: {url}")
+                page = fetcher.fetch(url)
+                
+                # Extract HTML content
+                if hasattr(page, 'body'):
+                    html_content = page.body.decode('utf-8', errors='ignore')
+                else:
+                    html_content = str(page)
+                
+                soup = BeautifulSoup(html_content, 'html.parser')
+                
+                # Remove navs, footers, scripts, styles
+                for elem in soup(["script", "style", "nav", "footer", "header"]):
+                    elem.extract()
+                    
+                text = soup.get_text(separator=' ', strip=True)
+                
+                # Check if it has any keywords at all before running NLTK
+                text_lower = text.lower()
+                keywords = ["tuition", "deadline", "scholarship", "financial aid", "apply", "requirements", "admissions", "grant", "program", "degree", "master", "bachelor"]
+                if any(k in text_lower for k in keywords):
+                    filtered_text = filter_text_with_nltk(text, profile_dict)
+                    title = soup.title.string if soup.title else url
+                    results.append({
+                        "url": url,
+                        "title": title.strip() if title else url,
+                        "text": filtered_text
+                    })
+                else:
+                    print(f"[Scraper] No relevant keywords found on {url}")
+                    errors.append({"url": url, "error": "No relevant keywords found in page content"})
+            except Exception as e:
+                print(f"[Scraper] Failed to fetch {url}: {e}")
+                errors.append({"url": url, "error": str(e)})
+                
+    except Exception as e:
+        print(f"[Scraper] Error initializing StealthyFetcher: {e}")
+        errors.append({"url": "all", "error": f"Failed to initialize stealth fetcher: {str(e)}"})
+        
+    print(f"[Scraper] Yielded {len(results)} valid pages and {len(errors)} errors.")
+    return {"pages": results, "errors": errors}
+

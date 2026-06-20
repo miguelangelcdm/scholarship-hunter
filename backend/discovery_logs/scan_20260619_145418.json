@@ -1,0 +1,222 @@
+{
+  "timestamp": "2026-06-19T14:54:18.872901Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": false
+  },
+  "search_phase": {
+    "max_results_limit": 5,
+    "offset": 1,
+    "seed_urls": [
+      "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+      "https://www.scholarshipsads.com/spain-government-scholarships-march282026",
+      "https://www.study.eu/article/us-students-scholarships-to-study-in-europe",
+      "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+      "https://education.ec.europa.eu/study-in-europe/country-profiles/spain"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 20,
+    "pages": [
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly"
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea"
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/country-profiles/spain",
+        "title": "Study in Spain \u2013 education system, tuition fees, scholarships and student life - European Education Area"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/the-cafyd-10/",
+        "title": "The CAFYD 10 | Universidad Europea"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/santander-erasmus-scholarships/",
+        "title": "Santander Erasmus Scholarships | Universidad Europea"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/european-commission-erasmus-grant-madrid/",
+        "title": "European Commission Erasmus Grant Madrid | UEM"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/high-academic-performance/",
+        "title": "High academic performance | Universidad Europea"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/plan-avanza/",
+        "title": "Plan Avanza | Universidad Europea"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/city-malaga-scholarships/",
+        "title": "City of Malaga Scholarships | Universidad Europea"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/community-madrid-vocational-training-scholarships/",
+        "title": "Community of Madrid Vocational Training Scholarships"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/oas-scholarships/",
+        "title": "Becas OEA 2026 | \u00a1Convocatoria abierta!"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/santander-conecta/",
+        "title": "Santander Conecta Scholarships | Universidad Europea"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/discount-double-master-degree-law-specialisation/",
+        "title": "Discount for Double Master's Degree in Law and Advocacy with Specialisation | Universidad Europea"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/orotava-council-scholarship/",
+        "title": "La Orotava Council Scholarship | Universidad Europea"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/family-member-another-degree/",
+        "title": "Family Member Studying Another Degree | UE"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/becas-santander-habilidades-evolution/",
+        "title": "Santander Progress Scholarships | Universidad Europea"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/skill-education-loan/",
+        "title": "Student Loans -\u00a0 Skills & Education Loan"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/death-person-financially-responsible/",
+        "title": "Death of the Person Financially Responsible | UE"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/scholarships-university-ministry-education/",
+        "title": "Ministry of Education University Scholarships"
+      }
+    ]
+  },
+  "extraction_phase": {
+    "processed_pages": [
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/country-profiles/spain",
+        "title": "Study in Spain \u2013 education system, tuition fees, scholarships and student life - European Education Area",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/the-cafyd-10/",
+        "title": "The CAFYD 10 | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/santander-erasmus-scholarships/",
+        "title": "Santander Erasmus Scholarships | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/european-commission-erasmus-grant-madrid/",
+        "title": "European Commission Erasmus Grant Madrid | UEM",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/high-academic-performance/",
+        "title": "High academic performance | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/plan-avanza/",
+        "title": "Plan Avanza | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/city-malaga-scholarships/",
+        "title": "City of Malaga Scholarships | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/community-madrid-vocational-training-scholarships/",
+        "title": "Community of Madrid Vocational Training Scholarships",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/oas-scholarships/",
+        "title": "Becas OEA 2026 | \u00a1Convocatoria abierta!",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/santander-conecta/",
+        "title": "Santander Conecta Scholarships | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/discount-double-master-degree-law-specialisation/",
+        "title": "Discount for Double Master's Degree in Law and Advocacy with Specialisation | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/orotava-council-scholarship/",
+        "title": "La Orotava Council Scholarship | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/family-member-another-degree/",
+        "title": "Family Member Studying Another Degree | UE",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/becas-santander-habilidades-evolution/",
+        "title": "Santander Progress Scholarships | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/skill-education-loan/",
+        "title": "Student Loans -\u00a0 Skills & Education Loan",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/death-person-financially-responsible/",
+        "title": "Death of the Person Financially Responsible | UE",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/scholarships-university-ministry-education/",
+        "title": "Ministry of Education University Scholarships",
+        "status": "failed (LLM error)"
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cost_usd": 0.0
+  }
+}

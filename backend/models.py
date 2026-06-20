@@ -9,6 +9,7 @@ class Profile(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, default="My Profile")
     major = Column(String, nullable=True)
+    degree_level = Column(String, nullable=True)
     gpa = Column(String, nullable=True)
     demographics = Column(String, nullable=True)
     nationalities = Column(String, nullable=True)
@@ -110,5 +111,14 @@ class TargetProgram(Base):
     is_online = Column(Boolean, default=False)
     is_hybrid = Column(Boolean, default=False)
     accepts_international = Column(Boolean, default=True)
+    
+    # New detailed extraction fields
+    details = Column(String, nullable=True)
+    steps = Column(String, nullable=True)
+    important_info = Column(String, nullable=True)
+    next_steps = Column(String, nullable=True)
+    
+    desire_score = Column(Float, default=0.0)
+    probability_score = Column(Float, default=0.0)
     
     status = Column(String, default="Discovered") # Discovered, Preparing, Applied, Rejected, Accepted

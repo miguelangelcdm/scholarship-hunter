@@ -23,13 +23,8 @@ The Educational Pathfinder relies heavily on `gemini-3.5-flash` for high-through
 
 ### 2. Scholarship / Program Scoring (Batch processing)
 **Trigger**: When the discovery engine scans new scholarships/programs.
-**Input**: Comprehensive User Profile including JSON arrays for experience, languages, targeted countries, nationalities, and goals (~1,100 tokens) + Target program/scholarship details (~500 tokens).
-**Output**: JSON object with `desire_score` and `probability_score` (~50 tokens).
-**Cost per execution**:
-- Input: 1,600 * $0.075 / 1M = $0.00012
-- Output: 50 * $0.30 / 1M = $0.000015
-- **Total**: ~$0.000135 per scholarship scored.
-*(Scanning 100 scholarships/programs costs ~$0.0135)*
+**Cost Model**: **$0.00 (Zero)**.
+Because batch scraping requires parsing huge amounts of unstructured university HTML, we have offloaded this entirely to **Hugging Face Serverless Inference** (specifically `Qwen2.5-7B-Instruct`). This bypasses Gemini completely for discovery, saving massive token costs. The dual-extraction (finding both programs and scholarships on a single page) is performed natively by the open-source model.
 
 ### 3. AI Essay Drafting
 **Trigger**: Clicking "Draft Essay" in the Kanban tracker.

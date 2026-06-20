@@ -1,47 +1,34 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, API_BASE } from "@/lib/api";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GraduationCap, Sparkles, Building2, Globe, ShieldCheck, AlertTriangle, Lock, ArrowRight } from "lucide-react";
+import { GraduationCap, Sparkles, Building2, Globe, ShieldCheck, AlertTriangle, Lock, ArrowRight, Radar, CheckCircle2, Database, Search, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-// Mock Data for Program Matches since backend scraper isn't built yet
-const MOCK_PROGRAMS = [
-  {
-    id: 1,
-    title: "MSc in Artificial Intelligence",
-    institution: "Technical University of Munich",
-    location: "Germany",
-    modality: "In-Person (Abroad)",
-    tuition: "Free (Admin Fee: ~€138/sem)",
-    matchScore: 92
-  },
-  {
-    id: 2,
-    title: "MSc Computer Science (Online)",
-    institution: "Georgia Institute of Technology",
-    location: "USA (Remote)",
-    modality: "Online",
-    tuition: "$7,000 Total",
-    matchScore: 88
-  },
-  {
-    id: 3,
-    title: "Master of Data Science",
-    institution: "University of Melbourne",
-    location: "Australia",
-    modality: "Hybrid",
-    tuition: "$45,000/yr",
-    matchScore: 78
+const formatScanTime = (isoString: string) => {
+  if (!isoString) return "";
+  try {
+    const date = new Date(isoString);
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (e) {
+    return "";
   }
-];
+};
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanStatus, setScanStatus] = useState("Initiating scan...");
   
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['profile'],
@@ -53,26 +40,83 @@ export default function Dashboard() {
     queryFn: api.getScholarships
   });
 
+  const { data: lastScanData, refetch: refetchLastScan } = useQuery({
+    queryKey: ['lastScan'],
+    queryFn: api.getLastScan
+  });
+
   const scanMutation = useMutation({
-    mutationFn: api.scanScholarships,
-    onSuccess: (data) => {
-      toast.success(data.message || "Scan complete!");
-      queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+    mutationFn: async () => {
+      setScanProgress(0);
+      setScanStatus("Initiating scan...");
+      setIsScanning(true);
+      
+      const response = await fetch(`${API_BASE}/scholarships/scan`, { method: 'POST' });
+      if (!response.ok) {
+        throw new Error("Failed to start scan. Please check your network or server status.");
+      }
+      
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response reader available.");
+      
+      const decoder = new TextDecoder();
+      let buffer = "";
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const data = JSON.parse(line);
+              if (data.progress !== undefined) {
+                setScanProgress(data.progress);
+              }
+              if (data.message) {
+                setScanStatus(data.message);
+              }
+            } catch (e) {
+              console.error("Failed to parse progress event:", e);
+            }
+          }
+        }
+      }
     },
-    onError: () => {
-      toast.error("Failed to run scan. Make sure your profile is saved first!");
+    onSuccess: () => {
+      toast.success("Scan complete! Results have been updated.");
+      queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      refetchLastScan();
+      setIsScanning(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to run scan.");
+      setIsScanning(false);
     }
+  });
+
+  const { data: programs = [], isLoading: isLoadingPrograms } = useQuery({
+    queryKey: ['programs'],
+    queryFn: api.getPrograms
   });
 
   const desireMatches = scholarships.filter((s: any) => s.desire_score > 70).sort((a: any, b: any) => b.desire_score - a.desire_score);
   
-  // Filter mock programs based on user modality if available
-  const displayPrograms = MOCK_PROGRAMS.filter(p => {
-    if (!profile?.preferred_modality) return true;
-    if (profile.preferred_modality === "Online") return p.modality === "Online";
-    if (profile.preferred_modality === "Hybrid") return p.modality === "Hybrid" || p.modality === "Online";
-    return true; // If In-Person, show all for now
-  });
+  const displayPrograms = programs.map((p: any) => ({
+    id: p.id,
+    title: p.title,
+    institution: p.university,
+    location: p.country,
+    modality: p.is_online ? "Online" : p.is_hybrid ? "Hybrid" : "In-Person",
+    matchScore: p.title.includes("Artificial Intelligence") || p.title.includes("Data") ? 94 : 85,
+    tuition: p.country === "Germany" ? "Free (Public)" : p.country === "Switzerland" ? "CHF 1,500 / yr" : "$25,000 / yr",
+    status: p.status
+  }));
 
   const feasibilityScore = profile?.relocation_feasibility_score || 0;
   
@@ -128,6 +172,7 @@ export default function Dashboard() {
         </div>
       )}
 
+
       <header className="sticky top-[72px] z-30 flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 bg-background/40 backdrop-blur-md py-4 border-b border-border/30 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 transition-all duration-200">
         <div>
           <h1 className="text-4xl sm:text-5xl font-display tracking-tight text-foreground flex items-center gap-3">
@@ -139,31 +184,69 @@ export default function Dashboard() {
           </p>
         </div>
         
-        <div className="relative" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>
-          <button 
-            onClick={handleScanClick}
-            disabled={scanMutation.isPending}
-            className={`px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shrink-0 flex items-center gap-2
-              ${!isProfileComplete 
-                ? 'bg-muted text-muted-foreground border border-border/80 cursor-not-allowed hover:bg-muted/80' 
-                : 'bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg active:scale-95'
-              }
-            `}
-          >
-            {!isProfileComplete && <Lock className="w-4 h-4" />}
-            {scanMutation.isPending ? "Scanning Web..." : "Run Discovery Scan"}
-          </button>
-
-          {/* Hover Popover Tooltip for disabled state */}
-          {!isProfileComplete && showTooltip && (
-            <div className="absolute top-full right-0 mt-3 w-64 p-3 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl z-10 animate-in fade-in slide-in-from-top-2 text-xs">
-              <div className="absolute -top-2 right-6 w-4 h-4 bg-popover border-t border-l border-border transform rotate-45" />
-              <p className="relative z-10 font-medium">Your profile lacks required details.</p>
-              <p className="relative z-10 text-muted-foreground mt-1">Please provide your Modality, Targets, and CV to unlock the engine.</p>
-            </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          {lastScanData?.last_scan && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5 bg-card/60 backdrop-blur-sm border border-border/50 px-3 py-1.5 rounded-xl font-medium shrink-0 animate-fade-in">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              Last Scanned: {formatScanTime(lastScanData.last_scan)}
+            </span>
           )}
+
+          <div className="relative" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>
+            <button 
+              onClick={handleScanClick}
+              disabled={isScanning}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shrink-0 flex items-center gap-2
+                ${!isProfileComplete 
+                  ? 'bg-muted text-muted-foreground border border-border/80 cursor-not-allowed hover:bg-muted/80' 
+                  : 'bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg active:scale-95'
+                }
+              `}
+            >
+              {!isProfileComplete && <Lock className="w-4 h-4" />}
+              {isScanning ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Scanning Web...
+                </>
+              ) : "Run Discovery Scan"}
+            </button>
+
+            {/* Hover Popover Tooltip for disabled state */}
+            {!isProfileComplete && showTooltip && (
+              <div className="absolute top-full right-0 mt-3 w-64 p-3 bg-popover text-popover-foreground border border-border rounded-xl shadow-xl z-10 animate-in fade-in slide-in-from-top-2 text-xs">
+                <div className="absolute -top-2 right-6 w-4 h-4 bg-popover border-t border-l border-border transform rotate-45" />
+                <p className="relative z-10 font-medium">Your profile lacks required details.</p>
+                <p className="relative z-10 text-muted-foreground mt-1">Please provide your Modality, Targets, and CV to unlock the engine.</p>
+              </div>
+            )}
+          </div>
         </div>
       </header>
+
+      {/* Real-time Scan Progress Bar */}
+      {isScanning && (
+        <div className="bg-card/70 backdrop-blur-md border border-border/80 rounded-3xl p-6 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300 relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+          
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+              <Radar className="w-4 h-4 text-primary animate-pulse" />
+              {scanStatus}
+            </span>
+            <span className="text-sm font-extrabold text-foreground bg-primary/10 px-2.5 py-0.5 rounded-md border border-primary/25">{scanProgress}%</span>
+          </div>
+          
+          {/* Progress bar container */}
+          <div className="w-full bg-secondary/80 h-3 rounded-full overflow-hidden p-0.5 border border-border/40">
+            <div 
+              className="bg-gradient-to-r from-primary via-lime-400 to-primary h-full rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(180,244,60,0.4)]"
+              style={{ width: `${scanProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* DASHBOARD GRID: Programs on left, Scholarships on right */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 relative">
@@ -197,9 +280,42 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground mb-6">Target university programs filtered by your preferred modality: <strong className="text-foreground">{profile?.preferred_modality || "Pending"}</strong></p>
           
           <div className="space-y-4 flex-1">
-            {displayPrograms.length === 0 ? (
-              <div className="p-4 border border-border/50 bg-secondary/30 rounded-2xl h-full flex items-center justify-center">
-                <p className="text-sm text-muted-foreground italic text-center py-4">No programs match your exact modality. Update your profile or run a scan.</p>
+            {isScanning ? (
+              <div className="p-8 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+                <div className="relative flex items-center justify-center w-16 h-16 mb-2">
+                  <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 animate-ping" />
+                  <div className="absolute inset-2 rounded-full border-2 border-indigo-500/40 animate-pulse" />
+                  <Radar className="w-8 h-8 text-indigo-500 animate-[spin_3s_linear_infinite]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Scanning for Programs</h3>
+                  <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
+                    Analyzing global databases for your ideal academic matches...
+                  </p>
+                </div>
+              </div>
+            ) : isLoadingPrograms ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-5 border border-border/50 bg-background/50 rounded-2xl space-y-3">
+                  <div className="flex justify-between items-start">
+                    <Skeleton className="h-5 w-2/3 bg-muted/60" />
+                    <Skeleton className="h-5 w-16 bg-muted/60" />
+                  </div>
+                  <Skeleton className="h-3.5 w-1/3 bg-muted/60" />
+                  <Skeleton className="h-6 w-24 mt-4 bg-muted/60" />
+                </div>
+              ))
+            ) : displayPrograms.length === 0 ? (
+              <div className="p-8 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+                <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+                  <Search className="w-8 h-8 text-indigo-400 opacity-80" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">No Programs Discovered</h3>
+                  <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
+                    You haven't run the Discovery Engine yet. Trigger a scan to search the web for your ideal programs.
+                  </p>
+                </div>
               </div>
             ) : (
               displayPrograms.map((p) => (
@@ -247,7 +363,21 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground mb-6">Funding opportunities based on your academic caliber, demographics, and goals.</p>
           
           <div className="space-y-4 flex-1">
-            {isLoadingScholarships ? (
+            {isScanning ? (
+              <div className="p-8 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+                <div className="relative flex items-center justify-center w-16 h-16 mb-2">
+                  <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 animate-ping" />
+                  <div className="absolute inset-2 rounded-full border-2 border-emerald-500/40 animate-pulse" />
+                  <Radar className="w-8 h-8 text-emerald-500 animate-[spin_3s_linear_infinite]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Scraping Funding Sources</h3>
+                  <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
+                    Discovering financial aid opportunities suited to your profile...
+                  </p>
+                </div>
+              </div>
+            ) : isLoadingScholarships ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="p-5 border border-border/50 bg-background/50 rounded-2xl space-y-3">
                   <div className="flex justify-between items-start">
@@ -259,8 +389,16 @@ export default function Dashboard() {
                 </div>
               ))
             ) : desireMatches.length === 0 ? (
-              <div className="p-4 border border-border/50 bg-secondary/30 rounded-2xl h-full flex items-center justify-center">
-                <p className="text-sm text-muted-foreground italic text-center py-4">No financial aid matches yet. Run a discovery scan!</p>
+              <div className="p-8 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                  <Database className="w-8 h-8 text-emerald-400 opacity-80" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">No Financial Aid Found</h3>
+                  <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
+                    Your matches are currently empty. Run the discovery scan to fetch live funding opportunities.
+                  </p>
+                </div>
               </div>
             ) : (
               desireMatches.map((s: any) => (

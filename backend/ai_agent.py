@@ -3,7 +3,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 
 class ScoreResponse(BaseModel):
     probability_score: float = Field(description="Score out of 100 on how likely the user is to win based on requirements vs profile")
@@ -15,6 +16,25 @@ def get_llm():
         print("Warning: No GEMINI_API_KEY found in environment variables.")
         return None
     return ChatGoogleGenerativeAI(model="gemini-3.5-flash", google_api_key=api_key)
+
+def get_hf_llm():
+    api_key = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+    if not api_key:
+        print("Warning: No HUGGINGFACEHUB_API_TOKEN found. Check your .env file.")
+        return None
+    
+    try:
+        # Using a highly capable open-source model that fully supports Chat endpoints
+        llm = HuggingFaceEndpoint(
+            repo_id="Qwen/Qwen2.5-7B-Instruct",
+            max_new_tokens=4000,
+            temperature=0.1,
+            huggingfacehub_api_token=api_key
+        )
+        return ChatHuggingFace(llm=llm)
+    except Exception as e:
+        print(f"Error initializing HuggingFace model: {e}")
+        return None
 
 def score_scholarship(profile_data: dict, scholarship_data: dict):
     llm = get_llm()
@@ -52,6 +72,103 @@ def score_scholarship(profile_data: dict, scholarship_data: dict):
     except Exception as e:
         print(f"Error scoring: {e}")
         return {"probability_score": 50.0, "desire_score": 50.0}
+
+class ExtractedScholarship(BaseModel):
+    title: str = Field(description="Name of the scholarship, program, or grant")
+    provider: str = Field(description="Name of the University, Institution, or Foundation")
+    amount: Optional[str] = Field(None, description="Amount of money, or 'Full Tuition', 'Partial', etc.")
+    description: str = Field(description="A 2-3 sentence summary of the grant and its core requirements")
+    probability_score: float = Field(description="Score out of 100 on how likely the user is to win based on requirements vs profile")
+    desire_score: float = Field(description="Score out of 100 on how much this matches the user's field and interests")
+    requires_outreach: bool = Field(False, description="True if the details are too vague and the user should email them to ask for clarification")
+    benefits_summary: Optional[str] = Field(None, description="Short summary of what it covers (e.g., 'Tuition + Stipend', 'Family Housing Included')")
+
+class ExtractedProgram(BaseModel):
+    title: str = Field(description="Name of the academic program or degree (e.g., MSc Systems Engineering)")
+    university: str = Field(description="Name of the University")
+    country: str = Field(description="Country where the university is located")
+    is_online: bool = Field(False, description="True if the program can be taken fully online")
+    is_hybrid: bool = Field(False, description="True if the program is hybrid")
+    accepts_international: bool = Field(True, description="True if international students can apply")
+    details: Optional[str] = Field(None, description="A 2-3 sentence summary of the program and its core curriculum")
+    steps: Optional[str] = Field(None, description="Step-by-step application instructions if available")
+    important_info: Optional[str] = Field(None, description="Deadlines, specific constraints, or key requirements")
+    next_steps: Optional[str] = Field(None, description="Recommended immediate next actions for the user to apply")
+    desire_score: float = Field(description="Score out of 100 on how much this matches the user's field and interests")
+    probability_score: float = Field(description="Score out of 100 on how likely the user is to be admitted based on requirements vs profile")
+
+class ExtractedPageData(BaseModel):
+    is_valid: bool = Field(description="True ONLY if this page actually contains ANY relevant university program, scholarship, or financial aid grant. False if it is just a generic article or unrelated page.")
+    scholarships: List[ExtractedScholarship] = Field(default_factory=list, description="List of relevant scholarships found on the page")
+    programs: List[ExtractedProgram] = Field(default_factory=list, description="List of relevant academic programs/degrees found on the page")
+
+def extract_page_content(profile_data: dict, page_data: dict):
+    llm = get_hf_llm()
+    if not llm:
+        print("Falling back to Gemini for extraction since HF is not configured...")
+        llm = get_llm()
+        if not llm:
+            return None
+        
+    parser = PydanticOutputParser(pydantic_object=ExtractedPageData)
+    prompt = PromptTemplate(
+        template="""
+        You are an expert scholarship and university admissions analyzer.
+        You have been given raw text scraped from a university or foundation website.
+        
+        Task: If the text describes relevant academic programs or scholarships, extract them.
+        Calculate 'probability_score' and 'desire_score' for each.
+        If no relevant items exist, set 'is_valid' to False.
+        
+        User Profile:
+        {profile}
+        
+        Scraped Webpage Title: {page_title}
+        Scraped Webpage URL: {page_url}
+        Scraped Webpage Text:
+        {page_text}
+        
+        {format_instructions}
+        """,
+        input_variables=["profile", "page_title", "page_url", "page_text"],
+        partial_variables={"format_instructions": parser.get_format_instructions()}
+    )
+    
+    try:
+        formatted = prompt.format(
+            profile=str(profile_data),
+            page_title=page_data.get("title", ""),
+            page_url=page_data.get("url", ""),
+            page_text=page_data.get("text", "")
+        )
+        response = llm.invoke(formatted)
+        
+        input_tokens = 0
+        output_tokens = 0
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            input_tokens = response.usage_metadata.get("input_tokens", 0)
+            output_tokens = response.usage_metadata.get("output_tokens", 0)
+        
+        raw_content = response.content
+        if "```json" in raw_content:
+            raw_content = raw_content.split("```json")[1].split("```")[0].strip()
+            
+        try:
+            parsed = parser.parse(raw_content)
+            result_dict = parsed.model_dump()
+            result_dict["url"] = page_data.get("url", "")
+            result_dict["token_usage"] = {
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "cost_usd": (input_tokens * 0.0001 + output_tokens * 0.0002) / 1000
+            }
+            return result_dict
+        except Exception as e:
+            print(f"Failed to parse JSON: {e}")
+            return None
+    except Exception as e:
+        print(f"Error extracting/scoring: {e}")
+        return None
 
 class ProfileExtraction(BaseModel):
     name: Optional[str] = Field(None, description="The user's full name if found in the text")

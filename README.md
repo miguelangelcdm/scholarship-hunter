@@ -36,6 +36,7 @@ For AI agents navigating the codebase, here is the master directory layout:
 Scholarship-hunter/
 ├── backend/                  # FastAPI Backend (Python)
 │   ├── database.py           # DB Config
+│   ├── discovery_logs/       # Detailed JSON execution logs & token/cost metrics for each scan
 │   ├── models.py             # SQLAlchemy Models (Profile, ProfileDocument, Scholarship, etc.)
 │   ├── schemas.py            # Pydantic Schemas
 │   ├── uploads/              # Local uploaded files (CVs, Recommendations, Diplomas)
@@ -45,6 +46,7 @@ Scholarship-hunter/
 │   ├── agents/                   # AI Persona Rules (Taste, Impeccable, Memanto, etc.)
 │   ├── database_schema.md        # Data Dictionary and Entity Relationship Diagram
 │   ├── token_cost_analysis.md    # Cost projections for Gemini AI token usage
+│   ├── gemini_scaling_strategy.md # Operational constraints and roadmap to scale Gemini API to production
 │   └── research_foundation.md    # Academic research justifying the Educational Pathfinder pivot
 ├── frontend/                 # Vite + React (Orbix Base)
 │   ├── src/
@@ -96,19 +98,23 @@ This will launch the interactive **Scholarship Hunter Developer Menu**:
   [2] Run FastAPI Backend Only
   [3] Run React Frontend Only
   [4] Run Playwright E2E Tests
-  [5] Exit
+  [5] Seed Database with Mock Programs & Applications
+  [6] Unseed Database
+  [7] Exit
 ==================================================
 ```
 
 ### Direct CLI Shortcuts
 You can also bypass the menu and execute targets directly from your shell at the root level:
 
-| Task / Feature | NPM command | Makefile command | Description |
-|---|---|---|---|
-| **Run Full Project** | (Use Option 1 from `npm start`) | `make run` | Runs Vite and FastAPI concurrently, merging and color-coding output logs in one terminal. |
-| **Run Backend Only** | `npm run backend` | `make run-backend` | Starts FastAPI on port 8000 using the python virtual environment. |
-| **Run Frontend Only** | `npm run frontend` | `make run-frontend` | Starts Vite development server on port 5173. |
-| **Run E2E Tests** | `npm run test:e2e` | `make test` | Runs the Playwright E2E test suite. |
+| Task / Feature | Command | Description |
+|---|---|---|
+| **Run Full Project** | `node menu.js --run-all` | Runs Vite and FastAPI concurrently, merging and color-coding output logs in one terminal. |
+| **Run Backend Only** | `node menu.js --run-backend` | Starts FastAPI on port 8000 using the python virtual environment. |
+| **Run Frontend Only** | `node menu.js --run-frontend` | Starts Vite development server on port 5173. |
+| **Run E2E Tests** | `node menu.js --run-tests` | Runs the Playwright E2E test suite. |
+| **Seed Database** | `node menu.js --seed` | Clears and seeds database tables with mock academic programs and scholarship applications. |
+| **Unseed Database** | `node menu.js --unseed` | Clears all mock academic programs and scholarships from the database. |
 
 > [!TIP]
 > **Process Cleanup**: When you terminate the runner (using `Ctrl+C` or exiting the menu), the utility automatically kills the entire spawned process tree (including uvicorn and node). This prevents orphaned processes from locking up ports `8000` or `5173` on Windows and Unix systems.
@@ -146,7 +152,11 @@ The backend requires Python and uvicorn to serve the API.
    pip install -r requirements.txt
    ```
 4. **Configure Environment**:
-   Ensure you have a `.env` file in the `backend` directory containing your API keys (e.g., `GEMINI_API_KEY`).
+   Ensure you have a `.env` file in the `backend` directory containing your API keys (e.g., `GEMINI_API_KEY`). You can also configure crawler limits to control execution speed and prevent runaway token consumption:
+   - `SEARCH_MAX_RESULTS`: Max seed URLs returned from DuckDuckGo per query (default: 5).
+   - `SCRAPER_DEPTH_LIMIT`: Scrapy link traversal depth (default: 1. Set to 0 to only scan seed URLs without following sublinks).
+   - `SCRAPER_MAX_PAGES`: Hard ceiling on the total number of crawled pages per scan (default: 8) to prevent endless crawling loops.
+   - `SCRAPER_MAX_TEXT_LENGTH`: Maximum characters per page sent to the LLM to protect token usage (default: 5000).
 5. **Start the Server**:
    ```bash
    uvicorn main:app --reload --host 127.0.0.1 --port 8000
@@ -170,6 +180,12 @@ The frontend uses Vite for fast development builds.
    ```
    The frontend will run at `http://localhost:5173` (or check terminal output for the specific port).
 
+> [!IMPORTANT]
+> **HeroUI Version & Tailwind CSS Compatibility**:
+> The project utilizes **Tailwind CSS v3** (`3.4.17`) and **React 18**. To maintain compatibility with this environment, the project uses **HeroUI v2** (`@heroui/react` version `^2.8.10`) rather than HeroUI v3 (which requires Tailwind CSS v4 and React 19+).
+> 
+> In `tailwind.config.ts`, the theme content scanning path must point to `./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}` instead of `@heroui/react/dist` to avoid PostCSS transform resolution errors.
+
 ---
 
 ## 1. Profile Manager & Dashboard Safeguards
@@ -187,6 +203,13 @@ To ensure the Discovery Engine generates high-quality matches, the Dashboard act
 - **Locked Overlay**: If a user's profile lacks critical data (e.g., Modality or Geographic Targets), the "Program Matches" and "Financial Aid" lanes are visually obscured behind a frosted glass layer.
 - **CTA Modal**: Clicking the disabled "Run Discovery Scan" button triggers a modal with a direct CTA to complete the Profile.
 - **Relocation Feasibility Score**: For users targeting programs abroad, the AI analyzes their CV (looking for language proficiency and multinational experience) and displays a Feasibility Score (0-100%). This provides a realistic "visa check" (represented by Shield or Warning icons) directly on the Program Match cards.
+
+### Frontend Error Resilience & Real-Time Progress Safeguards
+To prevent frontend crashes and keep the user informed during long scanning processes:
+- **Real-Time Scan Progress Bar**: Replaced the synchronous, blocking scan endpoint with a Server-Sent Events (SSE) `StreamingResponse` inside [main.py](file:///c:/Users/migue/.gemini/antigravity/scratch/Scholarship-hunter/backend/main.py#L166). The frontend reads the stream chunk-by-chunk and renders a premium, glowing progress bar showing the exact execution phase (e.g. searching, crawling, analyzing, saving) and percentage completion (0-100%). This keeps the HTTP connection alive, prevents browser request timeouts, and provides immediate visual feedback.
+- **Custom Error Boundary**: A premium, glassmorphic class-component `ErrorBoundary` (located in [ErrorBoundary.tsx](file:///c:/Users/migue/.gemini/antigravity/scratch/Scholarship-hunter/frontend/src/components/ErrorBoundary.tsx)) is wrapped around the entire application in `App.tsx`. In the event of a runtime error (e.g. ReferenceError, TypeError, or component crash), it intercepts the failure and presents a beautiful recovery screen showing the error details, stack trace (in a styled scrollable viewport), and buttons to reload the application or go to the home route.
+- **Robust API Response Checking**: In `frontend/src/lib/api.ts`, a unified `handleResponse` helper processes all fetch requests. If the backend returns a non-2xx code (e.g., a 500 server error or validation failure), it extracts the detail field and raises a descriptive `Error` that is propagated directly to React Query query and mutation callbacks (e.g. displaying error toast notifications instead of failing silently).
+- **Last Scan Timestamp Indicator**: Exposes the `GET /scholarships/last-scan` endpoint to retrieve the timestamp of the latest log in `backend/discovery_logs/`. The frontend fetches this on load and refetches it when a scan successfully runs, displaying a styled glassmorphic label next to the scan button.
 
 ## 2. Profile & Documents Feature
 The Profile section features a premium **Interactive Overview Landing Dashboard**:
@@ -212,42 +235,11 @@ From the Tracker, users can trigger AI actions:
 ### Gemini-Powered AI Autofill
 When a user uploads their CV/Resume, they can click the **AI Extract** button. The backend extracts text from the document (using `pypdf`) and prompts Gemini (`gemini-3.5-flash`) to parse all details. The database profile is automatically populated, and the UI values update instantly.
 
-- **Form Integrity Lock**: During the AI extraction process, all input fields, textareas, and save buttons are programmatically disabled to prevent conflict. On the input-centric tabs (*Academic Core*, *Experience & Goals*, and *Highlights & Projects*), a translucent glassmorphic loader overlay is displayed, visually blocking edits while keeping the inputs underneath readable. Users can freely navigate through all tabs to monitor the AI autofill progress in real-time.
 - **Robust API Type Coercion**: To prevent FastAPI `ResponseValidationError` when GPA values are stored or parsed as floats/integers, the backend response schemas utilize a custom Pydantic `field_validator` (`coerce_gpa`) to dynamically cast any numeric GPAs to string formats before returning them to the client.
 
-The wizard leverages the project's standard Radix-based `Select` component framework rather than external React UI libraries (like `@heroui/react`). This avoids dependency version conflicts with Tailwind CSS v3 and ensures seamless styling integration.
+## Frontend UI/UX Standards
 
-### E2E Testing & Performance Tuning
-To ensure maximum UI responsiveness and prevent regressions:
-- **Playwright E2E Suite**: Tests Profile Manager tab transitions, stepper node redirects, and captures visual screenshots under `frontend/e2e-screenshots/`.
-- **Latency Optimization**: Configured the frontend and tests to query the backend via explicit IPv4 loopback (`127.0.0.1`) instead of `localhost`. This bypassed IPv6 resolution timeouts, reducing page load latency from ~7.5 seconds to **sub-100ms** (75ms).
-- **Onboarding Wizard Bypass**: To prevent the onboarding wizard modal overlay from blocking UI interactions during test runs, the component detects automated runs via `window.navigator.webdriver` (and support for `?bypass_wizard=true` parameter), allowing Playwright tests to access and test the underlying profile tabs seamlessly.
-
-To run the E2E tests:
-```bash
-cd frontend
-npm run test:e2e
-```
-
-## UI Design Standard: Skeleton Loaders
-
-For a premium, non-generic look, this project avoids full-page spinners and empty states during loading. Instead, always implement visual skeletons that mimic the exact layout of the target component to prevent layout shifts.
-
-* **Usage**: Import the `Skeleton` primitive from `@/components/ui/skeleton`:
-  ```tsx
-  import { Skeleton } from "@/components/ui/skeleton";
-  ```
-* **Best Practices**:
-  - Keep heights and widths matching or approximating the expected loaded card/content dimensions (e.g., `<Skeleton className="h-5 w-2/3" />`).
-  - Use container skeletons inside layouts (e.g., sidebars, forms, card lists) to render early layout frameworks while data fetches.
-
-## UI Design Standard: Smooth Transitions & Interactive States
-
-To maintain a fluid, premium tactile feel, all page transitions, tab switches, and hover interactions must use smooth animation profiles:
-
-* **Tab Switching**: Use the `.animate-tab-content` utility class on the root element of any tab page panel. This applies a `0.35s` slide-up and fade-in animation using a premium cubic-bezier ease (`cubic-bezier(0.16, 1, 0.3, 1)`).
-* **Interactive Elements**: All interactive controls (`button`, `a`, `input`, `textarea`, `select`) have global transition behaviors configured in `index.css`. This ensures hover and focus states (backgrounds, borders, shadows, scales) transition smoothly over `0.25s` rather than snapping instantly.
-* **Containers & Cards**: Glassmorphic card surfaces (`.bg-card`, `.card-surface`) transition background-colors, borders, box-shadows, and transforms smoothly over `0.3s` using the same custom bezier easing.
+For detailed information on frontend styling, UI components, animation profiles, loading skeletons, and E2E performance testing, please refer to the dedicated [Frontend UI Standards](docs/frontend_ui_standards.md) document.
 
 ## Progress & TODOs
 
@@ -289,8 +281,18 @@ To maintain a fluid, premium tactile feel, all page transitions, tab switches, a
 - [x] Map Direct Toggles: Configured direct left-click (desired/neutral) and right-click (avoided/neutral) toggling for countries on the map. Intercepted right-click (`contextmenu`) events on the canvas to disable default browser dropdowns, wrapped callbacks in mutable React refs to prevent stale closure bugs in MapLibre event listeners, and added safeguards to alert the user if a clicked country inherits its status from a parent continent setting.
 - [x] Reworked profile languages selector with a full-width, two-dropdown (language & level) Radix Select UI, displaying entries as composite 'Language / Level' chips.
 - [x] Geographic Targets Prioritization & Exceptions: Overrode default continent-level target behavior to prioritize country-level preferences (desired/avoided) over continent defaults. Enabled clicking/toggling countries even when their continent is selected, and added override descriptions in the country detail popup card.
+- [x] Built the Python Discovery Engine pipeline: Implemented `search_seeder` using DuckDuckGo to bypass API keys, built a robust Scrapy crawler (`scraper.py`) with depth and token-truncation limits, and configured an `ai_agent` pipeline to parse the scraped unstructured text into a strict `ExtractedScholarship` JSON schema, validating the results and pushing them to the database.
+- [x] Implemented environment variable configuration (`.env`) to securely control crawler limits (max results, depth limit, text truncation) without hardcoding values in Python.
+- [x] Replaced the native HTML family checkbox with a premium HeroUI `<Checkbox>` component in the Profile tab.
+- [x] Configured the application to default to Dark Mode with localStorage persistence, preventing flash-of-light-theme on load.
+- [x] Implemented a premium React Error Boundary and robust API HTTP status response checking to prevent silent rendering crashes and gracefully display errors to the user.
+- [x] Migrated from deprecated and frozen `duckduckgo-search` package to `ddgs` in the Python backend environment, resolving empty search results during discovery runs.
+- [x] Created detailed Discovery Scan execution logger inside the FastAPI backend, saving JSON logs of each query, crawl, scraped details, and token/cost calculations to the `backend/discovery_logs/` directory.
+- [x] Implemented real-time Server-Sent Events (SSE) streaming scan updates on the backend, displaying a premium glowing scan progress bar with current phase messages and percentage indicators on the dashboard.
+- [x] Last Scan Timestamp Indicator: Implemented backend log parsing API and a glassmorphic UI indicator with a pulsing green indicator next to the scan button, updating automatically upon scan completion.
+- [x] Refactored Discovery pipeline to use `Scrapling` stealth bypass library and Hugging Face Open-Source models (Qwen2.5) to avoid Cloudflare 403 blocks and rate limits.
+- [x] Rebuilt the `ai_agent` Extractor to perform Parallel Multi-Entity Extraction. The LLM now analyzes webpages and extracts both Scholarships AND Target Academic Programs (degrees, master's) simultaneously into separate lists.
+- [x] Upgraded `TargetProgram` schemas and DB logic to parse actionable application steps, important deadlines, and recommended next actions, alongside personalized desire and probability scores.
 
 ### TODOs
-- [ ] Build the Python web scraper to feed the `scholarships` table.
-- [ ] Connect the remaining frontend UI components to the FastAPI backend endpoints (Dashboard and Tracker).
-
+- [x] Connect the remaining frontend UI components to the FastAPI backend endpoints (Dashboard and Tracker).

@@ -14,6 +14,7 @@ def run_migrations(engine):
     
     # Define columns that need to exist on profiles table
     profiles_cols = {
+        "degree_level": "VARCHAR",
         "target_countries": "VARCHAR",
         "undesired_countries": "VARCHAR",
         "target_continents": "VARCHAR",
@@ -38,6 +39,16 @@ def run_migrations(engine):
         "requires_outreach": "BOOLEAN DEFAULT 0"
     }
     
+    # Define columns that need to exist on target_programs table
+    target_programs_cols = {
+        "details": "VARCHAR",
+        "steps": "VARCHAR",
+        "important_info": "VARCHAR",
+        "next_steps": "VARCHAR",
+        "desire_score": "FLOAT DEFAULT 0.0",
+        "probability_score": "FLOAT DEFAULT 0.0"
+    }
+    
     with engine.begin() as conn:
         # Check profiles table
         if "profiles" in inspector.get_table_names():
@@ -52,6 +63,13 @@ def run_migrations(engine):
             for col, col_type in scholarships_cols.items():
                 if col not in existing_cols:
                     conn.execute(text(f"ALTER TABLE scholarships ADD COLUMN {col} {col_type}"))
+
+        # Check target_programs table
+        if "target_programs" in inspector.get_table_names():
+            existing_cols = {c["name"] for c in inspector.get_columns("target_programs")}
+            for col, col_type in target_programs_cols.items():
+                if col not in existing_cols:
+                    conn.execute(text(f"ALTER TABLE target_programs ADD COLUMN {col} {col_type}"))
 
 def init_db():
     Base.metadata.create_all(bind=engine)

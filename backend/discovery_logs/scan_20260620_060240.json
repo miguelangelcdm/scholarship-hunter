@@ -1,0 +1,294 @@
+{
+  "timestamp": "2026-06-20T06:02:40.764536Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": true
+  },
+  "search_phase": {
+    "max_results_limit": 15,
+    "offset": 20,
+    "seed_urls": [
+      "https://commonslibrary.parliament.uk/cost-of-living-support-for-students/",
+      "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+      "https://study-uk.britishcouncil.org/scholarships-funding",
+      "https://education.ec.europa.eu/study-in-europe/planning-your-studies/scholarships-and-funding",
+      "https://www.upgrad.com/study-abroad/articles/fully-funded-scholarships-in-spain/",
+      "https://psl.eu/en/education/scholarships-and-grants-graduate-students",
+      "https://esim.holafly.com/students/scholarship-spain/",
+      "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/scholarships-university-ministry-education/",
+      "https://www.internationalstudent.com/study_uk/financial_aid/sources_funding/",
+      "https://www.gooverseas.com/blog/scholarships-study-abroad-spain",
+      "https://africanscholars.yale.edu/resources/colleges-universities-europe-give-financial-aid-international-students",
+      "https://registryservices.ed.ac.uk/student-funding/postgraduate/international",
+      "https://www.nafsa.org/about/about-international-education/financial-aid-undergraduate-international-students",
+      "https://www.ucas.com/money-and-student-life/money/scholarships-grants-and-bursaries/eu-and-international-students",
+      "https://bestfullyfundedscholarships.com/25-fully-funded-scholarships-in-spain/"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 15,
+    "pages": [
+      {
+        "url": "https://commonslibrary.parliament.uk/cost-of-living-support-for-students/",
+        "title": "Financial support for higher education students - House of Commons Library"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea"
+      },
+      {
+        "url": "https://study-uk.britishcouncil.org/scholarships-funding",
+        "title": "Scholarships and funding | Study UK"
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/planning-your-studies/scholarships-and-funding",
+        "title": "Scholarships, grants and financial support - European Education Area"
+      },
+      {
+        "url": "https://www.upgrad.com/study-abroad/articles/fully-funded-scholarships-in-spain/",
+        "title": "Fully Funded Scholarships in Spain for International Students"
+      },
+      {
+        "url": "https://psl.eu/en/education/scholarships-and-grants-graduate-students",
+        "title": "Scholarships and grants for graduate students | PSL"
+      },
+      {
+        "url": "https://esim.holafly.com/students/scholarship-spain/",
+        "title": "Scholarship for Spain: Requirements and How to Apply - Holafly"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/scholarships-university-ministry-education/",
+        "title": "Ministry of Education University Scholarships"
+      },
+      {
+        "url": "https://www.internationalstudent.com/study_uk/financial_aid/sources_funding/",
+        "title": "Sources of Funding/ Financial Aid | Study in the UK"
+      },
+      {
+        "url": "https://www.gooverseas.com/blog/scholarships-study-abroad-spain",
+        "title": "The Top Scholarships for Studying Abroad in Spain | Go Overseas"
+      },
+      {
+        "url": "https://africanscholars.yale.edu/resources/colleges-universities-europe-give-financial-aid-international-students",
+        "title": "Colleges & Universities in Europe that Give Financial Aid to International Students | Yale Young African Scholars"
+      },
+      {
+        "url": "https://registryservices.ed.ac.uk/student-funding/postgraduate/international",
+        "title": "Funding for international students | Scholarships and Student Funding | Student Administration"
+      },
+      {
+        "url": "https://www.nafsa.org/about/about-international-education/financial-aid-undergraduate-international-students",
+        "title": "Financial Aid for Undergraduate International Students | NAFSA"
+      },
+      {
+        "url": "https://www.ucas.com/money-and-student-life/money/scholarships-grants-and-bursaries/eu-and-international-students",
+        "title": "Scholarships, grants, and bursaries: EU and international students | UCAS"
+      },
+      {
+        "url": "https://bestfullyfundedscholarships.com/25-fully-funded-scholarships-in-spain/",
+        "title": "25 Fully Funded Scholarships in Spain: International Students 2026"
+      }
+    ],
+    "errors": []
+  },
+  "extraction_phase": {
+    "processed_pages": [
+      {
+        "url": "https://commonslibrary.parliament.uk/cost-of-living-support-for-students/",
+        "title": "Financial support for higher education students - House of Commons Library",
+        "is_valid": true,
+        "scholarships_found": 2,
+        "programs_found": 1,
+        "token_usage": {
+          "input_tokens": 2536,
+          "output_tokens": 554,
+          "cost_usd": 0.0003644
+        }
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea",
+        "is_valid": true,
+        "scholarships_found": 2,
+        "programs_found": 1,
+        "token_usage": {
+          "input_tokens": 2571,
+          "output_tokens": 367,
+          "cost_usd": 0.0003305
+        }
+      },
+      {
+        "url": "https://study-uk.britishcouncil.org/scholarships-funding",
+        "title": "Scholarships and funding | Study UK",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2501,
+          "output_tokens": 109,
+          "cost_usd": 0.0002719
+        }
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/planning-your-studies/scholarships-and-funding",
+        "title": "Scholarships, grants and financial support - European Education Area",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2533,
+          "output_tokens": 83,
+          "cost_usd": 0.00026990000000000006
+        }
+      },
+      {
+        "url": "https://www.upgrad.com/study-abroad/articles/fully-funded-scholarships-in-spain/",
+        "title": "Fully Funded Scholarships in Spain for International Students",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2569,
+          "output_tokens": 100,
+          "cost_usd": 0.0002769
+        }
+      },
+      {
+        "url": "https://psl.eu/en/education/scholarships-and-grants-graduate-students",
+        "title": "Scholarships and grants for graduate students | PSL",
+        "is_valid": true,
+        "scholarships_found": 1,
+        "programs_found": 2,
+        "token_usage": {
+          "input_tokens": 2544,
+          "output_tokens": 446,
+          "cost_usd": 0.0003436
+        }
+      },
+      {
+        "url": "https://esim.holafly.com/students/scholarship-spain/",
+        "title": "Scholarship for Spain: Requirements and How to Apply - Holafly",
+        "is_valid": true,
+        "scholarships_found": 1,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2554,
+          "output_tokens": 126,
+          "cost_usd": 0.0002806
+        }
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/scholarships-university-ministry-education/",
+        "title": "Ministry of Education University Scholarships",
+        "is_valid": true,
+        "scholarships_found": 1,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2569,
+          "output_tokens": 371,
+          "cost_usd": 0.0003311
+        }
+      },
+      {
+        "url": "https://www.internationalstudent.com/study_uk/financial_aid/sources_funding/",
+        "title": "Sources of Funding/ Financial Aid | Study in the UK",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2541,
+          "output_tokens": 104,
+          "cost_usd": 0.00027489999999999996
+        }
+      },
+      {
+        "url": "https://www.gooverseas.com/blog/scholarships-study-abroad-spain",
+        "title": "The Top Scholarships for Studying Abroad in Spain | Go Overseas",
+        "is_valid": true,
+        "scholarships_found": 1,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2546,
+          "output_tokens": 153,
+          "cost_usd": 0.0002852
+        }
+      },
+      {
+        "url": "https://africanscholars.yale.edu/resources/colleges-universities-europe-give-financial-aid-international-students",
+        "title": "Colleges & Universities in Europe that Give Financial Aid to International Students | Yale Young African Scholars",
+        "is_valid": true,
+        "scholarships_found": 4,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2558,
+          "output_tokens": 569,
+          "cost_usd": 0.00036960000000000004
+        }
+      },
+      {
+        "url": "https://registryservices.ed.ac.uk/student-funding/postgraduate/international",
+        "title": "Funding for international students | Scholarships and Student Funding | Student Administration",
+        "is_valid": true,
+        "scholarships_found": 1,
+        "programs_found": 1,
+        "token_usage": {
+          "input_tokens": 2359,
+          "output_tokens": 393,
+          "cost_usd": 0.0003145
+        }
+      },
+      {
+        "url": "https://www.nafsa.org/about/about-international-education/financial-aid-undergraduate-international-students",
+        "title": "Financial Aid for Undergraduate International Students | NAFSA",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2567,
+          "output_tokens": 26,
+          "cost_usd": 0.0002619
+        }
+      },
+      {
+        "url": "https://www.ucas.com/money-and-student-life/money/scholarships-grants-and-bursaries/eu-and-international-students",
+        "title": "Scholarships, grants, and bursaries: EU and international students | UCAS",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2600,
+          "output_tokens": 26,
+          "cost_usd": 0.0002652
+        }
+      },
+      {
+        "url": "https://bestfullyfundedscholarships.com/25-fully-funded-scholarships-in-spain/",
+        "title": "25 Fully Funded Scholarships in Spain: International Students 2026",
+        "is_valid": true,
+        "scholarships_found": 1,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2654,
+          "output_tokens": 354,
+          "cost_usd": 0.00033620000000000004
+        }
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 13,
+    "total_programs_added": 5,
+    "total_input_tokens": 38202,
+    "total_output_tokens": 3781,
+    "total_cost_usd": 0.0045764
+  }
+}

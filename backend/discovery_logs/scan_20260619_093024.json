@@ -1,0 +1,150 @@
+{
+  "timestamp": "2026-06-19T09:30:24.815761Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": false
+  },
+  "search_phase": {
+    "max_results_limit": 5,
+    "offset": 30,
+    "seed_urls": [
+      "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+      "https://www.scholarshipsads.com/spain-government-scholarships-march282026",
+      "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+      "https://www.study.eu/article/us-students-scholarships-to-study-in-europe",
+      "https://education.ec.europa.eu/study-in-europe/country-profiles/spain"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 12,
+    "pages": [
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly"
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly"
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/country-profiles/spain",
+        "title": "Study in Spain \u2013 education system, tuition fees, scholarships and student life - European Education Area"
+      },
+      {
+        "url": "https://www.scholarshipsads.com/spain-government-scholarships-17may2026",
+        "title": "Spain Government Scholarships 2026-2027 (Fully Funded)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea"
+      },
+      {
+        "url": "https://www.facebook.com/ScholarshipsAds/",
+        "title": "ScholarshipsAds.com | Welwyn Garden City"
+      },
+      {
+        "url": "https://www.scholarshipsads.com/joseph-u-bottalla-scholarship-usa",
+        "title": "Joseph U. Bottalla Scholarship, USA"
+      },
+      {
+        "url": "https://webstories.scholarshipsads.com/web-stories/top-5-reasons-scholarships-get-rejected/",
+        "title": "Top 5 Reasons Scholarships Get Rejected - Scholarshipsads"
+      },
+      {
+        "url": "https://webstories.scholarshipsads.com/web-stories/top-5-mistakes-students-make-while-choosing-a-university/",
+        "title": "Top 5 Mistakes Students Make While Choosing a University - Scholarshipsads"
+      },
+      {
+        "url": "https://webstories.scholarshipsads.com/web-stories/top-5-mistakes-in-student-visa-application/",
+        "title": "Top 5 Mistakes in Student Visa Applications - Scholarshipsads"
+      },
+      {
+        "url": "https://www.scholarshipsads.com/blog/hungarian-heinnovate-train-the-trainers-programme-2026-in-budapest-travel-and-accommodation-fully-funded",
+        "title": "Hungarian Heinnovate Train The Trainers Programme 2026 In Budapest Travel And Accommodation Fully Funded"
+      },
+      {
+        "url": "https://www.scholarshipsads.com/ireland-fellowship-programme-16jun2026",
+        "title": "Ireland Fellowship Programme 2027\u201328"
+      }
+    ]
+  },
+  "extraction_phase": {
+    "processed_pages": [
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/country-profiles/spain",
+        "title": "Study in Spain \u2013 education system, tuition fees, scholarships and student life - European Education Area",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://www.scholarshipsads.com/spain-government-scholarships-17may2026",
+        "title": "Spain Government Scholarships 2026-2027 (Fully Funded)",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://www.facebook.com/ScholarshipsAds/",
+        "title": "ScholarshipsAds.com | Welwyn Garden City",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://www.scholarshipsads.com/joseph-u-bottalla-scholarship-usa",
+        "title": "Joseph U. Bottalla Scholarship, USA",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://webstories.scholarshipsads.com/web-stories/top-5-reasons-scholarships-get-rejected/",
+        "title": "Top 5 Reasons Scholarships Get Rejected - Scholarshipsads",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://webstories.scholarshipsads.com/web-stories/top-5-mistakes-students-make-while-choosing-a-university/",
+        "title": "Top 5 Mistakes Students Make While Choosing a University - Scholarshipsads",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://webstories.scholarshipsads.com/web-stories/top-5-mistakes-in-student-visa-application/",
+        "title": "Top 5 Mistakes in Student Visa Applications - Scholarshipsads",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://www.scholarshipsads.com/blog/hungarian-heinnovate-train-the-trainers-programme-2026-in-budapest-travel-and-accommodation-fully-funded",
+        "title": "Hungarian Heinnovate Train The Trainers Programme 2026 In Budapest Travel And Accommodation Fully Funded",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://www.scholarshipsads.com/ireland-fellowship-programme-16jun2026",
+        "title": "Ireland Fellowship Programme 2027\u201328",
+        "status": "failed (LLM error)"
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cost_usd": 0.0
+  }
+}

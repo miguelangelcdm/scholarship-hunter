@@ -5,6 +5,7 @@ from datetime import datetime
 class ProfileBase(BaseModel):
     name: str
     major: Optional[str] = None
+    degree_level: Optional[str] = None
     gpa: Optional[str] = None
     demographics: Optional[str] = None
     nationalities: Optional[str] = None
@@ -86,9 +87,16 @@ class TargetProgramBase(BaseModel):
     is_online: Optional[bool] = False
     is_hybrid: Optional[bool] = False
     accepts_international: Optional[bool] = True
+    
+    details: Optional[str] = None
+    steps: Optional[str] = None
+    important_info: Optional[str] = None
+    next_steps: Optional[str] = None
 
 class TargetProgramResponse(TargetProgramBase):
     id: int
     status: str
+    desire_score: float
+    probability_score: float
     class Config:
         from_attributes = True

@@ -1,18 +1,28 @@
-const API_BASE = typeof window !== 'undefined'
+export const API_BASE = typeof window !== 'undefined'
   ? `http://${window.location.hostname}:8000`
   : "http://127.0.0.1:8000";
 
+const handleResponse = async (res: Response) => {
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Request failed with status ${res.status}`);
+  }
+  return res.json();
+};
+
 export const api = {
-  getProfile: () => fetch(`${API_BASE}/profile`).then(res => res.json()),
+  getProfile: () => fetch(`${API_BASE}/profile`).then(handleResponse),
   updateProfile: (data: any) => fetch(`${API_BASE}/profile`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
-  }).then(res => res.json()),
-  getScholarships: () => fetch(`${API_BASE}/scholarships`).then(res => res.json()),
-  scanScholarships: () => fetch(`${API_BASE}/scholarships/scan`, { method: 'POST' }).then(res => res.json()),
-  draftEssay: (id: number) => fetch(`${API_BASE}/scholarships/${id}/draft`, { method: 'POST' }).then(res => res.json()),
-  draftOutreach: (id: number) => fetch(`${API_BASE}/scholarships/${id}/outreach`, { method: 'POST' }).then(res => res.json()),
+  }).then(handleResponse),
+  getScholarships: () => fetch(`${API_BASE}/scholarships`).then(handleResponse),
+  getPrograms: () => fetch(`${API_BASE}/programs`).then(handleResponse),
+  getLastScan: () => fetch(`${API_BASE}/scholarships/last-scan`).then(handleResponse),
+  scanScholarships: () => fetch(`${API_BASE}/scholarships/scan`, { method: 'POST' }).then(handleResponse),
+  draftEssay: (id: number) => fetch(`${API_BASE}/scholarships/${id}/draft`, { method: 'POST' }).then(handleResponse),
+  draftOutreach: (id: number) => fetch(`${API_BASE}/scholarships/${id}/outreach`, { method: 'POST' }).then(handleResponse),
   uploadDocument: (docType: string, file: File) => {
     const formData = new FormData();
     formData.append('doc_type', docType);
@@ -20,15 +30,9 @@ export const api = {
     return fetch(`${API_BASE}/profile/upload`, {
       method: 'POST',
       body: formData
-    }).then(res => {
-      if (!res.ok) throw new Error("Upload failed");
-      return res.json();
-    });
+    }).then(handleResponse);
   },
   parseDocument: (docType: string) => fetch(`${API_BASE}/profile/parse-doc/${docType}`, {
     method: 'POST'
-  }).then(res => {
-    if (!res.ok) throw new Error("Parsing failed");
-    return res.json();
-  })
+  }).then(handleResponse)
 };

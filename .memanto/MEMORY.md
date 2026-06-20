@@ -41,6 +41,8 @@ The agent is building "Scholarship Hunter": an AI-powered scholarship discovery,
 * Aligned profile health calculation: renamed the score card to "Pathfinder Preparedness" and capped the score at `60%` (returning an orange `Awaiting Preferences` status) if critical matching criteria like Modality or target locations are missing.
 * Created ultra-premium, high-contrast, glowing gradient CTA buttons in both light and dark modes for the locked results overlay and incomplete profile modals.
 * Updated Playwright E2E visual tests to reflect the new `Pathfinder Preparedness` title.
+* Resolved the Vite build and startup failure (`[postcss] No "exports" main defined in @heroui/react`) by downgrading `@heroui/react` from `v3.2.1` to `v2.8.10` and switching the Tailwind content scanning path to `@heroui/theme/dist` in `tailwind.config.ts` to restore compatibility with Tailwind CSS v3 and React 18.
+* Configured the frontend application to default to Dark Mode with full localStorage persistence. The `<html>` class is set to `dark` in `index.html` to prevent theme-flicker on reload, and the Header component toggles and tracks choices reactively.
 
 ## Current Objective (Phase 6 - Pending)
 * Build Python web scraper to feed the `scholarships` table.

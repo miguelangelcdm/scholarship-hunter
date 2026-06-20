@@ -199,4 +199,10 @@ Stores targeted university degree program matches found during discovery scans.
 | `is_online` | `Boolean` | | `No` | `False` | Boolean set to true if the program is fully remote/online. |
 | `is_hybrid` | `Boolean` | | `No` | `False` | Boolean set to true if the program is hybrid. |
 | `accepts_international` | `Boolean` | | `No` | `True` | Boolean indicating if international applicants are welcome. |
+| `details` | `String` | | `Yes` | *None* | A 2-3 sentence summary of the program and its core curriculum. |
+| `steps` | `String` | | `Yes` | *None* | Step-by-step application instructions if available. |
+| `important_info` | `String` | | `Yes` | *None* | Deadlines, specific constraints, or key requirements. |
+| `next_steps` | `String` | | `Yes` | *None* | Recommended immediate next actions for the user to apply. |
+| `desire_score` | `Float` | | `No` | `0.0` | Match score (0-100) based on user's field and interests. |
+| `probability_score` | `Float` | | `No` | `0.0` | Admission probability score (0-100) based on requirements. |
 | `status` | `String` | | `No` | `"Discovered"` | Board column: `"Discovered"`, `"Preparing"`, `"Applied"`, `"Rejected"`, `"Accepted"`. |

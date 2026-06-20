@@ -24,5 +24,6 @@ This document serves as the master director for the AI coding assistant. Dependi
 *   **When to invoke:** At the beginning and end of long coding sessions, or when making major architectural decisions.
 *   **Directives:** Maintain the project's memory ledger in `.memanto/` to ensure context is never lost.
 
-## Universal Directive
-Always ensure that the Orbix Health Dashboard base remains structurally sound while injecting these specific skills into new components (e.g., the Scholarship matching views).
+## Universal Directives
+1. **Orbix Foundation:** Always ensure that the Orbix Health Dashboard base remains structurally sound while injecting these specific skills into new components (e.g., the Scholarship matching views).
+2. **Automatic Documentation:** Whenever you finish implementing a new feature or patching a bug, you MUST automatically identify and update ALL relevant markdown files in the `docs/` folder (and the root `README.md`) to reflect the changes. Do this immediately before or alongside presenting your final walkthrough, without waiting for the user to explicitly ask you to document it.

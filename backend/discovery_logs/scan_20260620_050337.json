@@ -1,0 +1,88 @@
+{
+  "timestamp": "2026-06-20T05:03:37.640447Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": false
+  },
+  "search_phase": {
+    "max_results_limit": 5,
+    "offset": 1,
+    "seed_urls": [
+      "https://www.bachelorsportal.com/study-options/268828698/industrial-systems-engineering-spain.html",
+      "https://www.mastersportal.com/search/scholarships/master/industrial-systems-engineering",
+      "https://www.usnews.com/education/scholarships/scholarships-for-systems-engineering-142701",
+      "https://erasmusscholarship.com/erasmus-mundus-emsse-scholarship/",
+      "https://www.facebook.com/groups/1061296344506563/posts/1403841473585380/"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 5,
+    "pages": [
+      {
+        "url": "https://www.bachelorsportal.com/study-options/268828698/industrial-systems-engineering-spain.html",
+        "title": "Industrial & Systems Engineering in Spain: 2026 Bachelor's Guide | Bachelorsportal"
+      },
+      {
+        "url": "https://www.mastersportal.com/search/scholarships/master/industrial-systems-engineering",
+        "title": "2495 Scholarships for Master's in Industrial & Systems Engineering | Mastersportal"
+      },
+      {
+        "url": "https://www.usnews.com/education/scholarships/scholarships-for-systems-engineering-142701",
+        "title": "Scholarships for Systems Engineering"
+      },
+      {
+        "url": "https://erasmusscholarship.com/erasmus-mundus-emsse-scholarship/",
+        "title": "Erasmus Mundus EMSSE Scholarship 2026 | Master in Sustainable Systems Engineering"
+      },
+      {
+        "url": "https://www.facebook.com/groups/1061296344506563/posts/1403841473585380/",
+        "title": "Edugateway Consults | Scholarships For Masters Studies In The UK | Facebook"
+      }
+    ],
+    "errors": []
+  },
+  "extraction_phase": {
+    "processed_pages": [
+      {
+        "url": "https://www.bachelorsportal.com/study-options/268828698/industrial-systems-engineering-spain.html",
+        "title": "Industrial & Systems Engineering in Spain: 2026 Bachelor's Guide | Bachelorsportal",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://www.mastersportal.com/search/scholarships/master/industrial-systems-engineering",
+        "title": "2495 Scholarships for Master's in Industrial & Systems Engineering | Mastersportal",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://www.usnews.com/education/scholarships/scholarships-for-systems-engineering-142701",
+        "title": "Scholarships for Systems Engineering",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://erasmusscholarship.com/erasmus-mundus-emsse-scholarship/",
+        "title": "Erasmus Mundus EMSSE Scholarship 2026 | Master in Sustainable Systems Engineering",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://www.facebook.com/groups/1061296344506563/posts/1403841473585380/",
+        "title": "Edugateway Consults | Scholarships For Masters Studies In The UK | Facebook",
+        "status": "failed (LLM error)"
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cost_usd": 0.0
+  }
+}

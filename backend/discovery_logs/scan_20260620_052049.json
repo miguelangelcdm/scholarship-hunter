@@ -1,0 +1,116 @@
+{
+  "timestamp": "2026-06-20T05:20:49.947081Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": false
+  },
+  "search_phase": {
+    "max_results_limit": 5,
+    "offset": 9,
+    "seed_urls": [
+      "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+      "https://www.scholarshipsads.com/spain-government-scholarships-march282026",
+      "https://www.study.eu/article/us-students-scholarships-to-study-in-europe",
+      "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+      "https://education.ec.europa.eu/study-in-europe/country-profiles/spain"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 4,
+    "pages": [
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea"
+      },
+      {
+        "url": "https://www.scholarshipsads.com/spain-government-scholarships-march282026",
+        "title": "Spain Government Scholarships 2026-2027 (Fully Funded)"
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad - Holafly"
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/country-profiles/spain",
+        "title": "Study in Spain \u2013 education system, tuition fees, scholarships and student life - European Education Area"
+      }
+    ],
+    "errors": [
+      {
+        "url": "https://www.study.eu/article/us-students-scholarships-to-study-in-europe",
+        "error": "No relevant keywords found in page content"
+      }
+    ]
+  },
+  "extraction_phase": {
+    "processed_pages": [
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "City of Malaga Scholarships",
+        "provider": "Universidad Europea de Andaluc\u00eda",
+        "is_valid": true,
+        "desire_score": 90.0,
+        "probability_score": 85.0,
+        "token_usage": {
+          "input_tokens": 2004,
+          "output_tokens": 355,
+          "cost_usd": 0.0002568
+        }
+      },
+      {
+        "url": "https://www.scholarshipsads.com/spain-government-scholarships-march282026",
+        "title": "Spain Government Scholarships 2026-2027",
+        "provider": "Spanish Government (Ministry of Education and Vocational Training)",
+        "is_valid": true,
+        "desire_score": 85.0,
+        "probability_score": 70.0,
+        "token_usage": {
+          "input_tokens": 2020,
+          "output_tokens": 418,
+          "cost_usd": 0.00027689999999999995
+        }
+      },
+      {
+        "url": "https://esim.holafly.com/students/study-systems-engineering-abroad/",
+        "title": "Scholarships to study systems engineering abroad",
+        "provider": "Holafly",
+        "is_valid": false,
+        "desire_score": 80.0,
+        "probability_score": 0.0,
+        "token_usage": {
+          "input_tokens": 2026,
+          "output_tokens": 360,
+          "cost_usd": 0.00025995
+        }
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/country-profiles/spain",
+        "title": "SEPIE (Spanish Service for the Internationalisation of Education) Scholarships",
+        "provider": "SEPIE",
+        "is_valid": true,
+        "desire_score": 70.0,
+        "probability_score": 50.0,
+        "token_usage": {
+          "input_tokens": 1948,
+          "output_tokens": 326,
+          "cost_usd": 0.0002439
+        }
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 3,
+    "total_input_tokens": 7998,
+    "total_output_tokens": 1459,
+    "total_cost_usd": 0.00103755
+  }
+}
