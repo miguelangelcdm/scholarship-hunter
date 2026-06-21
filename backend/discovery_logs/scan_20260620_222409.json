@@ -1,0 +1,237 @@
+{
+  "timestamp": "2026-06-20T22:24:09.360869Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": true
+  },
+  "search_phase": {
+    "max_results_limit": 15,
+    "offset": 18,
+    "seed_urls": [
+      "https://www.facebook.com/Spain.Albania/posts/-official-masters-degree-in-european-union-uned-spain-presentation-and-relevance/1243993277920679/",
+      "https://careers.quest-global.com/global/en/job/P-119329/Systems-Engineer-MBSE",
+      "https://www.nu.edu/programs/master-of-science-in-engineering-management/master-of-science-in-engineering-management-systems-engineering/",
+      "https://www.saab.com/career/job-opportunities/director-systems-engineering-integration-and-test-seit",
+      "https://www.caribbeanjobs.com/Project-Engineering-Lead-Job-163438.aspx",
+      "https://www.dreamstudiesabroad.com/schools/spain-application",
+      "https://www.immoabroad.com/spain/child-benefit-in-spain-everything-you-need-to-know",
+      "https://www.humanium.org/en/spains-2025-universal-child-benefit-aims-to-combat-child-poverty/",
+      "https://www.eujobs.co/career-guides/assystem-s-a-career-guide",
+      "https://www.reddit.com/r/engineering/comments/1c232if/uk_engineers_what_did_you_earn_when/",
+      "https://www.cowi.com/your-career/open-vacancies/vacancy/?id=60370",
+      "https://www.tesla.com/et_EE/careers/search/job/sr-machine-learning-engineer-cell-manufacturing-266247",
+      "https://orange.jobs/fr/fr/job/ICM-585508/Senior-Engineer"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 11,
+    "pages": [
+      {
+        "url": "https://www.facebook.com/Spain.Albania/posts/-official-masters-degree-in-european-union-uned-spain-presentation-and-relevance/1243993277920679/",
+        "title": "\ud83c\udf93 OFFICIAL MASTER\u2019S DEGREE... - Embajada de Espa\u00f1a en Tirana | Facebook"
+      },
+      {
+        "url": "https://careers.quest-global.com/global/en/job/P-119329/Systems-Engineer-MBSE",
+        "title": "Systems Engineer (MBSE) in Madrid, Community of Madrid, Spain | Aerospace and Defense at Quest Global"
+      },
+      {
+        "url": "https://www.nu.edu/programs/master-of-science-in-engineering-management/master-of-science-in-engineering-management-systems-engineering/",
+        "title": "Master of Science in Engineering Management, Systems Engineering | National University"
+      },
+      {
+        "url": "https://www.saab.com/career/job-opportunities/director-systems-engineering-integration-and-test-seit",
+        "title": "Director, Systems Engineering, Integration and Test (SEIT)"
+      },
+      {
+        "url": "https://www.caribbeanjobs.com/Project-Engineering-Lead-Job-163438.aspx",
+        "title": "Jobs: Port-of-Spain Project Engineering Lead Jobs - caribbeanjobs.com"
+      },
+      {
+        "url": "https://www.dreamstudiesabroad.com/schools/spain-application",
+        "title": "Spain Application support - help to apply to all universities in Spain"
+      },
+      {
+        "url": "https://www.immoabroad.com/spain/child-benefit-in-spain-everything-you-need-to-know",
+        "title": "Child Benefit in Spain: Everything You Need to Know"
+      },
+      {
+        "url": "https://www.humanium.org/en/spains-2025-universal-child-benefit-aims-to-combat-child-poverty/",
+        "title": "Spain\u2019s 2025 Universal Child Benefit aims to combat child poverty - Humanium"
+      },
+      {
+        "url": "https://www.eujobs.co/career-guides/assystem-s-a-career-guide",
+        "title": "How to Get a Job at ASSYSTEM S.A. - Complete Career Guide - EUJobs.co"
+      },
+      {
+        "url": "https://www.reddit.com/r/engineering/comments/1c232if/uk_engineers_what_did_you_earn_when/",
+        "title": "UK engineers what did you earn when? : r/engineering"
+      },
+      {
+        "url": "https://orange.jobs/fr/fr/job/ICM-585508/Senior-Engineer",
+        "title": "Senior Engineer in MEXICO | IT & Ing\u00e9nierie at orange"
+      }
+    ],
+    "errors": [
+      {
+        "url": "https://www.cowi.com/your-career/open-vacancies/vacancy/?id=60370",
+        "error": "No relevant keywords found in page content"
+      },
+      {
+        "url": "https://www.tesla.com/et_EE/careers/search/job/sr-machine-learning-engineer-cell-manufacturing-266247",
+        "error": "No relevant keywords found in page content"
+      }
+    ]
+  },
+  "extraction_phase": {
+    "processed_pages": [
+      {
+        "url": "https://www.facebook.com/Spain.Albania/posts/-official-masters-degree-in-european-union-uned-spain-presentation-and-relevance/1243993277920679/",
+        "title": "\ud83c\udf93 OFFICIAL MASTER\u2019S DEGREE... - Embajada de Espa\u00f1a en Tirana | Facebook",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 3071,
+          "output_tokens": 107,
+          "cost_usd": 0.0003285
+        }
+      },
+      {
+        "url": "https://careers.quest-global.com/global/en/job/P-119329/Systems-Engineer-MBSE",
+        "title": "Systems Engineer (MBSE) in Madrid, Community of Madrid, Spain | Aerospace and Defense at Quest Global",
+        "is_valid": true,
+        "scholarships_found": 0,
+        "programs_found": 1,
+        "token_usage": {
+          "input_tokens": 2789,
+          "output_tokens": 437,
+          "cost_usd": 0.00036630000000000007
+        }
+      },
+      {
+        "url": "https://www.nu.edu/programs/master-of-science-in-engineering-management/master-of-science-in-engineering-management-systems-engineering/",
+        "title": "Master of Science in Engineering Management, Systems Engineering | National University",
+        "is_valid": true,
+        "scholarships_found": 0,
+        "programs_found": 1,
+        "token_usage": {
+          "input_tokens": 2825,
+          "output_tokens": 404,
+          "cost_usd": 0.00036330000000000005
+        }
+      },
+      {
+        "url": "https://www.saab.com/career/job-opportunities/director-systems-engineering-integration-and-test-seit",
+        "title": "Director, Systems Engineering, Integration and Test (SEIT)",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2815,
+          "output_tokens": 147,
+          "cost_usd": 0.0003109
+        }
+      },
+      {
+        "url": "https://www.caribbeanjobs.com/Project-Engineering-Lead-Job-163438.aspx",
+        "title": "Jobs: Port-of-Spain Project Engineering Lead Jobs - caribbeanjobs.com",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2904,
+          "output_tokens": 108,
+          "cost_usd": 0.000312
+        }
+      },
+      {
+        "url": "https://www.dreamstudiesabroad.com/schools/spain-application",
+        "title": "Spain Application support - help to apply to all universities in Spain",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2882,
+          "output_tokens": 121,
+          "cost_usd": 0.0003124
+        }
+      },
+      {
+        "url": "https://www.immoabroad.com/spain/child-benefit-in-spain-everything-you-need-to-know",
+        "title": "Child Benefit in Spain: Everything You Need to Know",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2891,
+          "output_tokens": 106,
+          "cost_usd": 0.0003103
+        }
+      },
+      {
+        "url": "https://www.humanium.org/en/spains-2025-universal-child-benefit-aims-to-combat-child-poverty/",
+        "title": "Spain\u2019s 2025 Universal Child Benefit aims to combat child poverty - Humanium",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 3056,
+          "output_tokens": 105,
+          "cost_usd": 0.0003266000000000001
+        }
+      },
+      {
+        "url": "https://www.eujobs.co/career-guides/assystem-s-a-career-guide",
+        "title": "How to Get a Job at ASSYSTEM S.A. - Complete Career Guide - EUJobs.co",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2913,
+          "output_tokens": 112,
+          "cost_usd": 0.0003137
+        }
+      },
+      {
+        "url": "https://www.reddit.com/r/engineering/comments/1c232if/uk_engineers_what_did_you_earn_when/",
+        "title": "UK engineers what did you earn when? : r/engineering",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 3181,
+          "output_tokens": 111,
+          "cost_usd": 0.0003403
+        }
+      },
+      {
+        "url": "https://orange.jobs/fr/fr/job/ICM-585508/Senior-Engineer",
+        "title": "Senior Engineer in MEXICO | IT & Ing\u00e9nierie at orange",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2800,
+          "output_tokens": 147,
+          "cost_usd": 0.0003094
+        }
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_programs_added": 2,
+    "total_input_tokens": 32127,
+    "total_output_tokens": 1905,
+    "total_cost_usd": 0.0035937000000000005
+  }
+}

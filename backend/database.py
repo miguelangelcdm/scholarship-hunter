@@ -36,7 +36,9 @@ def run_migrations(engine):
         "benefits_summary": "VARCHAR",
         "prestige_tier": "INTEGER",
         "award_count": "INTEGER",
-        "requires_outreach": "BOOLEAN DEFAULT 0"
+        "requires_outreach": "BOOLEAN DEFAULT 0",
+        "improvement_projection": "VARCHAR",
+        "target_program_id": "INTEGER"
     }
     
     # Define columns that need to exist on target_programs table
@@ -46,7 +48,8 @@ def run_migrations(engine):
         "important_info": "VARCHAR",
         "next_steps": "VARCHAR",
         "desire_score": "FLOAT DEFAULT 0.0",
-        "probability_score": "FLOAT DEFAULT 0.0"
+        "probability_score": "FLOAT DEFAULT 0.0",
+        "improvement_projection": "VARCHAR"
     }
     
     with engine.begin() as conn:

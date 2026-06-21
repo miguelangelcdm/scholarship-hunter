@@ -1,10 +1,12 @@
 import os
+import requests
+from typing import Optional, List
+from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-from pydantic import BaseModel, Field
-from typing import Optional, List
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_ollama import ChatOllama
 
 class ScoreResponse(BaseModel):
     probability_score: float = Field(description="Score out of 100 on how likely the user is to win based on requirements vs profile")
@@ -16,6 +18,17 @@ def get_llm():
         print("Warning: No GEMINI_API_KEY found in environment variables.")
         return None
     return ChatGoogleGenerativeAI(model="gemini-3.5-flash", google_api_key=api_key)
+
+def get_ollama_llm():
+    try:
+        # Check if Ollama is running locally
+        res = requests.get("http://localhost:11434/", timeout=1.0)
+        if res.status_code == 200:
+            print("Local Ollama detected! Routing inference to local hardware.")
+            return ChatOllama(model="llama3", temperature=0.1)
+    except Exception:
+        pass
+    return None
 
 def get_hf_llm():
     api_key = os.getenv("HUGGINGFACEHUB_API_TOKEN")
@@ -35,6 +48,12 @@ def get_hf_llm():
     except Exception as e:
         print(f"Error initializing HuggingFace model: {e}")
         return None
+
+def get_primary_llm():
+    llm = get_ollama_llm()
+    if llm:
+        return llm
+    return get_hf_llm()
 
 def score_scholarship(profile_data: dict, scholarship_data: dict):
     llm = get_llm()
@@ -105,9 +124,9 @@ class ExtractedPageData(BaseModel):
     programs: List[ExtractedProgram] = Field(default_factory=list, description="List of relevant academic programs/degrees found on the page")
 
 def extract_page_content(profile_data: dict, page_data: dict, target_program_context: dict = None):
-    llm = get_hf_llm()
+    llm = get_primary_llm()
     if not llm:
-        print("Falling back to Gemini for extraction since HF is not configured...")
+        print("Falling back to Gemini for extraction since primary is not configured...")
         llm = get_llm()
         if not llm:
             return None
@@ -122,7 +141,8 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
         # General scan logic
         target_info = ""
         rejection_rule = """You MUST strictly reject and discard ANY program or scholarship that does NOT strongly align with the User's major and career goals. 
-        CRITICAL INSTITUTION RULE: If the exact, concrete name of the university or institution cannot be found in the text, you MUST discard the program. Do not extract it. Do not use placeholders like 'Unknown University'. We only want concrete opportunities."""
+        CRITICAL INSTITUTION RULE: If the exact, concrete name of the university or institution cannot be found in the text, you MUST discard the program. Do not extract it. Do not use placeholders like 'Unknown University'.
+        STRICT ACADEMIC RULE: The provider or university MUST be a verifiable Higher Education Institution (e.g., University, College, Institute, Academy). You MUST reject corporate entities, consulting firms, or generic companies (like 'Quest Global', 'TechCorp', etc.). We only want academic degree programs and academic financial aid."""
 
     prompt = PromptTemplate(
         template="""
@@ -154,15 +174,27 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
     )
     
     try:
+        # Smart Content Truncation: Restrict to first ~25000 chars (~6000 tokens) to save credits and ignore footers
+        safe_page_text = page_data.get("text", "")
+        if len(safe_page_text) > 25000:
+            safe_page_text = safe_page_text[:25000] + "\n...[Content Truncated]..."
+            
         formatted = prompt.format(
             profile=str(profile_data),
             page_title=page_data.get("title", ""),
             page_url=page_data.get("url", ""),
-            page_text=page_data.get("text", ""),
+            page_text=safe_page_text,
             target_info=target_info,
             rejection_rule=rejection_rule
         )
-        response = llm.invoke(formatted)
+        try:
+            response = llm.invoke(formatted)
+        except Exception as e:
+            print(f"Primary LLM failed ({e}). Falling back to Gemini...")
+            llm = get_llm()
+            if not llm:
+                return None
+            response = llm.invoke(formatted)
         
         input_tokens = 0
         output_tokens = 0
@@ -267,9 +299,9 @@ class DeepProgramExtraction(BaseModel):
     next_steps: str = Field(description="Recommended immediate next actions for the user to start the application process.")
 
 def extract_deep_program_details(page_text: str, profile_data: dict, target_program_context: dict) -> dict:
-    llm = get_hf_llm()
+    llm = get_primary_llm()
     if not llm:
-        print("Falling back to Gemini for deep extraction since HF is not configured...")
+        print("Falling back to Gemini for deep extraction since primary is not configured...")
         llm = get_llm()
         if not llm:
             return {}
@@ -299,13 +331,24 @@ def extract_deep_program_details(page_text: str, profile_data: dict, target_prog
     )
     
     try:
+        safe_page_text = page_text
+        if len(safe_page_text) > 25000:
+            safe_page_text = safe_page_text[:25000] + "\n...[Content Truncated]..."
+            
         formatted = prompt.format(
             target_program=target_program_context.get("title", "Unknown Program"),
             university=target_program_context.get("university", "Unknown University"),
             profile=str(profile_data),
-            page_text=page_text
+            page_text=safe_page_text
         )
-        response = llm.invoke(formatted)
+        try:
+            response = llm.invoke(formatted)
+        except Exception as e:
+            print(f"Primary LLM failed ({e}). Falling back to Gemini...")
+            llm = get_llm()
+            if not llm:
+                return {}
+            response = llm.invoke(formatted)
         
         raw_content = response.content
         if "```json" in raw_content:

@@ -63,6 +63,7 @@ erDiagram
         String url
         Float desire_score
         Float probability_score
+        String improvement_projection
         String status
         String benefits_summary
         Integer prestige_tier
@@ -85,6 +86,7 @@ erDiagram
         Boolean is_online
         Boolean is_hybrid
         Boolean accepts_international
+        String improvement_projection
         String status
     }
 ```
@@ -167,7 +169,8 @@ Contains financial aid opportunities discovered and rated for matching.
 | `url` | `String` | | `No` | *None* | Link target pointing to details or application form. |
 | `desire_score` | `Float` | | `No` | `0.0` | Fit score rating (0-100) on user interest overlap. |
 | `probability_score` | `Float` | | `No` | `0.0` | Win chance score (0-100) calculated on academic/trait matches. |
-| `status` | `String` | | `No` | `"Discovered"` | Board column: `"Discovered"`, `"To Apply"`, `"Drafting"`, `"Applied"`, `"Rejected"`, `"Won"`. |
+| `improvement_projection` | `String` | | `Yes` | *None* | Actionable advice on what hard requirements are missing to improve probability score. |
+| `status` | `String` | | `No` | `"Discovered"` | Board column: `"Discovered"`, `"To Apply"`, `"Drafting"`, `"Applied"`, `"Rejected"`, `"Won"`, `"Discarded"`. |
 | `benefits_summary` | `String` | | `Yes` | *None* | Extracted list of extra benefits (e.g. travel, housing, health). |
 | `prestige_tier` | `Integer` | | `Yes` | *None* | Academic status tier index representing scholarship difficulty/reputation. |
 | `award_count` | `Integer` | | `Yes` | *None* | Number of individual awards typically granted. |
@@ -205,4 +208,5 @@ Stores targeted university degree program matches found during discovery scans.
 | `next_steps` | `String` | | `Yes` | *None* | Recommended immediate next actions for the user to apply. |
 | `desire_score` | `Float` | | `No` | `0.0` | Match score (0-100) based on user's field and interests. |
 | `probability_score` | `Float` | | `No` | `0.0` | Admission probability score (0-100) based on requirements. |
-| `status` | `String` | | `No` | `"Discovered"` | Board column: `"Discovered"`, `"Preparing"`, `"Applied"`, `"Rejected"`, `"Accepted"`. |
+| `improvement_projection` | `String` | | `Yes` | *None* | Actionable advice on what hard requirements are missing to improve probability score. |
+| `status` | `String` | | `No` | `"Discovered"` | Board column: `"Discovered"`, `"Preparing"`, `"Applied"`, `"Rejected"`, `"Accepted"`, `"Discarded"`. |

@@ -100,7 +100,9 @@ This will launch the interactive **Scholarship Hunter Developer Menu**:
   [4] Run Playwright E2E Tests
   [5] Seed Database with Mock Programs & Applications
   [6] Unseed Database
-  [7] Exit
+  [7] Clean Invalid Programs from Database
+  [8] Wipe ALL Discovered Programs & Funding Data
+  [9] Exit
 ==================================================
 ```
 
@@ -232,7 +234,28 @@ The app uses a Kanban-style board in the Tracker page to mirror the real-life ap
 From the Tracker, users can trigger AI actions:
 - **AI Essay Drafter**: Generates personalized essays.
 - **Educational Outreach Module**: Instead of just generating an email blindly, this module first educates the user on *why* contacting the university financial aid office is important, lists the typical steps to follow, and *then* provides an AI-generated professional inquiry email using their profile context.
+- **Deep Program Extraction:** Concurrent background fetching from official university pages to pull application steps and strict requirements.
+- **Wipe Database Utility:** Instantly obliterate discovered programs and funding records to start a fresh search session, while keeping user profile data intact.
+- **Local Hardware Processing (100% Free Inference):** Seamlessly detects and routes all AI processing to a local Ollama instance (`llama3` or `phi3`) if running, entirely eliminating API costs.
+- **Smart Content Truncation:** Reduces API credit usage by stripping heavy navigation menus and truncating scraped text to the core admissions content before scoring.
+- **Semantic Campus Photography:** Automatically fetches high-resolution, panoramic official campus photos via the **Wikidata Semantic API** (Property P18), guaranteeing images instead of logos without relying on luck or rate-limited bots.
 
+## Quickstart (Developer Menu)
+
+This project uses an interactive command-line menu powered by **PM2 (Process Manager 2)** to orchestrate all services concurrently and provide a real-time terminal dashboard for logs and resource usage.
+
+To launch the menu:
+```bash
+node menu.js
+```
+
+### Menu Options
+1. **[1] Start Services & Open PM2 Dashboard**: Spawns the React Frontend, FastAPI Backend, and Local Ollama services in the background, then opens `pm2 monit`—a split-pane interactive dashboard showing real-time logs, CPU usage, and RAM consumption.
+2. **[2] Stop All Services**: Safely terminates all background services.
+3. **[3] Restart All Services**: Reboots all running services via PM2.
+4. **[4] Run Playwright E2E Tests**: Executes the end-to-end test suite.
+5. **[5/6] Seed/Unseed Database**: Populates the database with mock profile and program data for testing.
+6. **[7/8] Database Cleanup**: Purges invalid programs or completely wipes all scraped data to start fresh.
 ### Gemini-Powered AI Autofill
 When a user uploads their CV/Resume, they can click the **AI Extract** button. The backend extracts text from the document (using `pypdf`) and prompts Gemini (`gemini-3.5-flash`) to parse all details. The database profile is automatically populated, and the UI values update instantly.
 

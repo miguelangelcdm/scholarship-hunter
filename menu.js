@@ -144,29 +144,40 @@ function checkProcessesStatus() {
   }, 1000);
 }
 
-function runAll() {
-  console.log('\x1b[33m[System] Starting Full Project (Combined Logs mode)...\x1b[0m');
-  const backend = startBackend();
-  const frontend = startFrontend();
-
-  if (backend) activeProcesses.push(backend);
-  if (frontend) activeProcesses.push(frontend);
-
-  console.log('\x1b[32m[System] Concurrency started. Press Ctrl+C to terminate both servers.\x1b[0m\n');
+function runPM2Start() {
+  console.log('\x1b[36m[System] Launching PM2 Services...\x1b[0m');
+  const pm2Cmd = isWin ? 'pm2.cmd' : 'pm2';
+  // Start the services
+  exec(`${pm2Cmd} start ecosystem.config.js`, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`\x1b[31m[System Error] Failed to start PM2: ${error.message}\x1b[0m`);
+      return;
+    }
+    console.log('\x1b[32m[System] Services started successfully. Opening PM2 Dashboard...\x1b[0m');
+    // Launch the pm2 monit interactive dashboard
+    const proc = spawn(pm2Cmd, ['monit'], { stdio: 'inherit', shell: true });
+    proc.on('close', () => {
+      showMenu();
+    });
+  });
 }
 
-function runBackendOnly() {
-  console.log('\x1b[33m[System] Starting Backend Only...\x1b[0m');
-  const backend = startBackend();
-  if (backend) activeProcesses.push(backend);
-  console.log('\x1b[32m[System] Backend started. Press Ctrl+C to terminate.\x1b[0m\n');
+function runPM2Stop() {
+  console.log('\x1b[33m[System] Stopping all PM2 Services...\x1b[0m');
+  const pm2Cmd = isWin ? 'pm2.cmd' : 'pm2';
+  exec(`${pm2Cmd} stop all`, (error, stdout, stderr) => {
+    console.log('\x1b[32m[System] All services stopped.\x1b[0m');
+    showMenu();
+  });
 }
 
-function runFrontendOnly() {
-  console.log('\x1b[33m[System] Starting Frontend Only...\x1b[0m');
-  const frontend = startFrontend();
-  if (frontend) activeProcesses.push(frontend);
-  console.log('\x1b[32m[System] Frontend started. Press Ctrl+C to terminate.\x1b[0m\n');
+function runPM2Restart() {
+  console.log('\x1b[33m[System] Restarting all PM2 Services...\x1b[0m');
+  const pm2Cmd = isWin ? 'pm2.cmd' : 'pm2';
+  exec(`${pm2Cmd} restart all`, (error, stdout, stderr) => {
+    console.log('\x1b[32m[System] All services restarted.\x1b[0m');
+    showMenu();
+  });
 }
 
 function runTests() {
@@ -185,8 +196,6 @@ function runSeed(unseed = false) {
   
   let execPath = pythonPath;
   if (!fs.existsSync(pythonPath)) {
-    console.log(`\x1b[33m[System] Virtual environment python not found at: ${pythonPath}\x1b[0m`);
-    console.log('\x1b[33m[System] Attempting to run using global "python" command...\x1b[0m');
     execPath = 'python';
   }
 
@@ -194,25 +203,13 @@ function runSeed(unseed = false) {
   const proc = spawn(execPath, [scriptPath, flag], { cwd: backendDir, stdio: 'inherit', shell: true });
   proc.on('close', (code) => {
     console.log(`\x1b[35m[System] Seeding script completed with code ${code}\x1b[0m`);
-    if (code === 0) {
-      console.log(`\x1b[32m[System] Database ${unseed ? 'unseeded' : 'seeded'} successfully!\x1b[0m`);
-    } else {
-      console.log(`\x1b[31m[System] Database operation failed with code ${code}\x1b[0m`);
-    }
     
-    // Wait for keypress to return to menu if in interactive mode, otherwise exit
     const args = process.argv.slice(2);
     const isInteractive = !args.includes('--seed') && !args.includes('--unseed');
     if (isInteractive) {
       console.log('Press Enter to return to the menu.');
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
-      rl.on('line', () => {
-        rl.close();
-        showMenu();
-      });
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      rl.on('line', () => { rl.close(); showMenu(); });
     } else {
       process.exit(code);
     }
@@ -221,29 +218,40 @@ function runSeed(unseed = false) {
 
 function runCleanDB() {
   console.log('\x1b[35m[System] Launching Database Cleanup...\x1b[0m');
-  
   let execPath = pythonPath;
-  if (!fs.existsSync(pythonPath)) {
-    execPath = 'python';
-  }
+  if (!fs.existsSync(pythonPath)) { execPath = 'python'; }
 
   const scriptPath = path.join(backendDir, 'clean_db.py');
   const proc = spawn(execPath, [scriptPath], { cwd: backendDir, stdio: 'inherit', shell: true });
   proc.on('close', (code) => {
     console.log(`\x1b[35m[System] Cleanup script completed with code ${code}\x1b[0m`);
-    
     const args = process.argv.slice(2);
     const isInteractive = !args.includes('--clean');
     if (isInteractive) {
       console.log('Press Enter to return to the menu.');
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
-      rl.on('line', () => {
-        rl.close();
-        showMenu();
-      });
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      rl.on('line', () => { rl.close(); showMenu(); });
+    } else {
+      process.exit(code);
+    }
+  });
+}
+
+function runWipeDB() {
+  console.log('\x1b[31m[System] WARNING: This will permanently wipe all discovered programs and funding.\x1b[0m');
+  let execPath = pythonPath;
+  if (!fs.existsSync(pythonPath)) { execPath = 'python'; }
+
+  const scriptPath = path.join(backendDir, 'clean_db.py');
+  const proc = spawn(execPath, [scriptPath, '--wipe-all'], { cwd: backendDir, stdio: 'inherit', shell: true });
+  proc.on('close', (code) => {
+    console.log(`\x1b[35m[System] Wipe script completed with code ${code}\x1b[0m`);
+    const args = process.argv.slice(2);
+    const isInteractive = !args.includes('--wipe-all');
+    if (isInteractive) {
+      console.log('Press Enter to return to the menu.');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      rl.on('line', () => { rl.close(); showMenu(); });
     } else {
       process.exit(code);
     }
@@ -255,22 +263,20 @@ function showMenu() {
   console.log('\x1b[36m==================================================\x1b[0m');
   console.log('\x1b[1;36m       ★  SCHOLARSHIP HUNTER DEVELOPER MENU  ★    \x1b[0m');
   console.log('\x1b[36m==================================================\x1b[0m');
-  console.log('  \x1b[32m[1]\x1b[0m Run Full Project (Frontend + Backend Concurrently)');
-  console.log('  \x1b[32m[2]\x1b[0m Run FastAPI Backend Only');
-  console.log('  \x1b[32m[3]\x1b[0m Run React Frontend Only');
+  console.log('  \x1b[32m[1]\x1b[0m Start Services & Open PM2 Dashboard');
+  console.log('  \x1b[32m[2]\x1b[0m Stop All Services');
+  console.log('  \x1b[32m[3]\x1b[0m Restart All Services');
   console.log('  \x1b[32m[4]\x1b[0m Run Playwright E2E Tests');
   console.log('  \x1b[32m[5]\x1b[0m Seed Database with Mock Programs & Applications');
   console.log('  \x1b[32m[6]\x1b[0m Unseed Database');
   console.log('  \x1b[32m[7]\x1b[0m Clean Invalid Programs from Database');
-  console.log('  \x1b[31m[8]\x1b[0m Exit');
+  console.log('  \x1b[31m[8]\x1b[0m Wipe ALL Discovered Programs & Funding Data');
+  console.log('  \x1b[31m[9]\x1b[0m Exit');
   console.log('\x1b[36m==================================================\x1b[0m');
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  rl.question('\x1b[33mSelect an option [1-8]: \x1b[0m', (answer) => {
+  rl.question('\x1b[33mSelect an option [1-9]: \x1b[0m', (answer) => {
     rl.close();
     handleOption(answer.trim());
   });
@@ -278,61 +284,29 @@ function showMenu() {
 
 function handleOption(option) {
   switch (option) {
-    case '1':
-      runAll();
-      break;
-    case '2':
-      runBackendOnly();
-      break;
-    case '3':
-      runFrontendOnly();
-      break;
-    case '4':
-      runTests();
-      break;
-    case '5':
-      runSeed(false);
-      break;
-    case '6':
-      runSeed(true);
-      break;
-    case '7':
-      runCleanDB();
-      break;
-    case '8':
+    case '1': runPM2Start(); break;
+    case '2': runPM2Stop(); break;
+    case '3': runPM2Restart(); break;
+    case '4': runTests(); break;
+    case '5': runSeed(false); break;
+    case '6': runSeed(true); break;
+    case '7': runCleanDB(); break;
+    case '8': runWipeDB(); break;
+    case '9':
       console.log('\x1b[32mExiting. Have a great coding session!\x1b[0m');
+      // Ensure we don't leave PM2 running indefinitely unless desired, 
+      // but typically developers might want it running. We will leave it running, 
+      // they can stop it with [2].
       process.exit(0);
       break;
     default:
       console.log('\x1b[31mInvalid option. Press Enter to try again.\x1b[0m');
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
-      rl.on('line', () => {
-        rl.close();
-        showMenu();
-      });
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      rl.on('line', () => { rl.close(); showMenu(); });
       break;
   }
 }
 
-// Parse args
 const args = process.argv.slice(2);
-if (args.includes('--run-all')) {
-  runAll();
-} else if (args.includes('--run-backend')) {
-  runBackendOnly();
-} else if (args.includes('--run-frontend')) {
-  runFrontendOnly();
-} else if (args.includes('--run-tests')) {
-  runTests();
-} else if (args.includes('--seed')) {
-  runSeed(false);
-} else if (args.includes('--unseed')) {
-  runSeed(true);
-} else if (args.includes('--clean')) {
-  runCleanDB();
-} else {
-  showMenu();
-}
+if (args.includes('--start-dashboard')) { runPM2Start(); }
+else { showMenu(); }

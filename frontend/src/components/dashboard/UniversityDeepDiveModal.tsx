@@ -53,7 +53,7 @@ export default function UniversityDeepDiveModal({
       scrollBehavior="inside"
       backdrop="blur"
       classNames={{
-        base: "bg-background/80 dark:bg-zinc-950/80 backdrop-blur-3xl border border-white/10 dark:border-white/5 overflow-hidden shadow-2xl",
+        base: "bg-background/90 dark:bg-zinc-950/90 backdrop-blur-2xl border border-white/10 dark:border-white/5 overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)]",
         body: "p-0",
         header: "p-0",
       }}
@@ -61,7 +61,7 @@ export default function UniversityDeepDiveModal({
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader className="relative p-0 h-80 overflow-hidden flex flex-col justify-end">
+            <ModalHeader className={`relative p-0 overflow-hidden flex flex-col justify-end ${data?.image_url && !loading ? 'h-[22rem]' : 'h-[16rem]'}`}>
               {loading ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/50">
                   <Spinner size="lg" color="primary" />
@@ -69,48 +69,48 @@ export default function UniversityDeepDiveModal({
               ) : data?.image_url ? (
                 <>
                   <div 
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 ease-out hover:scale-105" 
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 ease-out hover:scale-[1.02]" 
                     style={{ backgroundImage: `url(${data.image_url})` }}
                   />
-                  {/* Smooth top-to-bottom fade merging into the modal background */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-background/60 to-background" />
+                  {/* Flawless top-to-bottom fade merging into the modal background */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background/100" />
                 </>
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-background to-background" />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 via-background/80 to-background/100" />
               )}
               
-              <div className="relative z-10 px-8 pb-8">
-                <h2 className="text-4xl lg:text-5xl font-extrabold text-foreground mb-3 tracking-tight">
+              <div className="relative z-10 px-8 pb-8 pt-12">
+                <h2 className="text-4xl lg:text-5xl font-extrabold text-foreground mb-4 tracking-tight drop-shadow-sm">
                   {universityName}
                 </h2>
                 {programs.length > 0 && (
-                  <Chip size="sm" color="primary" variant="flat" className="backdrop-blur-md border border-primary/20">
+                  <Chip size="sm" color="primary" variant="flat" className="backdrop-blur-md border border-primary/20 text-xs px-2 py-1">
                     {programs.length} Programs Found
                   </Chip>
                 )}
               </div>
             </ModalHeader>
 
-            <ModalBody className="px-8 pb-8 gap-8 -mt-2">
+            <ModalBody className="px-8 pb-10 gap-8 -mt-2">
               {loading ? (
                 <div className="space-y-4 animate-pulse">
                   <div className="h-4 bg-muted/40 rounded w-3/4"></div>
                   <div className="h-4 bg-muted/40 rounded w-1/2"></div>
                 </div>
               ) : (
-                <p className="text-muted-foreground leading-relaxed text-lg font-medium">
+                <p className="text-muted-foreground leading-relaxed text-lg font-medium max-w-4xl">
                   {data?.description}
                 </p>
               )}
 
-              <div>
-                <h3 className="text-2xl font-bold tracking-tight mb-4 flex items-center gap-2">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-emerald-500">
+              <div className="w-full pb-8">
+                <h3 className="text-2xl font-bold tracking-tight mb-6 flex items-center gap-2">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-emerald-500 drop-shadow-sm">
                     Academic Opportunities
                   </span>
                 </h3>
                 
-                <Accordion variant="shadow" className="px-0 gap-3">
+                <Accordion variant="splitted" className="px-0 gap-4">
                   {programs.map((p) => {
                     const programFunding = scholarships.filter(s => s.target_program_id === p.id);
                     return (
@@ -118,21 +118,21 @@ export default function UniversityDeepDiveModal({
                         key={p.id} 
                         aria-label={p.title}
                         title={
-                          <div className="flex items-center justify-between py-1">
-                            <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between py-2">
+                            <div className="flex flex-col gap-2">
                               <span className="font-semibold text-lg text-foreground tracking-tight">{p.title}</span>
-                              <div className="flex flex-wrap gap-2">
-                                {p.is_online && <Chip size="sm" variant="flat" color="warning" className="text-[10px] h-5">Online</Chip>}
-                                <Chip size="sm" variant="flat" color={p.probability_score >= 70 ? "success" : "default"} className="text-[10px] h-5 border border-success/20">
-                                  Match: {p.probability_score}%
+                              <div className="flex flex-wrap gap-2 items-center">
+                                {p.is_online && <Chip size="sm" variant="flat" color="warning" className="text-[10px] h-6 px-1">Online</Chip>}
+                                <Chip size="sm" variant="dot" color={(p.probability_score ?? 0) >= 70 ? "success" : "default"} className="text-[11px] font-medium h-6 px-1 border-none bg-default-100/50">
+                                  Match: {p.probability_score ? `${p.probability_score}%` : "N/A"}
                                 </Chip>
                               </div>
                             </div>
                           </div>
                         }
                         classNames={{
-                          base: "bg-white/50 dark:bg-white/5 border border-white/20 dark:border-white/10 shadow-sm rounded-2xl overflow-hidden mb-3",
-                          content: "pb-4 px-4"
+                          base: "bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-md rounded-2xl overflow-hidden hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-colors",
+                          content: "pb-6 px-6 pt-2"
                         }}
                       >
                         <div className="space-y-5">

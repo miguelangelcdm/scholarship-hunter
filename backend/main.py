@@ -446,20 +446,34 @@ def run_discovery_scan(db: Session = Depends(get_db)):
 def get_university_deep_dive(university_name: str, db: Session = Depends(get_db)):
     """Fetches a deep dive summary and campus image for a specific university."""
     import urllib.parse
-    from duckduckgo_search import DDGS
+    import httpx
+    import hashlib
     import logging
 
     decoded_name = urllib.parse.unquote(university_name)
     image_url = None
     description = f"Detailed information and application steps for programs at {decoded_name}."
 
-    # Try to fetch an image of the campus using DuckDuckGo Images
+    # Fetch official photograph using Wikidata Semantic API (Property P18)
     try:
-        results = DDGS().images(f"{decoded_name} campus high resolution", max_results=1)
-        if results and len(results) > 0:
-            image_url = results[0].get("image")
+        search_url = f"https://www.wikidata.org/w/api.php?action=wbsearchentities&search={urllib.parse.quote(decoded_name)}&language=en&format=json"
+        res = httpx.get(search_url, timeout=5.0)
+        data = res.json()
+        
+        if data.get("search") and len(data["search"]) > 0:
+            entity_id = data["search"][0]["id"]
+            claims_url = f"https://www.wikidata.org/w/api.php?action=wbgetclaims&entity={entity_id}&property=P18&format=json"
+            res2 = httpx.get(claims_url, timeout=5.0)
+            claims_data = res2.json()
+            
+            if "claims" in claims_data and "P18" in claims_data["claims"]:
+                image_name = claims_data["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
+                image_name = image_name.replace(" ", "_")
+                # Generate Wikimedia Commons URL
+                md5_hash = hashlib.md5(image_name.encode('utf-8')).hexdigest()
+                image_url = f"https://upload.wikimedia.org/wikipedia/commons/{md5_hash[0]}/{md5_hash[0:2]}/{urllib.parse.quote(image_name)}"
     except Exception as e:
-        logging.error(f"Failed to fetch image for {decoded_name}: {e}")
+        logging.info(f"Could not fetch image for {decoded_name} via Wikidata: {e}")
         
     # We could also use an LLM call here to generate a short description if we wanted to
     return {
@@ -470,7 +484,7 @@ def get_university_deep_dive(university_name: str, db: Session = Depends(get_db)
 
 @app.post("/programs/{program_id}/deep-scan")
 def run_deep_program_scan(program_id: int, db: Session = Depends(get_db)):
-    from duckduckgo_search import DDGS
+    from ddgs import DDGS
     from scrapling import fetch
     from ai_agent import extract_deep_program_details
     

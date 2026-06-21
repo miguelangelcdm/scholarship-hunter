@@ -75,6 +75,8 @@ class ScholarshipResponse(ScholarshipBase):
     id: int
     desire_score: float
     probability_score: float
+    improvement_projection: Optional[str] = None
+    target_program_id: Optional[int] = None
     status: str
     class Config:
         from_attributes = True
@@ -98,5 +100,6 @@ class TargetProgramResponse(TargetProgramBase):
     status: str
     desire_score: float
     probability_score: float
+    improvement_projection: Optional[str] = None
     class Config:
         from_attributes = True

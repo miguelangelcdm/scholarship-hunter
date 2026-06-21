@@ -27,3 +27,4 @@ This document serves as the master director for the AI coding assistant. Dependi
 ## Universal Directives
 1. **Orbix Foundation:** Always ensure that the Orbix Health Dashboard base remains structurally sound while injecting these specific skills into new components (e.g., the Scholarship matching views).
 2. **Automatic Documentation:** Whenever you finish implementing a new feature or patching a bug, you MUST automatically identify and update ALL relevant markdown files in the `docs/` folder (and the root `README.md`) to reflect the changes. Do this immediately before or alongside presenting your final walkthrough, without waiting for the user to explicitly ask you to document it.
+3. **Task List Tracking:** When creating a `task.md` checklist during planning, ALWAYS explicitly add a final task to "Document changes in docs/ and README.md" to ensure documentation is formally tracked and completed before finishing.

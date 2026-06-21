@@ -81,6 +81,9 @@ class Scholarship(Base):
     
     desire_score = Column(Float, default=0.0)
     probability_score = Column(Float, default=0.0)
+    improvement_projection = Column(String, nullable=True)
+    
+    target_program_id = Column(Integer, ForeignKey("target_programs.id"), nullable=True)
     
     status = Column(String, default="Discovered") # Discovered, To Apply, Drafting, Applied, Rejected, Won
     
@@ -91,6 +94,7 @@ class Scholarship(Base):
     requires_outreach = Column(Boolean, default=False)
     
     requirements = relationship("ScholarshipRequirement", back_populates="scholarship")
+    program = relationship("TargetProgram", back_populates="scholarships")
 
 class ScholarshipRequirement(Base):
     __tablename__ = "scholarship_requirements"
@@ -120,5 +124,8 @@ class TargetProgram(Base):
     
     desire_score = Column(Float, default=0.0)
     probability_score = Column(Float, default=0.0)
+    improvement_projection = Column(String, nullable=True)
     
-    status = Column(String, default="Discovered") # Discovered, Preparing, Applied, Rejected, Accepted
+    status = Column(String, default="Discovered") # Discovered, Preparing, Applied, Rejected, Accepted, Discarded
+    
+    scholarships = relationship("Scholarship", back_populates="program")

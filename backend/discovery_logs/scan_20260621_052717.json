@@ -1,0 +1,266 @@
+{
+  "timestamp": "2026-06-21T05:27:17.909531Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": true
+  },
+  "search_phase": {
+    "max_results_limit": 15,
+    "offset": 17,
+    "seed_urls": [
+      "https://en.wikipedia.org/wiki/Systems_engineering",
+      "https://www.dreamstudiesabroad.com/schools/spain-application",
+      "https://www.immoabroad.com/spain/child-benefit-in-spain-everything-you-need-to-know",
+      "https://www.humanium.org/en/spains-2025-universal-child-benefit-aims-to-combat-child-poverty/",
+      "https://www.facebook.com/Spain.Albania/posts/-official-masters-degree-in-european-union-uned-spain-presentation-and-relevance/1243993277920679/",
+      "https://careers.quest-global.com/global/en/job/P-119329/Systems-Engineer-MBSE",
+      "https://www.nu.edu/programs/master-of-science-in-engineering-management/master-of-science-in-engineering-management-systems-engineering/",
+      "https://www.saab.com/career/job-opportunities/director-systems-engineering-integration-and-test-seit",
+      "https://europe.wordcamp.org/2026/speaker/ariel-ramos/",
+      "https://search.isepstudyabroad.org/Program/Detail/f73a5c81-698f-4e78-ad9d-d117beda4e6f?ProgramTypeId=1",
+      "https://www.bing.com/aclick?ld=e8jZQJ_qFKcKT8XdPdU6br9TVUCUyFtOWiiPF5SHy6r6r702VN1JvB06UnjR40sfDIzY2PZZtY10djdh7QjJnBCxWyfFzkV5s7ccowCNyYxpD918EK-rhc287OQkhafsJkeBVpBeDVLFcm-dEnlVOp7EvoZdib6JnPn26ntwtCJyNCRU6-950GDVay3O7rF8sajsbzPg&u=aHR0cHMlM2ElMmYlMmZ3d3cuZWR1Y2F0aW9ucy5jb20lMmZlbmdpbmVlcmluZy1tYW5hZ2VtZW50JTNmdXRtX3NvdXJjZSUzZGJpbmclMjZ1dG1fbWVkaXVtJTNkY3BjJTI2dXRtX2NhbXBhaWduJTNkU3R1ZHklMjUyMEFicm9hZCUyNTIwJTI1N0MlMjUyMExUJTI2dXRtX2lkJTNkMjIwNzkzNDQ3OTQlMjZtc2Nsa2lkJTNkYmU5OTU2ZGY1ODhiMWI3OTNmOTkzY2U4MmQ2NGU1ZmUlMjZ1dG1fdGVybSUzZGVuZ2luZWVyaW5nJTI1MjBkZWdyZWVzJTI1MjBhYnJvYWQlMjZ1dG1fY29udGVudCUzZFN0dWR5JTI1MjBFbmdpbmVlcmluZyUyNTIwQWJyb2Fk&rlid=be9956df588b1b793f993ce82d64e5fe",
+      "https://www.coursera.org/articles/systems-engineer",
+      "https://extension.harvard.edu/academics/programs/systems-engineering-masters-degree-program/",
+      "https://info.ep.jhu.edu/se/",
+      "https://e-catalogue.jhu.edu/engineering/engineering-professionals/systems-engineering/systems-engineering-master-science/"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 15,
+    "pages": [
+      {
+        "url": "https://en.wikipedia.org/wiki/Systems_engineering",
+        "title": "Systems engineering - Wikipedia"
+      },
+      {
+        "url": "https://www.dreamstudiesabroad.com/schools/spain-application",
+        "title": "Spain Application support - help to apply to all universities in Spain"
+      },
+      {
+        "url": "https://www.immoabroad.com/spain/child-benefit-in-spain-everything-you-need-to-know",
+        "title": "Child Benefit in Spain: Everything You Need to Know"
+      },
+      {
+        "url": "https://www.humanium.org/en/spains-2025-universal-child-benefit-aims-to-combat-child-poverty/",
+        "title": "Spain\u2019s 2025 Universal Child Benefit aims to combat child poverty - Humanium"
+      },
+      {
+        "url": "https://www.facebook.com/Spain.Albania/posts/-official-masters-degree-in-european-union-uned-spain-presentation-and-relevance/1243993277920679/",
+        "title": "\ud83c\udf93 OFFICIAL MASTER\u2019S DEGREE... - Embajada de Espa\u00f1a en Tirana | Facebook"
+      },
+      {
+        "url": "https://careers.quest-global.com/global/en/job/P-119329/Systems-Engineer-MBSE",
+        "title": "Systems Engineer (MBSE) in Madrid, Community of Madrid, Spain | Aerospace and Defense at Quest Global"
+      },
+      {
+        "url": "https://www.nu.edu/programs/master-of-science-in-engineering-management/master-of-science-in-engineering-management-systems-engineering/",
+        "title": "Master of Science in Engineering Management, Systems Engineering | National University"
+      },
+      {
+        "url": "https://www.saab.com/career/job-opportunities/director-systems-engineering-integration-and-test-seit",
+        "title": "Director, Systems Engineering, Integration and Test (SEIT)"
+      },
+      {
+        "url": "https://europe.wordcamp.org/2026/speaker/ariel-ramos/",
+        "title": "Ariel Ramos \u2013 WordCamp Europe 2026"
+      },
+      {
+        "url": "https://search.isepstudyabroad.org/Program/Detail/f73a5c81-698f-4e78-ad9d-d117beda4e6f?ProgramTypeId=1",
+        "title": "Study in Northern Spain - Science, Engineering, & Business in Vigo - Universidad de Vigo \u2013 ISEP Study Abroad"
+      },
+      {
+        "url": "https://www.bing.com/aclick?ld=e8jZQJ_qFKcKT8XdPdU6br9TVUCUyFtOWiiPF5SHy6r6r702VN1JvB06UnjR40sfDIzY2PZZtY10djdh7QjJnBCxWyfFzkV5s7ccowCNyYxpD918EK-rhc287OQkhafsJkeBVpBeDVLFcm-dEnlVOp7EvoZdib6JnPn26ntwtCJyNCRU6-950GDVay3O7rF8sajsbzPg&u=aHR0cHMlM2ElMmYlMmZ3d3cuZWR1Y2F0aW9ucy5jb20lMmZlbmdpbmVlcmluZy1tYW5hZ2VtZW50JTNmdXRtX3NvdXJjZSUzZGJpbmclMjZ1dG1fbWVkaXVtJTNkY3BjJTI2dXRtX2NhbXBhaWduJTNkU3R1ZHklMjUyMEFicm9hZCUyNTIwJTI1N0MlMjUyMExUJTI2dXRtX2lkJTNkMjIwNzkzNDQ3OTQlMjZtc2Nsa2lkJTNkYmU5OTU2ZGY1ODhiMWI3OTNmOTkzY2U4MmQ2NGU1ZmUlMjZ1dG1fdGVybSUzZGVuZ2luZWVyaW5nJTI1MjBkZWdyZWVzJTI1MjBhYnJvYWQlMjZ1dG1fY29udGVudCUzZFN0dWR5JTI1MjBFbmdpbmVlcmluZyUyNTIwQWJyb2Fk&rlid=be9956df588b1b793f993ce82d64e5fe",
+        "title": "2328 Engineering Management Degree Programs Abroad | educations.com"
+      },
+      {
+        "url": "https://www.coursera.org/articles/systems-engineer",
+        "title": "What Is a Systems Engineer (and How Do I Become One)? | Coursera"
+      },
+      {
+        "url": "https://extension.harvard.edu/academics/programs/systems-engineering-masters-degree-program/",
+        "title": "Systems Engineering Master's Degree Program | Harvard Extension School"
+      },
+      {
+        "url": "https://info.ep.jhu.edu/se/",
+        "title": "Johns Hopkins Engineering | Systems Engineering"
+      },
+      {
+        "url": "https://e-catalogue.jhu.edu/engineering/engineering-professionals/systems-engineering/systems-engineering-master-science/",
+        "title": "Systems Engineering, Master of Science | Johns Hopkins University Academic Catalogue"
+      }
+    ],
+    "errors": []
+  },
+  "extraction_phase": {
+    "processed_pages": [
+      {
+        "url": "https://en.wikipedia.org/wiki/Systems_engineering",
+        "title": "Systems engineering - Wikipedia",
+        "is_valid": true,
+        "scholarships_found": 0,
+        "programs_found": 1,
+        "token_usage": {
+          "input_tokens": 2928,
+          "output_tokens": 441,
+          "cost_usd": 0.000381
+        }
+      },
+      {
+        "url": "https://www.dreamstudiesabroad.com/schools/spain-application",
+        "title": "Spain Application support - help to apply to all universities in Spain",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2952,
+          "output_tokens": 129,
+          "cost_usd": 0.000321
+        }
+      },
+      {
+        "url": "https://www.immoabroad.com/spain/child-benefit-in-spain-everything-you-need-to-know",
+        "title": "Child Benefit in Spain: Everything You Need to Know",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2961,
+          "output_tokens": 120,
+          "cost_usd": 0.00032010000000000003
+        }
+      },
+      {
+        "url": "https://www.humanium.org/en/spains-2025-universal-child-benefit-aims-to-combat-child-poverty/",
+        "title": "Spain\u2019s 2025 Universal Child Benefit aims to combat child poverty - Humanium",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 3126,
+          "output_tokens": 99,
+          "cost_usd": 0.00033239999999999995
+        }
+      },
+      {
+        "url": "https://www.facebook.com/Spain.Albania/posts/-official-masters-degree-in-european-union-uned-spain-presentation-and-relevance/1243993277920679/",
+        "title": "\ud83c\udf93 OFFICIAL MASTER\u2019S DEGREE... - Embajada de Espa\u00f1a en Tirana | Facebook",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 3141,
+          "output_tokens": 113,
+          "cost_usd": 0.0003367
+        }
+      },
+      {
+        "url": "https://careers.quest-global.com/global/en/job/P-119329/Systems-Engineer-MBSE",
+        "title": "Systems Engineer (MBSE) in Madrid, Community of Madrid, Spain | Aerospace and Defense at Quest Global",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2859,
+          "output_tokens": 147,
+          "cost_usd": 0.00031529999999999997
+        }
+      },
+      {
+        "url": "https://www.nu.edu/programs/master-of-science-in-engineering-management/master-of-science-in-engineering-management-systems-engineering/",
+        "title": "Master of Science in Engineering Management, Systems Engineering | National University",
+        "is_valid": true,
+        "scholarships_found": 0,
+        "programs_found": 1,
+        "token_usage": {
+          "input_tokens": 2895,
+          "output_tokens": 410,
+          "cost_usd": 0.00037150000000000003
+        }
+      },
+      {
+        "url": "https://www.saab.com/career/job-opportunities/director-systems-engineering-integration-and-test-seit",
+        "title": "Director, Systems Engineering, Integration and Test (SEIT)",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2885,
+          "output_tokens": 129,
+          "cost_usd": 0.00031430000000000005
+        }
+      },
+      {
+        "url": "https://europe.wordcamp.org/2026/speaker/ariel-ramos/",
+        "title": "Ariel Ramos \u2013 WordCamp Europe 2026",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2588,
+          "output_tokens": 137,
+          "cost_usd": 0.0002862
+        }
+      },
+      {
+        "url": "https://search.isepstudyabroad.org/Program/Detail/f73a5c81-698f-4e78-ad9d-d117beda4e6f?ProgramTypeId=1",
+        "title": "Study in Northern Spain - Science, Engineering, & Business in Vigo - Universidad de Vigo \u2013 ISEP Study Abroad",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 3042,
+          "output_tokens": 119,
+          "cost_usd": 0.000328
+        }
+      },
+      {
+        "url": "https://www.bing.com/aclick?ld=e8jZQJ_qFKcKT8XdPdU6br9TVUCUyFtOWiiPF5SHy6r6r702VN1JvB06UnjR40sfDIzY2PZZtY10djdh7QjJnBCxWyfFzkV5s7ccowCNyYxpD918EK-rhc287OQkhafsJkeBVpBeDVLFcm-dEnlVOp7EvoZdib6JnPn26ntwtCJyNCRU6-950GDVay3O7rF8sajsbzPg&u=aHR0cHMlM2ElMmYlMmZ3d3cuZWR1Y2F0aW9ucy5jb20lMmZlbmdpbmVlcmluZy1tYW5hZ2VtZW50JTNmdXRtX3NvdXJjZSUzZGJpbmclMjZ1dG1fbWVkaXVtJTNkY3BjJTI2dXRtX2NhbXBhaWduJTNkU3R1ZHklMjUyMEFicm9hZCUyNTIwJTI1N0MlMjUyMExUJTI2dXRtX2lkJTNkMjIwNzkzNDQ3OTQlMjZtc2Nsa2lkJTNkYmU5OTU2ZGY1ODhiMWI3OTNmOTkzY2U4MmQ2NGU1ZmUlMjZ1dG1fdGVybSUzZGVuZ2luZWVyaW5nJTI1MjBkZWdyZWVzJTI1MjBhYnJvYWQlMjZ1dG1fY29udGVudCUzZFN0dWR5JTI1MjBFbmdpbmVlcmluZyUyNTIwQWJyb2Fk&rlid=be9956df588b1b793f993ce82d64e5fe",
+        "title": "2328 Engineering Management Degree Programs Abroad | educations.com",
+        "is_valid": true,
+        "scholarships_found": 0,
+        "programs_found": 1,
+        "token_usage": {
+          "input_tokens": 3545,
+          "output_tokens": 450,
+          "cost_usd": 0.00044450000000000007
+        }
+      },
+      {
+        "url": "https://www.coursera.org/articles/systems-engineer",
+        "title": "What Is a Systems Engineer (and How Do I Become One)? | Coursera",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://extension.harvard.edu/academics/programs/systems-engineering-masters-degree-program/",
+        "title": "Systems Engineering Master's Degree Program | Harvard Extension School",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://info.ep.jhu.edu/se/",
+        "title": "Johns Hopkins Engineering | Systems Engineering",
+        "status": "failed (LLM error)"
+      },
+      {
+        "url": "https://e-catalogue.jhu.edu/engineering/engineering-professionals/systems-engineering/systems-engineering-master-science/",
+        "title": "Systems Engineering, Master of Science | Johns Hopkins University Academic Catalogue",
+        "status": "failed (LLM error)"
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_programs_added": 2,
+    "total_input_tokens": 32922,
+    "total_output_tokens": 2294,
+    "total_cost_usd": 0.003751
+  }
+}

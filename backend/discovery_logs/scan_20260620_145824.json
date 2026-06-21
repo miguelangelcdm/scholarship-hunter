@@ -1,0 +1,259 @@
+{
+  "timestamp": "2026-06-20T14:58:24.934349Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": true
+  },
+  "search_phase": {
+    "max_results_limit": 15,
+    "offset": 13,
+    "seed_urls": [
+      "https://www.iefa.org/scholarships?Award_page=4",
+      "https://www.internationalscholarships.com/search?per-page=2500",
+      "https://www.internationalstudent.com/scholarships/search/?key=",
+      "https://www.facebook.com/SchweitzerEngineering/posts/the-sel-scholarship-program-continues-to-support-students-pursuing-degrees-in-en/1474997101337560/",
+      "https://www.stantec.com/en/about/community-engagement/stantec-future-leaders-scholarship",
+      "https://www.synergyquantumacademy.org/apps/pages/index.jsp?uREC_ID=355997",
+      "https://www2.fundsforngos.org/individuals/call-for-applications-fulbright-foreign-student-program-jamaica/",
+      "https://europe.umgc.edu/content/dam/umgc-europe/documents/upload/2018-2019-Grad-Catalog-Europe.pdf",
+      "https://commonslibrary.parliament.uk/cost-of-living-support-for-students/",
+      "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+      "https://study-uk.britishcouncil.org/scholarships-funding",
+      "https://education.ec.europa.eu/study-in-europe/planning-your-studies/scholarships-and-funding",
+      "https://www.upgrad.com/study-abroad/articles/fully-funded-scholarships-in-spain/",
+      "https://psl.eu/en/education/scholarships-and-grants-graduate-students",
+      "https://esim.holafly.com/students/scholarship-spain/"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 12,
+    "pages": [
+      {
+        "url": "https://www.iefa.org/scholarships?Award_page=4",
+        "title": "Browse Awards | International Scholarships Search | IEFA"
+      },
+      {
+        "url": "https://www.internationalscholarships.com/search?per-page=2500",
+        "title": "Search international scholarships financial aid and loans"
+      },
+      {
+        "url": "https://www.internationalstudent.com/scholarships/search/?key=",
+        "title": "International Student Scholarship Search"
+      },
+      {
+        "url": "https://www.facebook.com/SchweitzerEngineering/posts/the-sel-scholarship-program-continues-to-support-students-pursuing-degrees-in-en/1474997101337560/",
+        "title": "The... - SEL Community\u2014Schweitzer Engineering Laboratories | Facebook"
+      },
+      {
+        "url": "https://www.stantec.com/en/about/community-engagement/stantec-future-leaders-scholarship",
+        "title": "Stantec Future Leaders Scholarship"
+      },
+      {
+        "url": "https://commonslibrary.parliament.uk/cost-of-living-support-for-students/",
+        "title": "Financial support for higher education students - House of Commons Library"
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea"
+      },
+      {
+        "url": "https://study-uk.britishcouncil.org/scholarships-funding",
+        "title": "Scholarships and funding | Study UK"
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/planning-your-studies/scholarships-and-funding",
+        "title": "Scholarships, grants and financial support - European Education Area"
+      },
+      {
+        "url": "https://www.upgrad.com/study-abroad/articles/fully-funded-scholarships-in-spain/",
+        "title": "Fully Funded Scholarships in Spain for International Students"
+      },
+      {
+        "url": "https://psl.eu/en/education/scholarships-and-grants-graduate-students",
+        "title": "Scholarships and grants for graduate students | PSL"
+      },
+      {
+        "url": "https://esim.holafly.com/students/scholarship-spain/",
+        "title": "Scholarship for Spain: Requirements and How to Apply - Holafly"
+      }
+    ],
+    "errors": [
+      {
+        "url": "https://www.synergyquantumacademy.org/apps/pages/index.jsp?uREC_ID=355997",
+        "error": "No relevant keywords found in page content"
+      },
+      {
+        "url": "https://www2.fundsforngos.org/individuals/call-for-applications-fulbright-foreign-student-program-jamaica/",
+        "error": "No relevant keywords found in page content"
+      },
+      {
+        "url": "https://europe.umgc.edu/content/dam/umgc-europe/documents/upload/2018-2019-Grad-Catalog-Europe.pdf",
+        "error": "No relevant keywords found in page content"
+      }
+    ]
+  },
+  "extraction_phase": {
+    "processed_pages": [
+      {
+        "url": "https://www.iefa.org/scholarships?Award_page=4",
+        "title": "Browse Awards | International Scholarships Search | IEFA",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2907,
+          "output_tokens": 110,
+          "cost_usd": 0.0003127
+        }
+      },
+      {
+        "url": "https://www.internationalscholarships.com/search?per-page=2500",
+        "title": "Search international scholarships financial aid and loans",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2913,
+          "output_tokens": 141,
+          "cost_usd": 0.0003195
+        }
+      },
+      {
+        "url": "https://www.internationalstudent.com/scholarships/search/?key=",
+        "title": "International Student Scholarship Search",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2865,
+          "output_tokens": 147,
+          "cost_usd": 0.00031590000000000003
+        }
+      },
+      {
+        "url": "https://www.facebook.com/SchweitzerEngineering/posts/the-sel-scholarship-program-continues-to-support-students-pursuing-degrees-in-en/1474997101337560/",
+        "title": "The... - SEL Community\u2014Schweitzer Engineering Laboratories | Facebook",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2727,
+          "output_tokens": 111,
+          "cost_usd": 0.0002949
+        }
+      },
+      {
+        "url": "https://www.stantec.com/en/about/community-engagement/stantec-future-leaders-scholarship",
+        "title": "Stantec Future Leaders Scholarship",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2674,
+          "output_tokens": 106,
+          "cost_usd": 0.0002886
+        }
+      },
+      {
+        "url": "https://commonslibrary.parliament.uk/cost-of-living-support-for-students/",
+        "title": "Financial support for higher education students - House of Commons Library",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2882,
+          "output_tokens": 107,
+          "cost_usd": 0.0003096
+        }
+      },
+      {
+        "url": "https://universidadeuropea.com/en/admission-finance/scholarship-financial-aid/",
+        "title": "Scholarships and Financial Aid | Universidad Europea",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2917,
+          "output_tokens": 114,
+          "cost_usd": 0.0003145
+        }
+      },
+      {
+        "url": "https://study-uk.britishcouncil.org/scholarships-funding",
+        "title": "Scholarships and funding | Study UK",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2847,
+          "output_tokens": 135,
+          "cost_usd": 0.00031170000000000004
+        }
+      },
+      {
+        "url": "https://education.ec.europa.eu/study-in-europe/planning-your-studies/scholarships-and-funding",
+        "title": "Scholarships, grants and financial support - European Education Area",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2879,
+          "output_tokens": 124,
+          "cost_usd": 0.00031269999999999996
+        }
+      },
+      {
+        "url": "https://www.upgrad.com/study-abroad/articles/fully-funded-scholarships-in-spain/",
+        "title": "Fully Funded Scholarships in Spain for International Students",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2915,
+          "output_tokens": 115,
+          "cost_usd": 0.00031450000000000006
+        }
+      },
+      {
+        "url": "https://psl.eu/en/education/scholarships-and-grants-graduate-students",
+        "title": "Scholarships and grants for graduate students | PSL",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2890,
+          "output_tokens": 144,
+          "cost_usd": 0.0003178
+        }
+      },
+      {
+        "url": "https://esim.holafly.com/students/scholarship-spain/",
+        "title": "Scholarship for Spain: Requirements and How to Apply - Holafly",
+        "is_valid": false,
+        "scholarships_found": 0,
+        "programs_found": 0,
+        "token_usage": {
+          "input_tokens": 2900,
+          "output_tokens": 127,
+          "cost_usd": 0.0003154
+        }
+      }
+    ]
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_programs_added": 0,
+    "total_input_tokens": 34316,
+    "total_output_tokens": 1481,
+    "total_cost_usd": 0.0037278
+  }
+}
