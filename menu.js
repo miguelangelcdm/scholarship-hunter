@@ -219,6 +219,37 @@ function runSeed(unseed = false) {
   });
 }
 
+function runCleanDB() {
+  console.log('\x1b[35m[System] Launching Database Cleanup...\x1b[0m');
+  
+  let execPath = pythonPath;
+  if (!fs.existsSync(pythonPath)) {
+    execPath = 'python';
+  }
+
+  const scriptPath = path.join(backendDir, 'clean_db.py');
+  const proc = spawn(execPath, [scriptPath], { cwd: backendDir, stdio: 'inherit', shell: true });
+  proc.on('close', (code) => {
+    console.log(`\x1b[35m[System] Cleanup script completed with code ${code}\x1b[0m`);
+    
+    const args = process.argv.slice(2);
+    const isInteractive = !args.includes('--clean');
+    if (isInteractive) {
+      console.log('Press Enter to return to the menu.');
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+      rl.on('line', () => {
+        rl.close();
+        showMenu();
+      });
+    } else {
+      process.exit(code);
+    }
+  });
+}
+
 function showMenu() {
   console.clear();
   console.log('\x1b[36m==================================================\x1b[0m');
@@ -230,7 +261,8 @@ function showMenu() {
   console.log('  \x1b[32m[4]\x1b[0m Run Playwright E2E Tests');
   console.log('  \x1b[32m[5]\x1b[0m Seed Database with Mock Programs & Applications');
   console.log('  \x1b[32m[6]\x1b[0m Unseed Database');
-  console.log('  \x1b[31m[7]\x1b[0m Exit');
+  console.log('  \x1b[32m[7]\x1b[0m Clean Invalid Programs from Database');
+  console.log('  \x1b[31m[8]\x1b[0m Exit');
   console.log('\x1b[36m==================================================\x1b[0m');
 
   const rl = readline.createInterface({
@@ -238,7 +270,7 @@ function showMenu() {
     output: process.stdout
   });
 
-  rl.question('\x1b[33mSelect an option [1-7]: \x1b[0m', (answer) => {
+  rl.question('\x1b[33mSelect an option [1-8]: \x1b[0m', (answer) => {
     rl.close();
     handleOption(answer.trim());
   });
@@ -265,6 +297,9 @@ function handleOption(option) {
       runSeed(true);
       break;
     case '7':
+      runCleanDB();
+      break;
+    case '8':
       console.log('\x1b[32mExiting. Have a great coding session!\x1b[0m');
       process.exit(0);
       break;
@@ -296,6 +331,8 @@ if (args.includes('--run-all')) {
   runSeed(false);
 } else if (args.includes('--unseed')) {
   runSeed(true);
+} else if (args.includes('--clean')) {
+  runCleanDB();
 } else {
   showMenu();
 }

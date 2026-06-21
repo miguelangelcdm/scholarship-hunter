@@ -115,6 +115,7 @@ You can also bypass the menu and execute targets directly from your shell at the
 | **Run E2E Tests** | `node menu.js --run-tests` | Runs the Playwright E2E test suite. |
 | **Seed Database** | `node menu.js --seed` | Clears and seeds database tables with mock academic programs and scholarship applications. |
 | **Unseed Database** | `node menu.js --unseed` | Clears all mock academic programs and scholarships from the database. |
+| **Clean Database** | `node menu.js --clean` | Deletes all programs and scholarships that have an 'Unknown' provider or institution due to incomplete extraction. |
 
 > [!TIP]
 > **Process Cleanup**: When you terminate the runner (using `Ctrl+C` or exiting the menu), the utility automatically kills the entire spawned process tree (including uvicorn and node). This prevents orphaned processes from locking up ports `8000` or `5173` on Windows and Unix systems.

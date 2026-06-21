@@ -53,13 +53,15 @@ export default function UniversityDeepDiveModal({
       scrollBehavior="inside"
       backdrop="blur"
       classNames={{
-        base: "bg-white/5 dark:bg-black/40 backdrop-blur-3xl border border-white/10 dark:border-white/5 overflow-hidden",
+        base: "bg-background/80 dark:bg-zinc-950/80 backdrop-blur-3xl border border-white/10 dark:border-white/5 overflow-hidden shadow-2xl",
+        body: "p-0",
+        header: "p-0",
       }}
     >
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader className="relative p-0 h-64 overflow-hidden">
+            <ModalHeader className="relative p-0 h-80 overflow-hidden flex flex-col justify-end">
               {loading ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/50">
                   <Spinner size="lg" color="primary" />
@@ -67,118 +69,132 @@ export default function UniversityDeepDiveModal({
               ) : data?.image_url ? (
                 <>
                   <div 
-                    className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out" 
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 ease-out hover:scale-105" 
                     style={{ backgroundImage: `url(${data.image_url})` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                  {/* Smooth top-to-bottom fade merging into the modal background */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-background/60 to-background" />
                 </>
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20" />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-background to-background" />
               )}
               
-              <div className="absolute bottom-6 left-6 right-6">
-                <h2 className="text-4xl font-bold text-white mb-2 drop-shadow-md">
+              <div className="relative z-10 px-8 pb-8">
+                <h2 className="text-4xl lg:text-5xl font-extrabold text-foreground mb-3 tracking-tight">
                   {universityName}
                 </h2>
                 {programs.length > 0 && (
-                  <Chip size="sm" color="success" variant="flat" className="backdrop-blur-md">
+                  <Chip size="sm" color="primary" variant="flat" className="backdrop-blur-md border border-primary/20">
                     {programs.length} Programs Found
                   </Chip>
                 )}
               </div>
             </ModalHeader>
 
-            <ModalBody className="p-6 gap-6">
+            <ModalBody className="px-8 pb-8 gap-8 -mt-2">
               {loading ? (
                 <div className="space-y-4 animate-pulse">
-                  <div className="h-4 bg-white/10 rounded w-3/4"></div>
-                  <div className="h-4 bg-white/10 rounded w-1/2"></div>
+                  <div className="h-4 bg-muted/40 rounded w-3/4"></div>
+                  <div className="h-4 bg-muted/40 rounded w-1/2"></div>
                 </div>
               ) : (
-                <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed text-lg">
+                <p className="text-muted-foreground leading-relaxed text-lg font-medium">
                   {data?.description}
                 </p>
               )}
 
-              <h3 className="text-xl font-semibold mt-4 text-zinc-800 dark:text-white">
-                Academic Programs & Opportunities
-              </h3>
-              
-              <Accordion variant="splitted" className="px-0">
-                {programs.map((p) => {
-                  const programFunding = scholarships.filter(s => s.target_program_id === p.id);
-                  return (
-                    <AccordionItem 
-                      key={p.id} 
-                      aria-label={p.title}
-                      title={
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col gap-1">
-                            <span className="font-medium text-lg">{p.title}</span>
-                            <div className="flex gap-2">
-                              {p.is_online && <Chip size="sm" variant="flat" color="warning">Online</Chip>}
-                              <Chip size="sm" variant="dot" color={p.probability_score >= 70 ? "success" : "warning"}>
-                                Match: {p.probability_score}%
-                              </Chip>
+              <div>
+                <h3 className="text-2xl font-bold tracking-tight mb-4 flex items-center gap-2">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-emerald-500">
+                    Academic Opportunities
+                  </span>
+                </h3>
+                
+                <Accordion variant="shadow" className="px-0 gap-3">
+                  {programs.map((p) => {
+                    const programFunding = scholarships.filter(s => s.target_program_id === p.id);
+                    return (
+                      <AccordionItem 
+                        key={p.id} 
+                        aria-label={p.title}
+                        title={
+                          <div className="flex items-center justify-between py-1">
+                            <div className="flex flex-col gap-1.5">
+                              <span className="font-semibold text-lg text-foreground tracking-tight">{p.title}</span>
+                              <div className="flex flex-wrap gap-2">
+                                {p.is_online && <Chip size="sm" variant="flat" color="warning" className="text-[10px] h-5">Online</Chip>}
+                                <Chip size="sm" variant="flat" color={p.probability_score >= 70 ? "success" : "default"} className="text-[10px] h-5 border border-success/20">
+                                  Match: {p.probability_score}%
+                                </Chip>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      }
-                      classNames={{
-                        base: "bg-white/50 dark:bg-white/5 border border-white/20 dark:border-white/10 shadow-sm",
-                      }}
-                    >
-                      <div className="p-2 space-y-4">
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          {p.details || "No details available."}
-                        </p>
-                        
-                        {p.improvement_projection && (
-                          <Card className="bg-warning/10 border-warning/20 border">
-                            <CardBody className="p-3 text-sm text-warning-600 dark:text-warning-400 flex flex-row gap-2 items-start">
-                              <span className="text-xl">⚠️</span>
-                              <span>{p.improvement_projection}</span>
-                            </CardBody>
-                          </Card>
-                        )}
+                        }
+                        classNames={{
+                          base: "bg-white/50 dark:bg-white/5 border border-white/20 dark:border-white/10 shadow-sm rounded-2xl overflow-hidden mb-3",
+                          content: "pb-4 px-4"
+                        }}
+                      >
+                        <div className="space-y-5">
+                          <p className="text-sm text-muted-foreground leading-relaxed bg-black/5 dark:bg-black/20 p-4 rounded-xl">
+                            {p.details || "No detailed curriculum information available."}
+                          </p>
+                          
+                          {p.improvement_projection && (
+                            <Card className="bg-warning-500/10 border-warning/20 border shadow-none">
+                              <CardBody className="p-4 text-sm text-warning-700 dark:text-warning-400 flex flex-row gap-3 items-start">
+                                <span className="text-lg">💡</span>
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-bold text-xs uppercase tracking-wider opacity-80">Actionable Advice</span>
+                                  <span>{p.improvement_projection}</span>
+                                </div>
+                              </CardBody>
+                            </Card>
+                          )}
 
-                        <div className="flex items-center justify-between mt-4">
-                          <h4 className="font-semibold text-zinc-800 dark:text-zinc-200">
-                            Secured Funding ({programFunding.length})
-                          </h4>
-                          <Button 
-                            size="sm" 
-                            color="primary" 
-                            variant="flat"
-                            isLoading={isFundingLoading === p.id}
-                            onPress={() => onFindFunding(p.id)}
-                          >
-                            Scan Financial Aid
-                          </Button>
-                        </div>
-                        
-                        {programFunding.length > 0 ? (
-                          <div className="grid gap-2">
-                            {programFunding.map((s, idx) => (
-                              <div key={idx} className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm">
-                                <span className="font-medium text-green-700 dark:text-green-400">{s.title}</span>
-                                <p className="text-green-600 dark:text-green-500/70 mt-1">{s.amount || s.description}</p>
+                          <div className="pt-4 border-t border-border/40">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="font-bold text-foreground text-sm tracking-wide">
+                                Secured Funding ({programFunding.length})
+                              </h4>
+                              <Button 
+                                size="sm" 
+                                color="primary" 
+                                variant="shadow"
+                                className="font-semibold text-xs"
+                                isLoading={isFundingLoading === p.id}
+                                onPress={() => onFindFunding(p.id)}
+                              >
+                                Scan Financial Aid
+                              </Button>
+                            </div>
+                            
+                            {programFunding.length > 0 ? (
+                              <div className="grid gap-3">
+                                {programFunding.map((s, idx) => (
+                                  <div key={idx} className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20 text-sm hover:border-emerald-500/40 transition-colors">
+                                    <span className="font-bold text-emerald-700 dark:text-emerald-400 block mb-1">{s.title}</span>
+                                    <p className="text-emerald-600 dark:text-emerald-500/80 text-xs leading-relaxed">{s.amount || s.description}</p>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            ) : (
+                              <div className="p-4 rounded-xl border border-dashed border-border/60 bg-muted/20 text-center">
+                                <p className="text-xs text-muted-foreground font-medium">No specific funding found yet. Click the button above to launch a targeted scan.</p>
+                              </div>
+                            )}
                           </div>
-                        ) : (
-                          <p className="text-sm text-zinc-500 italic">No specific funding found yet. Run a scan to discover options.</p>
-                        )}
-                      </div>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
+                        </div>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              </div>
             </ModalBody>
 
-            <ModalFooter>
-              <Button color="danger" variant="light" onPress={onClose}>
-                Close Deep Dive
+            <ModalFooter className="border-t border-border/20 px-8 py-4">
+              <Button color="default" variant="light" onPress={onClose} className="font-medium">
+                Close
               </Button>
             </ModalFooter>
           </>
