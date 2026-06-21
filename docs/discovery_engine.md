@@ -23,8 +23,12 @@ sequenceDiagram
     UI->>Wave2: User clicks a University Card
     activate Wave2
     Note over Wave2: Opens Modal. Fetches fading Campus Image (DDGS)
-    Wave2->>AI2: Triggers Targeted Funding Scan
-    AI2-->>UI: Renders deep program steps and specific financial aid.
+    Wave2->>AI2: User clicks "Run Full Deep Dive"
+    Note over AI2: Concurrent Dual Scan triggered
+    AI2->>AI2: Task A: Find Funding via DDGS & Scrape
+    AI2->>AI2: Task B: Deep Scan official program URL
+    Note over AI2: Program Scan extracts Application Steps,<br/>Deadlines, and Hard Requirements.
+    AI2-->>UI: Updates UI with deep program specs and financial aid.
     deactivate Wave2
 ```
 

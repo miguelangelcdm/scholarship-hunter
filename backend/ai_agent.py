@@ -260,6 +260,63 @@ def parse_profile_from_document(text: str) -> dict:
         print(f"Error parsing document: {e}")
         return {}
 
+class DeepProgramExtraction(BaseModel):
+    details: str = Field(description="Comprehensive summary of the program, curriculum, and academic focus.")
+    steps: str = Field(description="Step-by-step application instructions, required portals, and timeline.")
+    important_info: str = Field(description="Deadlines, hard requirements, IELTS/TOEFL scores, GPA minimums, and specific constraints.")
+    next_steps: str = Field(description="Recommended immediate next actions for the user to start the application process.")
+
+def extract_deep_program_details(page_text: str, profile_data: dict, target_program_context: dict) -> dict:
+    llm = get_hf_llm()
+    if not llm:
+        print("Falling back to Gemini for deep extraction since HF is not configured...")
+        llm = get_llm()
+        if not llm:
+            return {}
+        
+    parser = PydanticOutputParser(pydantic_object=DeepProgramExtraction)
+    
+    prompt = PromptTemplate(
+        template="""
+        You are an expert university admissions advisor conducting a deep-dive on a specific program.
+        You have been given raw text scraped from the official university webpage for the following program:
+        TARGET PROGRAM: {target_program}
+        UNIVERSITY: {university}
+        
+        Analyze the text thoroughly and extract the exact details, step-by-step application process, important requirements (like test scores, deadlines), and immediate next steps.
+        Tailor the actionable advice slightly to the user's profile if possible, highlighting anything they are missing.
+        
+        User Profile:
+        {profile}
+        
+        Scraped Webpage Text:
+        {page_text}
+        
+        {format_instructions}
+        """,
+        input_variables=["target_program", "university", "profile", "page_text"],
+        partial_variables={"format_instructions": parser.get_format_instructions()}
+    )
+    
+    try:
+        formatted = prompt.format(
+            target_program=target_program_context.get("title", "Unknown Program"),
+            university=target_program_context.get("university", "Unknown University"),
+            profile=str(profile_data),
+            page_text=page_text
+        )
+        response = llm.invoke(formatted)
+        
+        raw_content = response.content
+        if "```json" in raw_content:
+            raw_content = raw_content.split("```json")[1].split("```")[0].strip()
+            
+        parsed = parser.parse(raw_content)
+        return parsed.model_dump()
+    except Exception as e:
+        print(f"Error during deep extraction: {e}")
+        return {}
+
 def draft_essay(profile_data: dict, scholarship_data: dict):
     llm = get_llm()
     if not llm:

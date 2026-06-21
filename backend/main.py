@@ -468,6 +468,65 @@ def get_university_deep_dive(university_name: str, db: Session = Depends(get_db)
         "description": description
     }
 
+@app.post("/programs/{program_id}/deep-scan")
+def run_deep_program_scan(program_id: int, db: Session = Depends(get_db)):
+    from duckduckgo_search import DDGS
+    from scrapling import fetch
+    from ai_agent import extract_deep_program_details
+    
+    profile = db.query(Profile).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile required to scan")
+        
+    program = db.query(TargetProgram).filter(TargetProgram.id == program_id).first()
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found")
+        
+    target_url = program.url
+    if not target_url:
+        # Search for the official program URL
+        query = f"{program.title} {program.university} official requirements admissions"
+        try:
+            results = DDGS().text(query, max_results=3)
+            for res in results:
+                url = res.get("href")
+                if url and "facebook.com" not in url and "findamasters.com" not in url:
+                    target_url = url
+                    program.url = target_url
+                    break
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to find program URL: {str(e)}")
+            
+    if not target_url:
+        raise HTTPException(status_code=404, detail="Could not locate official program URL to scrape.")
+        
+    # Scrape the URL
+    try:
+        page = fetch(target_url)
+        page_text = page.text
+        # Limit text size to avoid token limits
+        if len(page_text) > 40000:
+            page_text = page_text[:40000]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to scrape URL {target_url}: {str(e)}")
+        
+    # Extract details
+    target_context = {
+        "title": program.title,
+        "university": program.university
+    }
+    extracted = extract_deep_program_details(page_text, profile.__dict__, target_context)
+    
+    if extracted:
+        program.details = extracted.get("details", program.details)
+        program.steps = extracted.get("steps", program.steps)
+        program.important_info = extracted.get("important_info", program.important_info)
+        program.next_steps = extracted.get("next_steps", program.next_steps)
+        db.commit()
+        db.refresh(program)
+        
+    return {"status": "success", "program": program}
+
 @app.post("/programs/{program_id}/find-funding")
 def run_targeted_funding_scan(program_id: int, db: Session = Depends(get_db)):
     from fastapi.responses import StreamingResponse

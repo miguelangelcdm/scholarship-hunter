@@ -400,13 +400,26 @@ export default function Dashboard() {
         isFundingLoading={isFundingLoading}
         onFindFunding={async (programId) => {
           setIsFundingLoading(programId);
-          toast.info(`Scanning deeper funding for ${selectedUniversityName}...`);
+          toast.info(`Running full deep dive for program and funding...`);
           try {
-            await api.findFunding(programId);
-            toast.success("Targeted funding scan complete!");
+            await Promise.all([
+              api.deepScanProgram(programId),
+              api.findFunding(programId)
+            ]);
+            toast.success("Deep scan and funding search complete!");
             queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+            queryClient.invalidateQueries({ queryKey: ['programs'] });
+            
+            // Update the selected programs locally so the modal updates without closing
+            api.getPrograms().then(data => {
+              const updatedUniversityPrograms = data.filter((p: any) => p.institution === selectedUniversityName || p.university === selectedUniversityName);
+              if (updatedUniversityPrograms.length > 0) {
+                setSelectedUniversityPrograms(updatedUniversityPrograms);
+              }
+            });
+            
           } catch (e) {
-            toast.error("Failed to find funding.");
+            toast.error("Failed to complete deep dive.");
           } finally {
             setIsFundingLoading(null);
           }

@@ -139,6 +139,27 @@ export default function UniversityDeepDiveModal({
                           <p className="text-sm text-muted-foreground leading-relaxed bg-black/5 dark:bg-black/20 p-4 rounded-xl">
                             {p.details || "No detailed curriculum information available."}
                           </p>
+
+                          {p.steps && (
+                            <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10">
+                              <h5 className="font-bold text-xs uppercase tracking-wider text-indigo-500 mb-2">Application Steps</h5>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{p.steps}</p>
+                            </div>
+                          )}
+
+                          {p.important_info && (
+                            <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/10">
+                              <h5 className="font-bold text-xs uppercase tracking-wider text-rose-500 mb-2">Important Requirements & Deadlines</h5>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{p.important_info}</p>
+                            </div>
+                          )}
+
+                          {p.next_steps && (
+                            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                              <h5 className="font-bold text-xs uppercase tracking-wider text-emerald-500 mb-2">Immediate Next Steps</h5>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{p.next_steps}</p>
+                            </div>
+                          )}
                           
                           {p.improvement_projection && (
                             <Card className="bg-warning-500/10 border-warning/20 border shadow-none">
@@ -153,7 +174,7 @@ export default function UniversityDeepDiveModal({
                           )}
 
                           <div className="pt-4 border-t border-border/40">
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                               <h4 className="font-bold text-foreground text-sm tracking-wide">
                                 Secured Funding ({programFunding.length})
                               </h4>
@@ -165,7 +186,7 @@ export default function UniversityDeepDiveModal({
                                 isLoading={isFundingLoading === p.id}
                                 onPress={() => onFindFunding(p.id)}
                               >
-                                Scan Financial Aid
+                                Run Full Deep Dive
                               </Button>
                             </div>
                             
