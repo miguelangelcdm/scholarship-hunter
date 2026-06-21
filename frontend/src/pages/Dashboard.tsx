@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, API_BASE } from "@/lib/api";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GraduationCap, Sparkles, Building2, Globe, ShieldCheck, AlertTriangle, Lock, ArrowRight, Radar, CheckCircle2, Database, Search, Loader2, X } from "lucide-react";
+import { GraduationCap, Sparkles, Building2, Globe, ShieldCheck, AlertTriangle, Lock, ArrowRight, Radar, CheckCircle2, Database, Search, Loader2, X, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import UniversityDeepDiveModal from "@/components/dashboard/UniversityDeepDiveModal";
 const formatScanTime = (isoString: string) => {
   if (!isoString) return "";
   try {
@@ -29,6 +30,11 @@ export default function Dashboard() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStatus, setScanStatus] = useState("Initiating scan...");
+  
+  const [isDeepDiveOpen, setIsDeepDiveOpen] = useState(false);
+  const [selectedUniversityName, setSelectedUniversityName] = useState<string | null>(null);
+  const [selectedUniversityPrograms, setSelectedUniversityPrograms] = useState<any[]>([]);
+  const [isFundingLoading, setIsFundingLoading] = useState<number | null>(null);
   
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['profile'],
@@ -338,113 +344,74 @@ export default function Dashboard() {
                   acc[curr.institution].push(curr);
                   return acc;
                 }, {})
-              ).map(([university, universityPrograms]: [string, any]) => (
-                <div key={university} className="p-6 border border-border/60 bg-background/80 rounded-2xl hover:border-indigo-500/30 transition-all">
-                  
-                  {/* University Header */}
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h3 className="font-bold text-foreground text-xl flex items-center gap-2">
-                        <Building2 className="w-5 h-5 text-indigo-400" />
-                        {university}
-                      </h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1.5">
+              ).map(([university, universityPrograms]: [string, any]) => {
+                const totalSecured = scholarships.filter((s: any) => 
+                  universityPrograms.some((p: any) => p.id === s.target_program_id)
+                ).length;
+
+                return (
+                <div 
+                  key={university} 
+                  onClick={() => {
+                    setSelectedUniversityName(university);
+                    setSelectedUniversityPrograms(universityPrograms);
+                    setIsDeepDiveOpen(true);
+                  }}
+                  className="p-6 border border-border/60 bg-background/80 rounded-2xl hover:border-indigo-500/50 hover:bg-secondary/40 cursor-pointer transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h3 className="font-bold text-foreground text-xl flex items-center gap-2">
+                      <Building2 className="w-5 h-5 text-indigo-400 group-hover:text-indigo-300" />
+                      {university}
+                    </h3>
+                    <div className="flex items-center gap-4 mt-2">
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                         <Globe className="w-4 h-4" />
                         {universityPrograms[0].location}
                       </div>
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <GraduationCap className="w-4 h-4" />
+                        {universityPrograms.length} Programs
+                      </div>
+                      {totalSecured > 0 && (
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-500">
+                          <Database className="w-4 h-4" />
+                          {totalSecured} Funding Matches
+                        </div>
+                      )}
                     </div>
                   </div>
-                  
-                  {/* Nested Programs */}
-                  <div className="space-y-4">
-                    {universityPrograms.map((p: any) => (
-                      <div key={p.id} className="p-4 rounded-xl bg-secondary/30 border border-border/40 hover:bg-secondary/50 transition-colors group relative">
-                        <button 
-                          onClick={() => discardProgramMutation.mutate(p.id)}
-                          className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground hover:text-destructive flex items-center gap-1"
-                          title="Discard Program"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                        
-                        <h4 className="font-semibold text-foreground text-md pr-8">{p.title}</h4>
-                        
-                        <div className="flex flex-wrap items-center gap-2 mt-2 mb-3">
-                          <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-md border border-indigo-500/20">Desire: {p.desireScore}%</span>
-                          <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Probability: {p.probabilityScore}%</span>
-                          <span className="text-[10px] font-semibold bg-secondary px-2 py-0.5 rounded-md text-foreground border border-border/50">{p.modality}</span>
-                          {getFeasibilityBadge(p.modality)}
-                        </div>
-                        
-                        {p.improvementProjection && (
-                          <div className="mb-3 p-2.5 rounded-lg bg-indigo-500/5 border border-indigo-500/20 flex gap-2 items-start">
-                            <AlertTriangle className="w-3.5 h-3.5 text-indigo-400 mt-0.5 shrink-0" />
-                            <div>
-                              <p className="text-[10px] font-bold text-indigo-400 mb-0.5">Actionable Advice</p>
-                              <p className="text-xs text-muted-foreground leading-relaxed">{p.improvementProjection}</p>
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/40">
-                          <span className="text-xs font-semibold text-muted-foreground">{p.tuition}</span>
-                          
-                          <button
-                            onClick={async () => {
-                              toast.info(`Scanning funding for ${p.title}...`);
-                              try {
-                                await fetch(`${API_BASE}/programs/${p.id}/find-funding`, { method: 'POST' });
-                                toast.success("Funding scan complete!");
-                                queryClient.invalidateQueries({ queryKey: ['scholarships'] });
-                              } catch (e) {
-                                toast.error("Failed to find funding.");
-                              }
-                            }}
-                            className="text-xs flex items-center gap-1.5 font-bold text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg transition-colors"
-                          >
-                            <Database className="w-3.5 h-3.5" />
-                            Find Funding
-                          </button>
-                        </div>
-                        
-                        {/* Secured Funding List for this program */}
-                        {scholarships.filter((s: any) => s.target_program_id === p.id).length > 0 && (
-                          <div className="mt-4 space-y-2">
-                            <h5 className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Secured Funding</h5>
-                            {scholarships.filter((s: any) => s.target_program_id === p.id).map((s: any) => (
-                              <div key={s.id} className="flex justify-between items-center p-2.5 bg-emerald-500/5 border border-emerald-500/20 rounded-lg">
-                                <div className="flex-1">
-                                  <div className="flex justify-between items-center">
-                                    <p className="text-xs font-semibold text-emerald-400">{s.title}</p>
-                                    <button 
-                                      onClick={() => discardScholarshipMutation.mutate(s.id)}
-                                      className="text-[10px] text-muted-foreground hover:text-destructive"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                  <p className="text-[10px] text-muted-foreground line-clamp-1">{s.description}</p>
-                                </div>
-                                <div className="ml-3 shrink-0 text-right">
-                                  <p className="text-xs font-bold text-emerald-500">{s.amount || "Variable"}</p>
-                                  <p className="text-[10px] text-emerald-400/80">{s.probability_score}% Win</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                      </div>
-                    ))}
-                  </div>
-                  
+                  <ChevronRight className="w-6 h-6 text-muted-foreground group-hover:text-indigo-400 transition-colors" />
                 </div>
-              ))
+              )})
             )}
           </div>
         </section>
 
       </div>
+
+      {/* Deep Dive Modal */}
+      <UniversityDeepDiveModal
+        isOpen={isDeepDiveOpen}
+        onOpenChange={setIsDeepDiveOpen}
+        universityName={selectedUniversityName}
+        programs={selectedUniversityPrograms}
+        scholarships={scholarships}
+        isFundingLoading={isFundingLoading}
+        onFindFunding={async (programId) => {
+          setIsFundingLoading(programId);
+          toast.info(`Scanning deeper funding for ${selectedUniversityName}...`);
+          try {
+            await api.findFunding(programId);
+            toast.success("Targeted funding scan complete!");
+            queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+          } catch (e) {
+            toast.error("Failed to find funding.");
+          } finally {
+            setIsFundingLoading(null);
+          }
+        }}
+      />
     </div>
   );
 }

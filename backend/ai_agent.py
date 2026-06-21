@@ -121,7 +121,8 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
     else:
         # General scan logic
         target_info = ""
-        rejection_rule = "You MUST strictly reject and discard ANY program or scholarship that does NOT strongly align with the User's major and career goals. If the user is in 'Systems Engineering', DO NOT extract 'Chemistry' or 'Arts' programs. If there are no highly relevant programs, set 'is_valid' to False and return empty lists."
+        rejection_rule = """You MUST strictly reject and discard ANY program or scholarship that does NOT strongly align with the User's major and career goals. 
+        CRITICAL INSTITUTION RULE: If the exact, concrete name of the university or institution cannot be found in the text, you MUST discard the program. Do not extract it. Do not use placeholders like 'Unknown University'. We only want concrete opportunities."""
 
     prompt = PromptTemplate(
         template="""

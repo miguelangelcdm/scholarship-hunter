@@ -257,7 +257,7 @@ def run_discovery_scan(db: Session = Depends(get_db)):
         # 1. Search Seeding (Phase 1)
         yield json.dumps({"step": "seeding", "message": "Searching DuckDuckGo for matching scholarships...", "progress": 15}) + "\n"
         
-        search_limit = int(os.getenv("SEARCH_MAX_RESULTS", 5))
+        search_limit = int(os.getenv("SEARCH_MAX_RESULTS", 10))
         seed_urls = get_seed_urls(profile, offset=offset, limit=search_limit)
         
         # 2. Web Crawling (Phase 2)
@@ -387,6 +387,9 @@ def run_discovery_scan(db: Session = Depends(get_db)):
 
                 # Handle Programs
                 for prog in extracted.get("programs", []):
+                    if prog.get("university") == "Unknown University" or not prog.get("university"):
+                        continue # Skip invalid universities per wave 1 strict rule
+
                     existing = db.query(TargetProgram).filter(TargetProgram.url == page_data["url"], TargetProgram.title == prog.get("title")).first()
                     if not existing:
                         new_program = TargetProgram(
@@ -432,12 +435,38 @@ def run_discovery_scan(db: Session = Depends(get_db)):
             
         yield json.dumps({
             "step": "complete", 
-            "message": f"Scan complete! Discovered {new_scholarship_count} scholarships and {new_program_count} programs.", 
+            "message": f"Scan complete! Discovered {new_program_count} universities.", 
             "progress": 100,
             "new_count": new_scholarship_count + new_program_count
         }) + "\n"
         
     return StreamingResponse(scan_generator(), media_type="application/x-ndjson")
+
+@app.get("/universities/{university_name}/deep-dive")
+def get_university_deep_dive(university_name: str, db: Session = Depends(get_db)):
+    """Fetches a deep dive summary and campus image for a specific university."""
+    import urllib.parse
+    from duckduckgo_search import DDGS
+    import logging
+
+    decoded_name = urllib.parse.unquote(university_name)
+    image_url = None
+    description = f"Detailed information and application steps for programs at {decoded_name}."
+
+    # Try to fetch an image of the campus using DuckDuckGo Images
+    try:
+        results = DDGS().images(f"{decoded_name} campus high resolution", max_results=1)
+        if results and len(results) > 0:
+            image_url = results[0].get("image")
+    except Exception as e:
+        logging.error(f"Failed to fetch image for {decoded_name}: {e}")
+        
+    # We could also use an LLM call here to generate a short description if we wanted to
+    return {
+        "university": decoded_name,
+        "image_url": image_url,
+        "description": description
+    }
 
 @app.post("/programs/{program_id}/find-funding")
 def run_targeted_funding_scan(program_id: int, db: Session = Depends(get_db)):

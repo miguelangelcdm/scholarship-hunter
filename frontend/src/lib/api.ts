@@ -24,6 +24,7 @@ export const api = {
   getLastScan: () => fetch(`${API_BASE}/scholarships/last-scan`).then(handleResponse),
   scanScholarships: () => fetch(`${API_BASE}/scholarships/scan`, { method: 'POST' }).then(handleResponse),
   findFunding: (programId: number) => fetch(`${API_BASE}/programs/${programId}/find-funding`, { method: 'POST' }),
+  getUniversityDeepDive: (universityName: string) => fetch(`${API_BASE}/universities/${encodeURIComponent(universityName)}/deep-dive`).then(handleResponse),
   draftEssay: (id: number) => fetch(`${API_BASE}/scholarships/${id}/draft`, { method: 'POST' }).then(handleResponse),
   draftOutreach: (id: number) => fetch(`${API_BASE}/scholarships/${id}/outreach`, { method: 'POST' }).then(handleResponse),
   uploadDocument: (docType: string, file: File) => {

@@ -2,30 +2,30 @@
 
 The Discovery Engine is the core of the Scholarship Hunter platform. It utilizes a **Standardized Pipeline** to find university programs and financial aid worldwide, parse unstructured university web pages, and match them against a user's rich profile.
 
-## The Standardized Pipeline
+## The Two-Wave Discovery Architecture
 
-We cannot build custom scrapers for every university on earth. Instead, we use a generic funnel that treats every university program as an object with a strict schema. 
+To provide a premium, credible experience while conserving compute, we split the engine into two phases: **Wave 1 (Broad Discovery)** and **Wave 2 (Deep Dive)**.
 
 ```mermaid
 sequenceDiagram
     participant User as User Profile
-    participant Search as Phase 1: Search Seeder (DDGS)
-    participant Scraper as Phase 2: Stealth Crawler (Scrapling)
-    participant LLM as Phase 3: Extractor (HuggingFace/Qwen)
-    participant UI as Phase 4: Frontend UI
+    participant Wave1 as Wave 1: Broad Scan
+    participant AI1 as Phase 1: Filter & Discard
+    participant UI as Dashboard UI
+    participant Wave2 as Wave 2: Deep Dive
+    participant AI2 as Phase 2: Details & Funding
 
-    User->>Search: Generate Search Queries (Major, Degree, Target Countries, 1-2 Keywords)
-    Note over Search: e.g. "(scholarship OR financial aid OR admissions OR program)"<br/>Uses DDGS to pull top organic results.
-    Search-->>Scraper: Top Seed URLs
-    activate Scraper
-    Note over Scraper: Stealth fetch bypasses Cloudflare.<br/>Filter out non-relevant paragraphs.
-    Scraper-->>LLM: Cleaned Context
-    deactivate Scraper
-    activate LLM
-    Note over LLM: Evaluates text against FULL User Profile<br/>(Experience, volunteering, exact GPA)
-    LLM-->>UI: Dual Extracted JSON (Programs list + Scholarships list)
-    deactivate LLM
-    Note over UI: Renders lists across<br/>Dashboard & Target Programs views.
+    User->>Wave1: Generate Search Queries (Major, Degree, Target Countries)
+    Note over Wave1: Scrapes top 10 universities.<br/>Lighter extraction.
+    Wave1->>AI1: Initial Evaluation
+    Note over AI1: CRITICAL RULE: Drops any program<br/>without a concrete University name.
+    AI1-->>UI: Renders Sleek University Cards
+    UI->>Wave2: User clicks a University Card
+    activate Wave2
+    Note over Wave2: Opens Modal. Fetches fading Campus Image (DDGS)
+    Wave2->>AI2: Triggers Targeted Funding Scan
+    AI2-->>UI: Renders deep program steps and specific financial aid.
+    deactivate Wave2
 ```
 
 ### Phase 1: Search Seeding vs. Full Profile Evaluation
