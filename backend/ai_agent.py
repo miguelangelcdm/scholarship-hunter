@@ -21,11 +21,12 @@ def get_llm():
 
 def get_ollama_llm():
     try:
-        # Check if Ollama is running locally
-        res = requests.get("http://localhost:11434/", timeout=1.0)
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        # Check if Ollama is running
+        res = requests.get(f"{base_url}/", timeout=1.0)
         if res.status_code == 200:
             print("Local Ollama detected! Routing inference to local hardware.")
-            return ChatOllama(model="llama3", temperature=0.1)
+            return ChatOllama(base_url=base_url, model="gemma4", temperature=0.1)
     except Exception:
         pass
     return None
@@ -56,7 +57,7 @@ def get_primary_llm():
     return get_hf_llm()
 
 def score_scholarship(profile_data: dict, scholarship_data: dict):
-    llm = get_llm()
+    llm = get_primary_llm()
     if not llm:
         # Fallback fake scoring if no API key is provided
         return {"probability_score": 88.0, "desire_score": 92.0}
@@ -243,7 +244,7 @@ class ProfileExtraction(BaseModel):
     primary_goal: Optional[str] = Field(None, description="Infer from goals if user wants to 'Migrate', 'Brain-Circulation', or 'Local Growth'.")
 
 def parse_profile_from_document(text: str) -> dict:
-    llm = get_llm()
+    llm = get_primary_llm()
     if not llm:
         # Fallback mock data for local testing if API key is not set
         return {
@@ -361,9 +362,9 @@ def extract_deep_program_details(page_text: str, profile_data: dict, target_prog
         return {}
 
 def draft_essay(profile_data: dict, scholarship_data: dict):
-    llm = get_llm()
+    llm = get_primary_llm()
     if not llm:
-        return "Please configure GEMINI_API_KEY in the .env file to generate an essay draft."
+        return "Please ensure Ollama is running or configure GEMINI_API_KEY as a fallback."
         
     prompt = PromptTemplate(
         template="""
@@ -391,9 +392,9 @@ def draft_essay(profile_data: dict, scholarship_data: dict):
         return f"Error generating essay: {e}"
 
 def draft_outreach_email(profile_data: dict, scholarship_data: dict):
-    llm = get_llm()
+    llm = get_primary_llm()
     if not llm:
-        return "Please configure GEMINI_API_KEY in the .env file to generate an outreach email draft."
+        return "Please ensure Ollama is running or configure GEMINI_API_KEY as a fallback."
         
     prompt = PromptTemplate(
         template="""
