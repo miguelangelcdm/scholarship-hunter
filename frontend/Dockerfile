@@ -10,7 +10,7 @@ RUN npm install
 COPY . .
 
 # Expose Vite port
-EXPOSE 5173
+EXPOSE 8080
 
 # Run Vite in dev mode, exposing host
 CMD ["npm", "run", "dev", "--", "--host"]

@@ -5,6 +5,8 @@ WORKDIR /app
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m patchright install chromium
+RUN python -m patchright install-deps chromium
 
 # Copy the rest of the application
 COPY . .

@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-06-21T08:00:51.851876Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": true
+  },
+  "search_phase": {
+    "max_results_limit": 15,
+    "offset": 25,
+    "seed_urls": [
+      "https://example.edu/admissions",
+      "https://example.edu/financial-aid"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 0,
+    "pages": [],
+    "errors": [
+      {
+        "url": "https://example.edu/admissions",
+        "error": "BrowserType.launch_persistent_context: Executable doesn't exist at /root/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome\n\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n\u2551 Looks like Playwright was just installed or updated.       \u2551\n\u2551 Please run the following command to download new browsers: \u2551\n\u2551                                                            \u2551\n\u2551     patchright install                                     \u2551\n\u2551                                                            \u2551\n\u2551 <3 Patchright Team                                         \u2551\n\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d"
+      },
+      {
+        "url": "https://example.edu/financial-aid",
+        "error": "BrowserType.launch_persistent_context: Executable doesn't exist at /root/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome\n\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n\u2551 Looks like Playwright was just installed or updated.       \u2551\n\u2551 Please run the following command to download new browsers: \u2551\n\u2551                                                            \u2551\n\u2551     patchright install                                     \u2551\n\u2551                                                            \u2551\n\u2551 <3 Patchright Team                                         \u2551\n\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d"
+      }
+    ]
+  },
+  "extraction_phase": {
+    "processed_pages": []
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_programs_added": 0,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cost_usd": 0.0
+  }
+}

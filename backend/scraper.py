@@ -54,26 +54,22 @@ def fetch_scholarships_real(urls, profile_dict):
                 
                 soup = BeautifulSoup(html_content, 'html.parser')
                 
-                # Remove navs, footers, scripts, styles
                 for elem in soup(["script", "style", "nav", "footer", "header"]):
                     elem.extract()
                     
                 text = soup.get_text(separator=' ', strip=True)
                 
-                # Check if it has any keywords at all before running NLTK
-                text_lower = text.lower()
-                keywords = ["tuition", "deadline", "scholarship", "financial aid", "apply", "requirements", "admissions", "grant", "program", "degree", "master", "bachelor"]
-                if any(k in text_lower for k in keywords):
-                    filtered_text = filter_text_with_nltk(text, profile_dict)
-                    title = soup.title.string if soup.title else url
-                    results.append({
-                        "url": url,
-                        "title": title.strip() if title else url,
-                        "text": filtered_text
-                    })
-                else:
-                    print(f"[Scraper] No relevant keywords found on {url}")
-                    errors.append({"url": url, "error": "No relevant keywords found in page content"})
+                # We no longer strictly reject pages based on narrow keywords.
+                # We let the massive Gemma context window decide if it's relevant.
+                max_len = int(os.getenv('SCRAPER_MAX_TEXT_LENGTH', 50000))
+                filtered_text = text[:max_len]
+                
+                title = soup.title.string if soup.title else url
+                results.append({
+                    "url": url,
+                    "title": title.strip() if title else url,
+                    "text": filtered_text
+                })
             except Exception as e:
                 print(f"[Scraper] Failed to fetch {url}: {e}")
                 errors.append({"url": url, "error": str(e)})

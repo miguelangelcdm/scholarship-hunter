@@ -63,3 +63,4 @@ scrapling[all]
 nltk
 huggingface_hub
 langchain-huggingface
+langchain-ollama

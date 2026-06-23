@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   frontend:
     build:
       context: ./frontend
     ports:
-      - "5173:5173"
+      - "8080:8080"
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -21,34 +19,8 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN}
-      - OLLAMA_BASE_URL=http://ollama:11434
-    # Ollama is running inside the docker network, so localhost won't work for the backend to reach Ollama.
-    # We must set an environment variable for the backend to know where Ollama is!
-    # Wait, in ai_agent.py, it's hardcoded to localhost:11434. 
-    # Let's map it via extra_hosts or just use the service name.
-    # To keep code simple without changing it, we can use network_mode: "host", but on Windows Docker Desktop, it's tricky.
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
-    depends_on:
-      - ollama
 
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    restart: unless-stopped
-    # The command below automatically pulls the model if it doesn't exist when the container boots!
-    entrypoint: /bin/sh -c "ollama serve & sleep 5 && ollama pull gemma4:12b && wait"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-
-volumes:
-  ollama_data:

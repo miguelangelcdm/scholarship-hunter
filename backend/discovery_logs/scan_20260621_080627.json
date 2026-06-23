@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-06-21T08:06:27.228430Z",
+  "profile_id": 1,
+  "criteria": {
+    "name": "Miguelangel Garay",
+    "major": "Systems Engineering",
+    "gpa": "Top 20%",
+    "preferred_modality": "In-Person (Abroad)",
+    "target_countries": [
+      "United Kingdom",
+      "Spain",
+      "europe"
+    ],
+    "has_dependents": true
+  },
+  "search_phase": {
+    "max_results_limit": 15,
+    "offset": 8,
+    "seed_urls": [
+      "https://example.edu/admissions",
+      "https://example.edu/financial-aid"
+    ]
+  },
+  "scraper_phase": {
+    "pages_scraped_count": 0,
+    "pages": [],
+    "errors": [
+      {
+        "url": "https://example.edu/admissions",
+        "error": "No relevant keywords found in page content"
+      },
+      {
+        "url": "https://example.edu/financial-aid",
+        "error": "No relevant keywords found in page content"
+      }
+    ]
+  },
+  "extraction_phase": {
+    "processed_pages": []
+  },
+  "aggregate_metrics": {
+    "total_scholarships_added": 0,
+    "total_programs_added": 0,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cost_usd": 0.0
+  }
+}

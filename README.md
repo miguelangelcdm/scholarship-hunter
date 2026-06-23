@@ -124,8 +124,8 @@ You can also bypass the menu and execute targets directly from your shell at the
 
 ---
 
-### Manual / Separate Run Instructions (Legacy)
-If you prefer running the servers manually in separate terminal windows:
+### Manual / Separate Run Instructions (Legacy / Local Dev)
+If you prefer running the servers manually in separate terminal windows (for maximum local performance or when not using Docker):
 
 > [!IMPORTANT]
 > **Python Version Requirement**: While the main FastAPI backend can run on Python 3.14, some dependencies in the workspace (such as `crewai` in `external_repos/memanto/examples/crewai-memory/requirements.txt`) do not yet support Python 3.14. It is **highly recommended to use Python 3.12** for the Python environment in this workspace to avoid installation failures.
@@ -182,6 +182,21 @@ The frontend uses Vite for fast development builds.
    npm run dev
    ```
    The frontend will run at `http://localhost:5173` (or check terminal output for the specific port).
+
+---
+
+### Running via Docker Compose
+
+For a containerized setup, you can use `docker-compose`. This approach is configured to use your **host machine's Ollama instance** for maximum GPU performance, preventing heavy model downloads within Docker.
+
+1. Ensure Ollama is running on your host machine and has pulled `gemma4` or `gemma4:12b` (or whichever local model you prefer).
+2. From the root of the project, run:
+   ```bash
+   docker-compose up --build
+   ```
+3. The frontend will be available at `http://localhost:8080` and the backend at `http://localhost:8000`.
+
+*Note: The `docker-compose.yml` maps `OLLAMA_BASE_URL` to `http://host.docker.internal:11434` automatically so the backend container can reach the host.*
 
 > [!IMPORTANT]
 > **HeroUI Version & Tailwind CSS Compatibility**:
