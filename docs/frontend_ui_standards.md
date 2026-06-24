@@ -24,7 +24,12 @@ To maintain a fluid, premium tactile feel, all page transitions, tab switches, a
 
 ## UI Patterns & Components
 
-* **Select Components**: Leverage the project's standard Radix-based `Select` component framework rather than external React UI libraries (like `@heroui/react`) whenever possible. This avoids dependency version conflicts with Tailwind CSS v3 and ensures seamless styling integration.
+* **HeroUI Component Usage & Constraints**: 
+  - Use simple HeroUI components (like `Input`, `Textarea`, `Checkbox`, `Select`) to achieve consistent, beautiful form controls with minimal manual styling.
+  - **Crucial Constraint**: Do **NOT** use complex composite components (like `DisclosureGroup` or `Accordion`) from the `@heroui/react` package, as they may have strict peer dependency requirements (e.g., React 19) that conflict with the project's current stable React 18.x environment and break the build.
+  - When you need collapsible or complex list layouts, implement them natively using standard maps, divs, and transitions to ensure build stability.
+* **Sticky Action Panels**: For long forms like the Profile tabs, always use sticky panels at the bottom of the viewport for action buttons (e.g., "Save Profile"). Ensure the panel floats above the content with `z-40`, has `pointer-events-none` on the wrapper, and `pointer-events-auto` on the button itself so it does not block the user from interacting with the content behind it.
+* **Responsive Data Rendering**: When presenting AI-generated tags (like Target Disciplines), use CSS Multi-Column layout (`columns-1 md:columns-2`) or responsive grids to maximize screen real-estate instead of long vertical single columns. Use LocalStorage caching (`scholarship_suggested_pivots`) to persist generated options across tab changes.
 * **Form Integrity Lock**: During asynchronous processes like AI extraction, all input fields, textareas, and save buttons must be programmatically disabled to prevent conflict. On input-centric tabs, use a translucent glassmorphic loader overlay that visually blocks edits while keeping the inputs underneath readable. Users should be able to freely navigate through tabs to monitor progress in real-time.
 * **Dashboard Safelocks**: If a user's profile lacks critical data (e.g., Modality or Geographic Targets), visually obscure the actionable lanes behind a frosted glass layer. Clicking disabled buttons should trigger a modal with a direct CTA to complete the Profile.
 

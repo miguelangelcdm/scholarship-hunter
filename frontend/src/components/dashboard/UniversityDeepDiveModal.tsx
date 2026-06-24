@@ -123,8 +123,23 @@ export default function UniversityDeepDiveModal({
                               <span className="font-semibold text-lg text-foreground tracking-tight">{p.title}</span>
                               <div className="flex flex-wrap gap-2 items-center">
                                 {p.is_online && <Chip size="sm" variant="flat" color="warning" className="text-[10px] h-6 px-1">Online</Chip>}
-                                <Chip size="sm" variant="dot" color={(p.probability_score ?? 0) >= 70 ? "success" : "default"} className="text-[11px] font-medium h-6 px-1 border-none bg-default-100/50">
-                                  Match: {p.probability_score ? `${p.probability_score}%` : "N/A"}
+                                {p.instructionLanguages && p.instructionLanguages.length > 0 && (
+                                  <Chip size="sm" variant="flat" color="primary" className="text-[10px] h-6 px-1">
+                                    {p.instructionLanguages.join(", ")}
+                                  </Chip>
+                                )}
+                                {p.offersLanguageTraining && (
+                                  <Chip size="sm" variant="flat" color="secondary" className="text-[10px] h-6 px-1">
+                                    Language Training
+                                  </Chip>
+                                )}
+                                {p.foreignerFriendly && (
+                                  <Chip size="sm" variant="flat" color="success" className="text-[10px] h-6 px-1">
+                                    Foreigner Friendly
+                                  </Chip>
+                                )}
+                                <Chip size="sm" variant="dot" color={(p.probabilityScore ?? 0) >= 70 ? "success" : "default"} className="text-[11px] font-medium h-6 px-1 border-none bg-default-100/50">
+                                  Match: {p.probabilityScore ? `${p.probabilityScore}%` : "N/A"}
                                 </Chip>
                               </div>
                             </div>

@@ -69,4 +69,5 @@ Assuming an average user per month:
 1. **Model Selection**: Using Flash instead of Pro drastically reduces cost without sacrificing JSON structured output quality.
 2. **Field Pruning**: The outreach and scoring endpoints filter out heavy, irrelevant profile fields (like hobbies or publications) from the input prompt payload unless strictly required.
 3. **Structured Inputs**: Standardizing experience and languages into compact JSON database arrays reduces delimiters and prompt formatting overhead, lowering input tokens.
-4. **Caching**: Future improvements should include caching identical program descriptions in a vector DB to prevent re-submitting standard university data repeatedly.
+4. **Tier-1 Heuristic Gatekeeper**: During broad discovery scans, the Scrapy worker applies a pure-Python keyword density gatekeeper. Raw web pages that do not mention core financial aid or major keywords are immediately discarded before *any* AI extraction occurs, preventing thousands of wasted tokens on irrelevant university pages (e.g., faculty directories or campus news).
+5. **Caching**: Future improvements should include caching identical program descriptions in a vector DB to prevent re-submitting standard university data repeatedly.

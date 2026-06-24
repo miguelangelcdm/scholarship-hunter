@@ -16,7 +16,7 @@ from models import Profile, Scholarship, ProfileDocument, TargetProgram
 from schemas import ProfileUpdate, ProfileResponse, ScholarshipResponse, ProfileDocumentResponse, TargetProgramResponse
 from scraper import fetch_scholarships_real
 from search_seeder import get_seed_urls
-from ai_agent import score_scholarship, draft_essay, draft_outreach_email, parse_profile_from_document, extract_page_content
+from ai_agent import score_scholarship, draft_essay, draft_outreach_email, parse_profile_from_document, extract_page_content, suggest_target_disciplines
 
 app = FastAPI(title="Scholarship Hunter API")
 
@@ -64,6 +64,13 @@ def update_profile(profile_data: ProfileUpdate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(profile)
     return profile
+
+@app.get("/profile/suggest-pivots")
+def get_suggested_pivots(major: str, career_goals: str = ""):
+    if not major:
+        raise HTTPException(status_code=400, detail="Major is required")
+    suggestions = suggest_target_disciplines(major, career_goals)
+    return {"suggestions": suggestions}
 
 @app.post("/profile/upload", response_model=ProfileDocumentResponse)
 def upload_profile_document(
@@ -694,3 +701,31 @@ def generate_outreach(scholarship_id: int, db: Session = Depends(get_db)):
     email = draft_outreach_email(profile_dict, scholarship_dict)
     
     return {"email_draft": email}
+
+@app.post("/scholarships/mass-scan")
+def trigger_mass_discovery_scan(db: Session = Depends(get_db)):
+    from worker import run_mass_discovery_job
+    profile = db.query(Profile).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile required to scan")
+    import uuid
+    job_id = str(uuid.uuid4())
+    # Enqueue the job
+    run_mass_discovery_job(job_id, profile.id)
+    
+    return {"job_id": job_id, "message": "Mass discovery job enqueued"}
+
+@app.get("/scholarships/mass-scan/{job_id}/status")
+def get_mass_discovery_status(job_id: str):
+    import os
+    import json
+    status_file = os.path.join(os.path.dirname(__file__), "discovery_logs", f"job_{job_id}.json")
+    if not os.path.exists(status_file):
+        return {"status": "pending", "progress": 0, "message": "Job initializing..."}
+        
+    try:
+        with open(status_file, "r") as f:
+            data = json.load(f)
+            return data
+    except Exception:
+        return {"status": "pending", "progress": 0, "message": "Reading status..."}

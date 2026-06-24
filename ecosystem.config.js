@@ -15,6 +15,20 @@ module.exports = {
       args: "-m uvicorn main:app --host 0.0.0.0 --port 8000",
       cwd: "./backend",
       watch: false,
+    },
+    {
+      name: "worker",
+      script: process.platform === 'win32' ? ".\\venv\\Scripts\\huey_consumer.exe" : "./venv/bin/huey_consumer",
+      args: "worker.huey -w 2",
+      cwd: "./backend",
+      watch: false,
+    },
+    {
+      name: "ollama",
+      script: "node",
+      args: "start_ollama.js",
+      cwd: ".",
+      watch: false,
     }
   ]
 };

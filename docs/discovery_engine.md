@@ -4,7 +4,7 @@ The Discovery Engine is the core of the Scholarship Hunter platform. It utilizes
 
 ## The Two-Wave Discovery Architecture
 
-To provide a premium, credible experience while conserving compute, we split the engine into two phases: **Wave 1 (Broad Discovery)** and **Wave 2 (Deep Dive)**.
+To provide a premium, credible experience while conserving compute, we split the engine into two phases: **Wave 1 (Broad Discovery)** and **Wave 2 (Deep Dive)**. We also provide two modes of execution for Wave 1: **Quick Scan** and **Deep Mass Scan**.
 
 ```mermaid
 sequenceDiagram
@@ -15,53 +15,68 @@ sequenceDiagram
     participant Wave2 as Wave 2: Deep Dive
     participant AI2 as Phase 2: Details & Funding
 
-    User->>Wave1: Generate Search Queries (Major, Degree, Target Countries)
-    Note over Wave1: Scrapes top 10 universities.<br/>Lighter extraction.
-    Wave1->>AI1: Initial Evaluation
-    Note over AI1: CRITICAL RULE: Drops any program<br/>without a concrete University name.
+    User->>Wave1: Generate Search Queries or Seed ROR URLs
+    Note over Wave1: Scrapes top universities via DDG (Quick)<br/>or queries local ROR db (Mass).
+    Wave1->>AI1: Initial Evaluation (Heuristic Gatekeeper)
+    Note over AI1: CRITICAL RULE: Drops any program<br/>without financial aid keywords.
     AI1-->>UI: Renders Sleek University Cards
     UI->>Wave2: User clicks a University Card
     activate Wave2
-    Note over Wave2: Opens Modal. Fetches fading Campus Image (DDGS)
+    Note over Wave2: Opens Modal. Fetches fading Campus Image (Wikidata P18)
     Wave2->>AI2: User clicks "Run Full Deep Dive"
     Note over AI2: Concurrent Dual Scan triggered
-    AI2->>AI2: Task A: Find Funding via DDGS & Scrape
+    AI2->>AI2: Task A: Find Funding via targeted Scrape
     AI2->>AI2: Task B: Deep Scan official program URL
     Note over AI2: Program Scan extracts Application Steps,<br/>Deadlines, and Hard Requirements.
     AI2-->>UI: Updates UI with deep program specs and financial aid.
     deactivate Wave2
 ```
 
-### Phase 1: Search Seeding vs. Full Profile Evaluation
-**Why don't we put the whole profile into the search engine?**
-If we put a user's entire profile (experience, volunteering, exact GPA, languages) into a Google/DuckDuckGo search bar, it will return zero results because the query is too hyper-specific. 
-Instead:
-1. **Search Seeder (DuckDuckGo):** Uses only the *broad constraints* (Major, Degree Level, Target Countries, and generic program/scholarship keywords) to cast a wide net and find relevant university portal pages.
-2. **AI Extractor & Scorer:** Once we download the webpage text, the AI uses the *entire, rich profile* (including professional development, volunteering, and experience) to evaluate if the user is a strong candidate for that specific program or scholarship.
+### Phase 1: Quick Scan vs. Deep Mass Scan
 
-### Phase 2: Crawling & Cloudflare Bypass
-To prevent getting blocked by modern university portals and burning massive amounts of AI tokens:
-- **Stealth Browsing:** We utilize the `Scrapling` library to natively bypass Cloudflare's "Turnstile" or interstitial challenges, ensuring we don't just extract 403 Forbidden pages.
-- **Local Pre-filtering:** Before hitting the AI, the scraper extracts only paragraphs containing targeted keywords (e.g., "$", "tuition", "deadline", "apply", "program", "degree"). If the page lacks these, it may be discarded early or heavily truncated to save tokens.
+**1. Quick Scan (Synchronous)**
+The Quick Scan uses `ddgs` (DuckDuckGo) to search for broad keywords based on the user's major and target countries. It seeds the scraper with ~10 results and streams the extraction progress via Server-Sent Events (SSE) directly to the UI.
 
-### Phase 3: Dual-Extraction via Hugging Face
-Because extraction is a token-heavy process running over dozens of pages, we offload this task from Gemini to a free, fast open-source model via Hugging Face (e.g., `Qwen2.5`).
-The AI enforces a strict JSON output representing two parallel lists: `TargetPrograms` (with curriculum details, steps, and deadlines) and `Scholarships` (with amounts and benefits). 
+**2. Deep Mass Scan (Asynchronous Background Task)**
+For a comprehensive search, the user triggers the Deep Mass Scan.
+- **Task Queue System**: We utilize **Huey** backed by **SQLite** (`SqliteHuey`). This offloads the heavy AI scraping from FastAPI's request cycle to a background `worker.py` process.
+- **University Domain Database (ROR)**: Instead of DDG, we rely on the **Research Organization Registry (ROR)**. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR open-source data dump, filtering it down to ~24,000 educational domains (`universities.json`). 
+- **AI Scout Navigation**: The background worker fetches the homepage of each matching domain, extracts all internal links via BeautifulSoup, and feeds them to an AI "Scout". The Scout evaluates the links against the user's profile and returns the top 2-3 specific URLs most likely to contain academic programs or admissions info, completely eliminating the need to blindly guess URL paths.
+- **Frontend Interfacing**: The frontend receives a `job_id` and runs an active polling loop against `GET /scholarships/mass-scan/{job_id}/status`, reading static JSON log files without stressing the backend.
+
+### Phase 2: Tier 1 Heuristic Gatekeeper & Crawling
+
+## Tier 1: AI Scout Guided Crawling & Heuristic Gatekeeper
+Before performing a deep extraction, the worker relies on a highly efficient pipeline:
+1. **AI Scout Selection**: The AI Scout has already pre-selected the 2-3 most relevant links from the university's homepage structure.
+2. **Multilingual Gatekeeper**: It fetches those specific pages and applies a relaxed keyword density heuristic. It translates academic keywords (program, degree, bachelor, major) into the target country's native language.
+3. If the density of these translated keywords is below `0.2 per 1000 words` (meaning roughly 0 hits), the page is dropped. This serves as a safety net to ensure the Scout didn't hallucinate an empty page.
+This ensures only highly relevant, organically discovered academic pages reach the Deep Extraction LLM.
+
+## Tier 2: Deep Extraction via Local AI (Gemma4)
+Pages that pass Tier 1 are fed to the `gemma4:e2b` (7.2GB) instance running natively on the Host OS via Ollama (configured in `main.py` and `ai_agent.py` through LangChain). 
+
+**Data Standardization (Pre-LLM)**
+To maximize accuracy, we feed the LLM highly curated seed data:
+- **Categorized Major Standardization**: The UI explicitly groups 40+ recognized global academic majors (e.g. Engineering, Business). By forcing the user to pick from this structured `CATEGORIZED_MAJORS` dictionary (in `Profile.tsx`), the LLM avoids misinterpreting niche or non-translatable degree titles, granting it a universally understood anchor point.
+
+During extraction:
+- The LLM extracts structured data adhering to `schemas.py`.
+- **Language Feasibility**: It checks if the `instruction_languages` match the user's known languages. If not, and no `offers_language_training` is available, it caps the `probability_score` to 15%.
 
 #### Strict Scoring Algorithm
 During extraction, the LLM uses highly engineered strict logic to calculate scores and discard irrelevant items:
-- **Major Alignment Rejection**: The AI immediately sets `is_valid=False` if the program completely misses the user's major (e.g., rejecting a "Chemistry" program for a "Systems Engineering" profile).
-- **Desire Score (Compatibility)**: Calculated as **40%** Academic Field Match + **30%** Location/Modality Match + **30%** Career Goals Match.
-- **Probability Score (Acceptance Likelihood)**: Operates with a **Hard Ceiling**. If the user is missing a mandatory document or standardized test (IELTS/GRE) or has a low GPA, their probability is capped at **30%**, regardless of soft factors like work experience.
-- **Actionable Advice (Improvement Projection)**: If a user is capped by the ceiling, the LLM populates the `improvement_projection` field with specific steps to bypass it (e.g., *"Upload an IELTS score of 7.0 to bypass the ceiling and boost probability to 90%+"*).
+- **Target Disciplines Pivot**: The platform explicitly separates the user's *Past Background* (e.g. Computer Science) from their *Target Disciplines* (e.g. Tech MBA). The AI uses the Target Disciplines field to find interdisciplinary pivots instead of strictly searching for their previous major.
+- **Desire Score (Compatibility)**: Calculated as **40%** Target Disciplines Match + **30%** Location/Modality Match + **30%** Career Goals Match.
+- **Probability Score (Acceptance Likelihood)**: Operates with a **Hard Ceiling**. If the user is missing a mandatory document or standardized test (IELTS/GRE) or has a low GPA, their probability is capped at **30%**.
+- **Actionable Advice (Improvement Projection)**: If a user is capped by the ceiling, the LLM populates the `improvement_projection` field with specific steps to bypass it (e.g., *"Upload an IELTS score of 7.0 to bypass the ceiling"*).
 
 ### Phase 4: UI Presentation (University-Centric) & Targeted Funding
+
 To accurately reflect the real-world admissions journey, the UI is heavily **University-Centric**:
-1. **University Clusters**: Target Programs are not listed randomly. They are grouped under their host institution (e.g., *Technical University of Munich*).
+1. **University Clusters**: Target Programs are grouped under their host institution.
 2. **Targeted Funding Scans**: Financial aid is inherently tied to specific institutions and programs. The global scan discovers programs; then, users trigger a highly specific `POST /api/programs/{id}/find-funding` pipeline. 
-   - This explicitly injects the `University` and `Program Title` into the DuckDuckGo seeder and the LLM context.
-   - The LLM runs a secondary extraction pass that completely ignores new programs and solely pulls down scholarships and financial aid tied to that specific university.
-3. **Nested Secured Funding**: Once discovered, targeted scholarships render visually nested under the specific academic program they support, enforcing the dependency that admissions come first, funding follows.
+3. **Nested Secured Funding**: Targeted scholarships render visually nested under the specific academic program they support.
 
 **Machine Learning Feedback Loop & Soft Deletes**:
-Users can click a "Not Interested" (Discard) button on any program card or scholarship. This triggers a `PATCH` request that updates the database item to `status = "Discarded"`. The item is hidden from the UI but preserved in the database (Soft Delete) to train future search-accuracy models on the user's rejection patterns.
+Users can click a "Not Interested" (Discard) button on any program card. This triggers a `PATCH` request updating the database item to `status = "Discarded"`. The item is preserved in the database (Soft Delete) to eventually train future search-accuracy ML models on the user's rejection patterns.

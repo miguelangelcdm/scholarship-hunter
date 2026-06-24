@@ -106,6 +106,47 @@ export default function Dashboard() {
     }
   });
 
+  const massScanMutation = useMutation({
+    mutationFn: async () => {
+      setScanProgress(0);
+      setScanStatus("Initiating deep mass scan...");
+      setIsScanning(true);
+      
+      const response = await fetch(`${API_BASE}/scholarships/mass-scan`, { method: 'POST' });
+      if (!response.ok) {
+        throw new Error("Failed to start mass scan.");
+      }
+      const data = await response.json();
+      const jobId = data.job_id;
+      
+      while (true) {
+        await new Promise(r => setTimeout(r, 2000));
+        const statusRes = await fetch(`${API_BASE}/scholarships/mass-scan/${jobId}/status`);
+        if (!statusRes.ok) continue;
+        
+        const statusData = await statusRes.json();
+        setScanProgress(statusData.progress || 0);
+        setScanStatus(statusData.message || "Scanning...");
+        
+        if (statusData.status === "completed" || statusData.status === "failed") {
+          if (statusData.status === "failed") throw new Error(statusData.message || "Scan failed.");
+          break;
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("Mass scan complete! Results updated.");
+      queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      refetchLastScan();
+      setIsScanning(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to run mass scan.");
+      setIsScanning(false);
+    }
+  });
+
   const { data: programs = [], isLoading: isLoadingPrograms } = useQuery({
     queryKey: ['programs'],
     queryFn: api.getPrograms
@@ -137,7 +178,10 @@ export default function Dashboard() {
     probabilityScore: p.probability_score || 0,
     improvementProjection: p.improvement_projection || null,
     tuition: p.country === "Germany" ? "Free (Public)" : p.country === "Switzerland" ? "CHF 1,500 / yr" : "$25,000 / yr",
-    status: p.status
+    status: p.status,
+    instructionLanguages: p.instruction_languages ? (() => { try { return JSON.parse(p.instruction_languages); } catch { return []; } })() : [],
+    offersLanguageTraining: p.offers_language_training,
+    foreignerFriendly: p.foreigner_friendly
   })).sort((a: any, b: any) => b.desireScore - a.desireScore);
 
   const feasibilityScore = profile?.relocation_feasibility_score || 0;
@@ -162,6 +206,14 @@ export default function Dashboard() {
       setIsModalOpen(true);
     } else {
       scanMutation.mutate();
+    }
+  };
+
+  const handleMassScanClick = () => {
+    if (!isProfileComplete) {
+      setIsModalOpen(true);
+    } else {
+      massScanMutation.mutate();
     }
   };
 
@@ -214,9 +266,22 @@ export default function Dashboard() {
             </span>
           )}
 
-          <div className="relative" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>
+          <div className="relative flex gap-2" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>
             <button 
               onClick={handleScanClick}
+              disabled={isScanning}
+              className={`px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm shrink-0 flex items-center gap-2 text-sm
+                ${!isProfileComplete 
+                  ? 'bg-muted text-muted-foreground border border-border/80 cursor-not-allowed hover:bg-muted/80' 
+                  : 'bg-secondary hover:bg-secondary/90 text-secondary-foreground border border-border/50 active:scale-95'
+                }
+              `}
+            >
+              {!isProfileComplete && <Lock className="w-3 h-3" />}
+              {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : "Quick Scan"}
+            </button>
+            <button 
+              onClick={handleMassScanClick}
               disabled={isScanning}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shrink-0 flex items-center gap-2
                 ${!isProfileComplete 
@@ -231,7 +296,7 @@ export default function Dashboard() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Scanning Web...
                 </>
-              ) : "Run Discovery Scan"}
+              ) : "Deep Mass Scan"}
             </button>
 
             {/* Hover Popover Tooltip for disabled state */}

@@ -94,6 +94,10 @@ class TargetProgramBase(BaseModel):
     steps: Optional[str] = None
     important_info: Optional[str] = None
     next_steps: Optional[str] = None
+    
+    instruction_languages: Optional[List[str]] = []
+    offers_language_training: Optional[bool] = False
+    foreigner_friendly: Optional[bool] = True
 
 class TargetProgramResponse(TargetProgramBase):
     id: int

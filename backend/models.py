@@ -122,6 +122,11 @@ class TargetProgram(Base):
     important_info = Column(String, nullable=True)
     next_steps = Column(String, nullable=True)
     
+    # Multilingual & International details
+    instruction_languages = Column(String, nullable=True) # JSON array string
+    offers_language_training = Column(Boolean, default=False)
+    foreigner_friendly = Column(Boolean, default=True)
+    
     desire_score = Column(Float, default=0.0)
     probability_score = Column(Float, default=0.0)
     improvement_projection = Column(String, nullable=True)

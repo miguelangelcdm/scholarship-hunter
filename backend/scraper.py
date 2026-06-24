@@ -54,6 +54,29 @@ def fetch_scholarships_real(urls, profile_dict):
                 
                 soup = BeautifulSoup(html_content, 'html.parser')
                 
+                # Hunt for an official English translation link
+                english_url = None
+                for a in soup.find_all('a', href=True):
+                    href = a['href']
+                    text_link = a.get_text().strip().lower()
+                    if href.endswith('/en') or href.endswith('/en/') or '/en/' in href or '?lang=en' in href or text_link in ['en', 'english', 'anglais', 'ingles']:
+                        from urllib.parse import urljoin
+                        english_url = urljoin(url, href)
+                        break
+                        
+                if english_url and english_url != url:
+                    print(f"[Scraper] Found official English version! Redirecting to: {english_url}")
+                    try:
+                        en_page = fetcher.fetch(english_url)
+                        if hasattr(en_page, 'body'):
+                            html_content = en_page.body.decode('utf-8', errors='ignore')
+                        else:
+                            html_content = str(en_page)
+                        soup = BeautifulSoup(html_content, 'html.parser')
+                        url = english_url
+                    except Exception as e:
+                        print(f"[Scraper] Failed to fetch English version {english_url}: {e}. Falling back to original.")
+                
                 for elem in soup(["script", "style", "nav", "footer", "header"]):
                     elem.extract()
                     

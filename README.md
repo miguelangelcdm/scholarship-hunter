@@ -7,6 +7,8 @@ We have pivoted the project from a simple "Scholarship Hunter" into a holistic *
 
 The system uses a Python (FastAPI) backend for scraping and LLM logic, paired with a Vite (React) frontend. 
 
+**Local AI Processing**: Deep web scanning and profile extraction are optimized to run 100% locally and privately using the `gemma4:e2b` (7.2GB) model via Ollama. This protects Gemini API limits while delivering frontier-level performance locally.
+
 Crucially, the UI/UX development is guided by a specific suite of AI agent personas to ensure a premium, non-generic aesthetic.
 
 ## Architecture Map
@@ -19,7 +21,7 @@ graph TD;
     B --> E[Desire Matches];
     B --> F[Probability Matches];
     C --> G[Academic Core];
-    C --> H[Demographics & Need];
+    C --> H["Demographics & Need (Multilingual Target Config)"];
     C --> J[Experience & Goals];
     C --> K[Highlights & Projects];
     C --> L[Documents Checklist];
@@ -111,8 +113,8 @@ You can also bypass the menu and execute targets directly from your shell at the
 
 | Task / Feature | Command | Description |
 |---|---|---|
-| **Run Full Project** | `node menu.js --run-all` | Runs Vite and FastAPI concurrently, merging and color-coding output logs in one terminal. |
-| **Run Backend Only** | `node menu.js --run-backend` | Starts FastAPI on port 8000 using the python virtual environment. |
+| **Run Full Project** | `node menu.js` | Runs Vite, FastAPI, Huey Worker, and the Local Ollama server concurrently using PM2. |
+| **Run Backend Only** | `node menu.js` | Select Option 2 to start FastAPI on port 8000 using the python virtual environment. |
 | **Run Frontend Only** | `node menu.js --run-frontend` | Starts Vite development server on port 5173. |
 | **Run E2E Tests** | `node menu.js --run-tests` | Runs the Playwright E2E test suite. |
 | **Seed Database** | `node menu.js --seed` | Clears and seeds database tables with mock academic programs and scholarship applications. |
@@ -185,18 +187,48 @@ The frontend uses Vite for fast development builds.
 
 ---
 
-### Running via Docker Compose
+## Setting Up the Local AI Engine (Ollama)
 
-For a containerized setup, you can use `docker-compose`. This approach is configured to use your **host machine's Ollama instance** for maximum GPU performance, preventing heavy model downloads within Docker.
+The Educational Pathfinder uses **Gemma 4** (`gemma4`) as its primary local AI model for reasoning, parsing, and drafting.
 
-1. Ensure Ollama is running on your host machine and has pulled `gemma4` or `gemma4:12b` (or whichever local model you prefer).
+> **Why don't we bundle Ollama inside the Docker container?**
+> Running large language models inside Docker on macOS or Windows often falls back to CPU-only execution unless complex GPU passthrough (like NVIDIA Container Toolkit) is configured. By running Ollama natively on your Host OS, the model can automatically utilize your hardware acceleration (Apple Metal or native GPU), ensuring the platform runs fast and doesn't crash your system.
+
+### 1. Install the Model
+Whether you plan to run the app manually or via Docker, you must first have the AI engine installed on your machine:
+1. Download and install **Ollama** from [ollama.com](https://ollama.com/).
+2. Open your terminal and run:
+   ```bash
+   ollama pull gemma4
+   ```
+   *This will download the 4B parameter weights. You only need to do this once.*
+
+### 2. Running the Model
+**Using the Developer Menu (Recommended):**
+When you select Option 1 in the Developer Menu, PM2 will automatically spawn the Ollama server in the background alongside the frontend and backend services. You do not need to run it manually.
+
+**Running Manually:**
+If you prefer not to use the automated menu, you can launch the model manually in a separate terminal:
+```bash
+ollama run gemma4
+```
+
+---
+
+## Running the Application
+
+You can choose to run the application using either **Docker Compose** or **Local Development** (Manual).
+
+### Option A: Running via Docker Compose
+
+1. Ensure Ollama is running on your host machine (as instructed above).
 2. From the root of the project, run:
    ```bash
    docker-compose up --build
    ```
 3. The frontend will be available at `http://localhost:8080` and the backend at `http://localhost:8000`.
 
-*Note: The `docker-compose.yml` maps `OLLAMA_BASE_URL` to `http://host.docker.internal:11434` automatically so the backend container can reach the host.*
+*Note: The `docker-compose.yml` automatically maps `OLLAMA_BASE_URL` to `http://host.docker.internal:11434` so the Docker container can communicate with the model running natively on your host.*
 
 > [!IMPORTANT]
 > **HeroUI Version & Tailwind CSS Compatibility**:
@@ -227,6 +259,12 @@ To prevent frontend crashes and keep the user informed during long scanning proc
 - **Real-Time Scan Progress Bar**: Replaced the synchronous, blocking scan endpoint with a Server-Sent Events (SSE) `StreamingResponse` inside [main.py](file:///c:/Users/migue/.gemini/antigravity/scratch/Scholarship-hunter/backend/main.py#L166). The frontend reads the stream chunk-by-chunk and renders a premium, glowing progress bar showing the exact execution phase (e.g. searching, crawling, analyzing, saving) and percentage completion (0-100%). This keeps the HTTP connection alive, prevents browser request timeouts, and provides immediate visual feedback.
 - **Custom Error Boundary**: A premium, glassmorphic class-component `ErrorBoundary` (located in [ErrorBoundary.tsx](file:///c:/Users/migue/.gemini/antigravity/scratch/Scholarship-hunter/frontend/src/components/ErrorBoundary.tsx)) is wrapped around the entire application in `App.tsx`. In the event of a runtime error (e.g. ReferenceError, TypeError, or component crash), it intercepts the failure and presents a beautiful recovery screen showing the error details, stack trace (in a styled scrollable viewport), and buttons to reload the application or go to the home route.
 - **Robust API Response Checking**: In `frontend/src/lib/api.ts`, a unified `handleResponse` helper processes all fetch requests. If the backend returns a non-2xx code (e.g., a 500 server error or validation failure), it extracts the detail field and raises a descriptive `Error` that is propagated directly to React Query query and mutation callbacks (e.g. displaying error toast notifications instead of failing silently).
+- **2. Deep Mass Scan (Asynchronous Background Task)**
+For a comprehensive search, the user triggers the Deep Mass Scan.
+- **Task Queue System**: We utilize **Huey** backed by **SQLite** (`SqliteHuey`). This offloads the heavy AI scraping from FastAPI's request cycle to a background `worker.py` process.
+- **University Domain Database (ROR)**: Instead of DDG, we rely on the **Research Organization Registry (ROR)**. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR open-source data dump, filtering it down to ~24,000 educational domains (`universities.json`). 
+- **AI Scout Navigation**: The background worker fetches the homepage of each matching domain, extracts all internal links, and feeds them to an AI "Scout". The Scout evaluates the links and returns the top 2-3 specific URLs most likely to contain academic programs, organically mapping the website.
+- **Frontend Interfacing**: The frontend receives a `job_id` and runs an active polling loop against `GET /scholarships/mass-scan/{job_id}/status`, reading static JSON log files without stressing the backend.
 - **Last Scan Timestamp Indicator**: Exposes the `GET /scholarships/last-scan` endpoint to retrieve the timestamp of the latest log in `backend/discovery_logs/`. The frontend fetches this on load and refetches it when a scan successfully runs, displaying a styled glassmorphic label next to the scan button.
 
 ## 2. Profile & Documents Feature
@@ -265,12 +303,13 @@ node menu.js
 ```
 
 ### Menu Options
-1. **[1] Start Services & Open PM2 Dashboard**: Spawns the React Frontend, FastAPI Backend, and Local Ollama services in the background, then opens `pm2 monit`—a split-pane interactive dashboard showing real-time logs, CPU usage, and RAM consumption.
+1. **[1] Start Services & Open PM2 Dashboard**: Spawns the React Frontend, FastAPI Backend, Background Worker (Huey), and Local Ollama services in the background, then opens `pm2 monit`—a split-pane interactive dashboard showing real-time logs, CPU usage, and RAM consumption.
 2. **[2] Stop All Services**: Safely terminates all background services.
 3. **[3] Restart All Services**: Reboots all running services via PM2.
 4. **[4] Run Playwright E2E Tests**: Executes the end-to-end test suite.
 5. **[5/6] Seed/Unseed Database**: Populates the database with mock profile and program data for testing.
 6. **[7/8] Database Cleanup**: Purges invalid programs or completely wipes all scraped data to start fresh.
+
 ### Gemini-Powered AI Autofill
 When a user uploads their CV/Resume, they can click the **AI Extract** button. The backend extracts text from the document (using `pypdf`) and prompts Gemini (`gemini-3.5-flash`) to parse all details. The database profile is automatically populated, and the UI values update instantly.
 
@@ -320,7 +359,9 @@ For detailed information on frontend styling, UI components, animation profiles,
 - [x] Map Direct Toggles: Configured direct left-click (desired/neutral) and right-click (avoided/neutral) toggling for countries on the map. Intercepted right-click (`contextmenu`) events on the canvas to disable default browser dropdowns, wrapped callbacks in mutable React refs to prevent stale closure bugs in MapLibre event listeners, and added safeguards to alert the user if a clicked country inherits its status from a parent continent setting.
 - [x] Reworked profile languages selector with a full-width, two-dropdown (language & level) Radix Select UI, displaying entries as composite 'Language / Level' chips.
 - [x] Geographic Targets Prioritization & Exceptions: Overrode default continent-level target behavior to prioritize country-level preferences (desired/avoided) over continent defaults. Enabled clicking/toggling countries even when their continent is selected, and added override descriptions in the country detail popup card.
-- [x] Built the Python Discovery Engine pipeline: Implemented `search_seeder` using DuckDuckGo to bypass API keys, built a robust Scrapy crawler (`scraper.py`) with depth and token-truncation limits, and configured an `ai_agent` pipeline to parse the scraped unstructured text into a strict `ExtractedScholarship` JSON schema, validating the results and pushing them to the database.
+- [x] Built the Python Discovery Engine pipeline: Implemented Two-Tier Asynchronous Mass Scanning using **Huey + SQLite**, replacing the legacy synchronous DuckDuckGo search.
+- [x] Implemented the Tier-1 Heuristic Gatekeeper: Analyzes raw scraped HTML and applies a strict keyword density threshold to instantly discard irrelevant pages, drastically cutting down on API token consumption.
+- [x] Integrated the Research Organization Registry (ROR) JSON data dump as the master source for thousands of university domains, entirely replacing the deprecated Hipolabs API.
 - [x] Implemented environment variable configuration (`.env`) to securely control crawler limits (max results, depth limit, text truncation) without hardcoding values in Python.
 - [x] Replaced the native HTML family checkbox with a premium HeroUI `<Checkbox>` component in the Profile tab.
 - [x] Configured the application to default to Dark Mode with localStorage persistence, preventing flash-of-light-theme on load.
@@ -337,6 +378,7 @@ For detailed information on frontend styling, UI components, animation profiles,
 - [x] Added Soft-Delete Discarding & Machine Learning Hook: Users can discard irrelevant programs from the dashboard via a new `PATCH /discard` endpoint. Items are hidden but preserved (`status = "Discarded"`) to eventually train ML ranking models.
 - [x] Implemented University-Centric Dashboard UI: Programs are logically grouped under their host universities, replacing the fragmented global list.
 - [x] Built Targeted Funding Engine: Added `POST /api/programs/{id}/find-funding` endpoint. Each program now has a dedicated "Find Funding" button that launches an isolated SSE scan, searching exclusively for financial aid at that specific university and rendering secured matches nested directly underneath the academic program.
+- [x] Improved Profile UI forms: Standardized inputs with HeroUI components, added two-column masonry layouts and localStorage caching for AI-generated Target Disciplines, and implemented sticky "Save Profile" action panels for better usability on long forms.
 
 ### TODOs
 - [x] Connect the remaining frontend UI components to the FastAPI backend endpoints (Dashboard and Tracker).

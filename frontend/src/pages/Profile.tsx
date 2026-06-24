@@ -24,7 +24,8 @@ import {
 import PreferencesTab from "@/components/profile/PreferencesTab";
 import LanguageManager from "@/components/profile/LanguageManager";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@heroui/react";
+import { Checkbox, Select, SelectItem, SelectSection, Input, Textarea } from "@heroui/react";
+import { CATEGORIZED_MAJORS } from "@/lib/majors";
 export default function Profile() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'experience' | 'highlights' | 'documents' | 'preferences'>('overview');
@@ -32,6 +33,7 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     name: "Default User",
     major: "",
+    target_areas: "",
     degree_level: "",
     has_dependents: false,
     gpa: "",
@@ -74,6 +76,7 @@ export default function Profile() {
       setFormData({
         name: profile.name || "",
         major: profile.major || "",
+        target_areas: profile.target_areas || "",
         degree_level: profile.degree_level || "",
         has_dependents: profile.has_dependents || false,
         gpa: profile.gpa || "",
@@ -109,6 +112,33 @@ export default function Profile() {
     onError: () => toast.error("Failed to save profile.")
   });
 
+  const [suggestedPivots, setSuggestedPivots] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('scholarship_suggested_pivots');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('scholarship_suggested_pivots', JSON.stringify(suggestedPivots));
+  }, [suggestedPivots]);
+
+  const suggestPivotsMutation = useMutation({
+    mutationFn: async () => {
+      if (!formData.major) throw new Error("Major is required");
+      const res = await fetch(`http://localhost:8000/profile/suggest-pivots?major=${encodeURIComponent(formData.major)}&career_goals=${encodeURIComponent(formData.career_goals)}`);
+      if (!res.ok) throw new Error("Failed to fetch suggestions");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setSuggestedPivots(data.suggestions || []);
+      toast.success("AI generated pivot suggestions!");
+    },
+    onError: () => toast.error("Failed to generate suggestions. Ensure local AI is running.")
+  });
+
   // Helper document lookup
   const docMap = profile?.documents?.reduce((acc: any, doc: any) => {
     acc[doc.doc_type] = doc;
@@ -119,10 +149,11 @@ export default function Profile() {
   const calculateCompleteness = () => {
     let score = 0;
     
-    // Academic (4 fields, 5% each = 20%)
-    if (formData.name && formData.name.trim() !== "" && formData.name !== "Default User") score += 5;
+    // Core (20 points)
+    if (formData.name && formData.name !== "Default User") score += 5;
     if (formData.major && formData.major.trim() !== "") score += 5;
-    if (formData.gpa && String(formData.gpa).trim() !== "") score += 5;
+    if (formData.target_areas && formData.target_areas.trim() !== "") score += 5;
+    if (formData.degree_level && formData.degree_level.trim() !== "") score += 5;
     if (formData.demographics && formData.demographics.trim() !== "") score += 5;
     
     // Experience (3 fields, 10% each = 30%)
@@ -731,50 +762,146 @@ export default function Profile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">Full Name</label>
-                  <input 
-                    type="text" 
+                  <Input 
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
-                    disabled={isAutofilling}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                    isDisabled={isAutofilling}
                     placeholder="e.g. Jane Doe" 
+                    classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">Major / Field of Study</label>
+                  <label className="block text-sm font-semibold text-foreground mb-2">Current Background (Major)</label>
                   <div className="flex gap-2">
-                    <select
-                      value={formData.degree_level}
+                    <Select
+                      aria-label="Degree Level"
+                      placeholder="Degree"
+                      selectedKeys={formData.degree_level ? [formData.degree_level] : []}
                       onChange={e => setFormData({...formData, degree_level: e.target.value})}
-                      disabled={isAutofilling}
-                      className="w-1/3 px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      isDisabled={isAutofilling}
+                      className="w-1/3"
+                      classNames={{
+                        trigger: "bg-background border border-border rounded-xl shadow-sm h-[42px]",
+                        value: "text-sm text-foreground",
+                        popoverContent: "bg-popover border border-border text-popover-foreground rounded-xl shadow-md"
+                      }}
                     >
-                      <option value="">Degree</option>
-                      <option value="Bachelors">Bachelors</option>
-                      <option value="Masters">Masters</option>
-                      <option value="PhD">PhD</option>
-                    </select>
-                    <input 
-                      type="text" 
-                      value={formData.major}
+                      <SelectItem key="Bachelors">Bachelors</SelectItem>
+                      <SelectItem key="Masters">Masters</SelectItem>
+                      <SelectItem key="PhD">PhD</SelectItem>
+                    </Select>
+                    <Select 
+                      aria-label="Current Major"
+                      placeholder="Select your Major..."
+                      selectedKeys={formData.major ? [formData.major] : []}
                       onChange={e => setFormData({...formData, major: e.target.value})}
-                      disabled={isAutofilling}
-                      className="w-2/3 px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                      placeholder="e.g. Computer Science" 
-                    />
+                      isDisabled={isAutofilling}
+                      className="w-2/3"
+                      classNames={{
+                        trigger: "bg-background border border-border rounded-xl shadow-sm h-[42px]",
+                        value: "text-sm text-foreground",
+                        popoverContent: "bg-popover border border-border text-popover-foreground rounded-xl shadow-md"
+                      }}
+                    >
+                      {Object.entries(CATEGORIZED_MAJORS).map(([category, majors]) => (
+                        <SelectSection key={category} title={category} classNames={{ heading: "text-xs font-bold opacity-70 bg-secondary/30 px-2 py-1 rounded" }}>
+                          {majors.map((m) => (
+                            <SelectItem key={m} textValue={m}>{m}</SelectItem>
+                          ))}
+                        </SelectSection>
+                      ))}
+                    </Select>
                   </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">This is what you have already studied. The AI will use this to determine eligibility for Masters/PhDs.</p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-foreground">Target Disciplines</label>
+                    <button
+                      type="button"
+                      onClick={() => suggestPivotsMutation.mutate()}
+                      disabled={!formData.major || suggestPivotsMutation.isPending}
+                      className="text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                    >
+                      {suggestPivotsMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                      {suggestPivotsMutation.isPending ? "Generating..." : (suggestedPivots.length > 0 ? "Generate More" : "AI Suggest Pivots")}
+                    </button>
+                  </div>
+                  
+                  <div className="p-4 bg-secondary/30 border border-border/50 rounded-xl min-h-[100px] flex flex-col gap-5">
+                    {/* Active Areas */}
+                    {formData.target_areas && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5 opacity-90"><CheckCircle2 className="w-3 h-3 text-primary" /> Active Targets</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {formData.target_areas.split(',').map(s => s.trim()).filter(Boolean).map((area, idx) => (
+                            <button
+                              key={`active-${idx}`}
+                              type="button"
+                              onClick={() => {
+                                let areas = formData.target_areas.split(',').map(s => s.trim()).filter(Boolean);
+                                areas = areas.filter(a => a.toLowerCase() !== area.toLowerCase());
+                                setFormData({...formData, target_areas: areas.join(', ')});
+                              }}
+                              className="chip text-[11px] py-1.5 px-3 rounded-lg border transition-all active:scale-[0.98] bg-primary/20 border-primary/50 text-primary font-medium flex items-center gap-1"
+                            >
+                              {area} <span className="opacity-60 hover:opacity-100">&times;</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Suggested Areas (Unselected) */}
+                    {suggestedPivots.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5 opacity-80"><Sparkles className="w-3 h-3" /> Brainstorm Pool</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {suggestedPivots
+                            .filter(pivot => !(formData.target_areas || "").toLowerCase().includes(pivot.toLowerCase()))
+                            .map((pivot, idx) => (
+                            <button
+                              key={`suggested-${idx}`}
+                              type="button"
+                              onClick={() => {
+                                let areas = formData.target_areas ? formData.target_areas.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                areas.push(pivot);
+                                setFormData({...formData, target_areas: areas.join(', ')});
+                              }}
+                              className="chip text-[11px] py-1.5 px-3 rounded-lg border transition-all active:scale-[0.98] bg-background hover:bg-secondary border-border text-muted-foreground hover:text-foreground shadow-sm"
+                            >
+                              + {pivot}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {!formData.target_areas && suggestedPivots.length === 0 && !suggestPivotsMutation.isPending && (
+                       <p className="text-xs text-muted-foreground text-center italic m-auto opacity-70">
+                         Click "AI Suggest Pivots" to brainstorm degree ideas based on your major.
+                       </p>
+                    )}
+                    {suggestPivotsMutation.isPending && (
+                       <p className="text-xs text-muted-foreground text-center italic m-auto opacity-70 flex items-center gap-2">
+                         <Loader2 className="w-3 h-3 animate-spin" /> Brainstorming career pivots...
+                       </p>
+                    )}
+                  </div>
+                  
+                  <p className="text-[10px] text-muted-foreground mt-2">These are the actual fields you want to study next. The AI Scout will prioritize finding programs that match your selected chips.</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">Cumulative GPA / Class Rank</label>
-                  <input 
-                    type="text" 
+                  <Input 
                     value={formData.gpa}
                     onChange={e => setFormData({...formData, gpa: e.target.value})}
-                    disabled={isAutofilling}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                    isDisabled={isAutofilling}
                     placeholder="e.g. 3.82 or Top 5%" 
+                    classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                   />
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {["Top 5%", "Top 10%", "Top 20%", "1st Class Honours", "Summa Cum Laude"].map((suggestion) => (
@@ -794,13 +921,12 @@ export default function Profile() {
 
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">Demographics & Background</label>
-                  <input 
-                    type="text" 
+                  <Input 
                     value={formData.demographics}
                     onChange={e => setFormData({...formData, demographics: e.target.value})}
-                    disabled={isAutofilling}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                    isDisabled={isAutofilling}
                     placeholder="e.g. First-generation, Woman in Tech, Hispanic" 
+                    classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                   />
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {["First-Gen", "Woman in STEM", "Minority Background", "LGBTQ+", "Low-Income", "Bilingual", "Rural Area", "Disabled", "First-Generation College", "Neurodivergent"].map((trait) => {
@@ -830,34 +956,34 @@ export default function Profile() {
 
                 <div className="mt-6">
                   <label className="block text-sm font-semibold text-foreground mb-2">Nationalities / Citizenships</label>
-                  <input 
-                    type="text" 
+                  <Input 
                     value={formData.nationalities}
                     onChange={e => setFormData({...formData, nationalities: e.target.value})}
-                    disabled={isAutofilling}
-                    className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                    isDisabled={isAutofilling}
                     placeholder="e.g. Colombian, Italian" 
+                    classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">Comma-separated list of your official citizenships. Crucial for matching regional or bilateral scholarships.</p>
                 </div>
 
                 <div className="col-span-1 md:col-span-2 mt-2">
-                  <div className="flex items-center space-x-3 p-4 bg-secondary/50 rounded-xl border border-border">
-                    <Checkbox 
-                      isSelected={formData.has_dependents}
-                      onValueChange={(isSelected) => setFormData({...formData, has_dependents: isSelected})}
-                      isDisabled={isAutofilling}
-                      color="primary"
-                      size="md"
-                    >
-                      <div className="flex flex-col ml-1">
-                        <span className="text-sm font-semibold text-foreground">I have a family or dependents</span>
-                        <span className="text-xs text-muted-foreground mt-0.5">
-                          We will prioritize programs offering family housing, childcare subsidies, and family-friendly financial aid.
-                        </span>
-                      </div>
-                    </Checkbox>
-                  </div>
+                  <label className="flex items-start space-x-3 p-4 bg-secondary/30 hover:bg-secondary/50 transition-colors rounded-xl border border-border cursor-pointer group">
+                    <div className="flex items-center h-full pt-0.5">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.has_dependents}
+                        onChange={e => setFormData({...formData, has_dependents: e.target.checked})}
+                        disabled={isAutofilling}
+                        className="w-5 h-5 rounded border-border text-primary focus:ring-primary focus:ring-2 disabled:opacity-50 cursor-pointer accent-primary transition-all"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">I have a family or dependents</span>
+                      <span className="text-xs text-muted-foreground mt-0.5">
+                        We will prioritize programs offering family housing, childcare subsidies, and family-friendly financial aid.
+                      </span>
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>
@@ -909,7 +1035,6 @@ export default function Profile() {
                            arr = [{ company: 'Legacy Entry', role: '', dates: '', location: '', multinational_roots: '', description: formData.experience }];
                          }
                        }
-
                        if (arr.length === 0) {
                          return <div className="p-4 border border-dashed border-border rounded-xl bg-muted/10 flex items-center justify-center"><p className="text-xs text-muted-foreground italic">No experience added yet. Click above to add.</p></div>;
                        }
@@ -1038,13 +1163,13 @@ export default function Profile() {
                     <Target className="w-4 h-4 text-muted-foreground" />
                     <span>Academic & Career Goals</span>
                   </label>
-                  <textarea 
+                  <Textarea 
                     value={formData.career_goals}
                     onChange={e => setFormData({...formData, career_goals: e.target.value})}
-                    disabled={isAutofilling}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
+                    isDisabled={isAutofilling}
+                    minRows={4}
                     placeholder="Describe your long-term research or career goals. Why are you pursuing this field of study?" 
+                    classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                   />
                 </div>
 
@@ -1053,13 +1178,13 @@ export default function Profile() {
                     <DollarSign className="w-4 h-4 text-muted-foreground" />
                     <span>Financial Need Statement</span>
                   </label>
-                  <textarea 
+                  <Textarea 
                     value={formData.financial_need}
                     onChange={e => setFormData({...formData, financial_need: e.target.value})}
-                    disabled={isAutofilling}
-                    rows={3}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
+                    isDisabled={isAutofilling}
+                    minRows={3}
                     placeholder="Provide details about your financial situation, student loans, or circumstances that highlight your need for financial assistance." 
+                    classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                   />
                 </div>
               </div>
@@ -1078,48 +1203,48 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-2">Volunteer Work & Community Service</label>
-                    <textarea 
+                    <Textarea 
                       value={formData.volunteer_work}
                       onChange={e => setFormData({...formData, volunteer_work: e.target.value})}
-                      disabled={isAutofilling}
-                      rows={3}
-                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
+                      isDisabled={isAutofilling}
+                      minRows={3}
                       placeholder="e.g. Volunteered at local shelter, Tutored STEM to underrepresented middle schoolers." 
+                      classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-2">Hobbies & Interests</label>
-                    <textarea 
+                    <Textarea 
                       value={formData.hobbies}
                       onChange={e => setFormData({...formData, hobbies: e.target.value})}
-                      disabled={isAutofilling}
-                      rows={3}
-                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
+                      isDisabled={isAutofilling}
+                      minRows={3}
                       placeholder="e.g. Competitive chess, playing violin, hiking, baking sourdough bread." 
+                      classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">Important Projects</label>
-                  <textarea 
+                  <Textarea 
                     value={formData.projects}
                     onChange={e => setFormData({...formData, projects: e.target.value})}
-                    disabled={isAutofilling}
-                    rows={3}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
+                    isDisabled={isAutofilling}
+                    minRows={3}
                     placeholder="Describe relevant projects. E.g. Capstone design project, open-source contributions, portfolio projects." 
+                    classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                   />
                 </div>                <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">Awards & Honors</label>
-                  <textarea 
+                  <Textarea 
                     value={formData.awards}
                     onChange={e => setFormData({...formData, awards: e.target.value})}
-                    disabled={isAutofilling}
-                    rows={2}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm scrollbar-hide disabled:opacity-50 disabled:cursor-not-allowed" 
+                    isDisabled={isAutofilling}
+                    minRows={2}
                     placeholder="Dean's List (2024), Academic Merit Scholarship, Math Olympiad 3rd place." 
+                    classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                   />
                 </div>
 
@@ -1129,13 +1254,12 @@ export default function Profile() {
                       <BookOpen className="w-4 h-4 text-muted-foreground" />
                       <span>Publications & Research Papers</span>
                     </label>
-                    <input 
-                      type="text" 
+                    <Input 
                       value={formData.publications}
                       onChange={e => setFormData({...formData, publications: e.target.value})}
-                      disabled={isAutofilling}
-                      className="w-full px-4 py-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                      isDisabled={isAutofilling}
                       placeholder="e.g. Co-authored IEEE paper on CV algorithms." 
+                      classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                     />
                   </div>
 
@@ -1277,16 +1401,19 @@ export default function Profile() {
 
           {/* Bottom Save Action Panel */}
           {activeTab !== 'documents' && activeTab !== 'overview' && (
-            <div className="pt-6 mt-8 flex justify-end border-t border-border/50">
-              <button 
-                onClick={() => updateMutation.mutate(formData)}
-                disabled={updateMutation.isPending || isAutofilling}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {updateMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                <span>{updateMutation.isPending ? "Saving..." : "Save Profile"}</span>
-              </button>
-            </div>
+            <>
+              <div className="mt-8 border-t border-border/50" />
+              <div className="sticky bottom-6 z-40 flex justify-end mt-6 pointer-events-none">
+                <button 
+                  onClick={() => updateMutation.mutate(formData)}
+                  disabled={updateMutation.isPending || isAutofilling}
+                  className="pointer-events-auto bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-bold transition-all shadow-xl shadow-primary/20 hover:shadow-2xl hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2 border border-primary/20"
+                >
+                  {updateMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>{updateMutation.isPending ? "Saving..." : "Save Profile"}</span>
+                </button>
+              </div>
+            </>
           )}
 
         </main>

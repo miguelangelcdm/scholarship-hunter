@@ -47,6 +47,9 @@ def run_migrations(engine):
         "steps": "VARCHAR",
         "important_info": "VARCHAR",
         "next_steps": "VARCHAR",
+        "instruction_languages": "VARCHAR",
+        "offers_language_training": "BOOLEAN DEFAULT 0",
+        "foreigner_friendly": "BOOLEAN DEFAULT 1",
         "desire_score": "FLOAT DEFAULT 0.0",
         "probability_score": "FLOAT DEFAULT 0.0",
         "improvement_projection": "VARCHAR"
