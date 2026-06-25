@@ -218,7 +218,7 @@ export default function Profile() {
       // If uploading CV from Overview, run AI autofill immediately in 1 click
       if (isOverview && docType === 'cv') {
         setIsAutofilling(true);
-        toast.loading("Analyzing resume text with Gemini AI & auto-filling profile...", { id: toastId });
+        toast.loading("Analyzing resume text with Scout AI & auto-filling profile...", { id: toastId });
         await api.parseDocument('cv');
         toast.success("Resume uploaded and profile successfully auto-filled!", { id: toastId });
       } else {
@@ -241,7 +241,7 @@ export default function Profile() {
   const handleParseDocument = async (docType: string) => {
     setParsingDoc(docType);
     setIsAutofilling(true);
-    const toastId = toast.loading("Gemini AI is parsing document text and auto-filling profile...");
+    const toastId = toast.loading("Scout AI is parsing document text and auto-filling profile...");
     try {
       await api.parseDocument(docType);
       toast.success("Profile auto-filled successfully!", { id: toastId });
@@ -447,8 +447,8 @@ export default function Profile() {
         <main className="relative lg:col-span-4 bg-card p-6 sm:p-8 rounded-3xl border border-border/50 shadow-sm transition-all hover:shadow-md -mr-4 sm:-mr-6 lg:-mr-8">
           
           {isAutofilling && ['academic', 'experience', 'highlights'].includes(activeTab) && (
-            <div className="absolute inset-0 bg-background/40 backdrop-blur-[1.5px] rounded-3xl z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-              <div className="bg-card/90 border border-border/80 p-8 rounded-2xl shadow-xl max-w-md space-y-4 flex flex-col items-center">
+            <div className="absolute inset-0 bg-background/40 backdrop-blur-[1.5px] rounded-3xl z-50 flex flex-col items-center p-6 text-center animate-fade-in">
+              <div className="sticky top-[50vh] -translate-y-1/2 bg-card/90 border border-border/80 p-8 rounded-2xl shadow-xl max-w-md space-y-4 flex flex-col items-center">
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
                   <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center border border-primary/30 relative z-10 animate-bounce">
@@ -456,10 +456,10 @@ export default function Profile() {
                   </div>
                 </div>
                 <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                  <span>Gemini AI Autofilling</span>
+                  <span>Scout AI Autofilling</span>
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Gemini is analyzing your CV to extract and structure your profile details. 
+                  Scout AI is analyzing your CV to extract and structure your profile details. 
                   Form fields are temporarily locked during this process.
                 </p>
                 <div className="flex items-center gap-2 text-primary font-semibold text-sm">
@@ -639,7 +639,7 @@ export default function Profile() {
                         )}
                       </div>
                       <h4 className="text-lg font-bold text-foreground">CV, Resume, or LinkedIn PDF</h4>
-                      <p className="text-xs text-muted-foreground">Uploading parses your entire educational history, skills, work experience, and honors automatically using Gemini.</p>
+                      <p className="text-xs text-muted-foreground">Uploading parses your entire educational history, skills, work experience, and honors automatically using Scout AI.</p>
                       {docMap['cv']?.is_uploaded && (
                         <div className="text-[10px] font-mono text-muted-foreground border border-border/60 rounded px-2 py-0.5 inline-block bg-background">
                           {docMap['cv'].filename}
@@ -1011,9 +1011,9 @@ export default function Profile() {
                          try {
                            let arr = formData.experience ? JSON.parse(formData.experience) : [];
                            if (!Array.isArray(arr)) arr = [];
-                           setFormData({...formData, experience: JSON.stringify([...arr, { company: '', role: '', dates: '', location: '', multinational_roots: '', description: '' }])});
+                           setFormData({...formData, experience: JSON.stringify([...arr, { company: '', role: '', startMonth: '', startYear: '', endMonth: '', endYear: '', isCurrentRole: false, employmentType: 'Full-time', location: '', multinational_roots: '', description: '' }])});
                          } catch(e) {
-                           setFormData({...formData, experience: JSON.stringify([{ company: 'Previous Experience', role: '', dates: '', location: '', multinational_roots: '', description: formData.experience||'' }, { company: '', role: '', dates: '', location: '', multinational_roots: '', description: '' }])});
+                           setFormData({...formData, experience: JSON.stringify([{ company: 'Previous Experience', role: '', startMonth: '', startYear: '', endMonth: '', endYear: '', isCurrentRole: false, employmentType: 'Full-time', location: '', multinational_roots: '', description: formData.experience||'' }, { company: '', role: '', startMonth: '', startYear: '', endMonth: '', endYear: '', isCurrentRole: false, employmentType: 'Full-time', location: '', multinational_roots: '', description: '' }])});
                          }
                       }}
                       disabled={isAutofilling}
@@ -1033,7 +1033,7 @@ export default function Profile() {
                          }
                        } catch (e) {
                          if (formData.experience) {
-                           arr = [{ company: 'Legacy Entry', role: '', dates: '', location: '', multinational_roots: '', description: formData.experience }];
+                           arr = [{ company: 'Legacy Entry', role: '', startMonth: '', startYear: '', endMonth: '', endYear: '', isCurrentRole: false, employmentType: 'Full-time', location: '', multinational_roots: '', description: formData.experience }];
                          }
                        }
                        if (arr.length === 0) {
@@ -1094,18 +1094,118 @@ export default function Profile() {
                                  </div>
 
                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                   <Input 
-                                     label="Dates" labelPlacement="outside"
-                                     variant="bordered"
-                                     value={item.dates || ''} 
-                                     onChange={(e) => {
-                                       const newArr = [...arr];
-                                       newArr[idx] = { ...newArr[idx], dates: e.target.value };
-                                       setFormData({...formData, experience: JSON.stringify(newArr)});
-                                     }}
-                                     isDisabled={isAutofilling}
-                                     placeholder="e.g. June 2024 - Present"
-                                   />
+                                   <div className="flex flex-col gap-2">
+                                     <label className="text-small text-foreground-500">Employment Type</label>
+                                     <Select 
+                                       value={item.employmentType || 'Full-time'} 
+                                       onValueChange={(val) => {
+                                         const newArr = [...arr];
+                                         newArr[idx] = { ...newArr[idx], employmentType: val };
+                                         setFormData({...formData, experience: JSON.stringify(newArr)});
+                                       }}
+                                       disabled={isAutofilling}
+                                     >
+                                       <SelectTrigger className="w-full bg-background border border-border/50 rounded-xl px-4 py-3 text-sm hover:bg-muted/40 h-[42px]">
+                                         <SelectValue placeholder="Type" />
+                                       </SelectTrigger>
+                                       <SelectContent className="bg-card border border-border/85 rounded-xl">
+                                         <SelectItem value="Full-time">Full-time</SelectItem>
+                                         <SelectItem value="Part-time">Part-time</SelectItem>
+                                         <SelectItem value="Freelance">Freelance</SelectItem>
+                                         <SelectItem value="Internship">Internship</SelectItem>
+                                       </SelectContent>
+                                     </Select>
+                                   </div>
+
+                                   <div className="flex flex-col gap-2">
+                                     <label className="text-small text-foreground-500">Start Date</label>
+                                     <div className="flex gap-2">
+                                       <Select 
+                                         value={item.startMonth ? String(item.startMonth).padStart(2, '0') : undefined} 
+                                         onValueChange={(val) => {
+                                           const newArr = [...arr];
+                                           newArr[idx] = { ...newArr[idx], startMonth: val };
+                                           setFormData({...formData, experience: JSON.stringify(newArr)});
+                                         }}
+                                         disabled={isAutofilling}
+                                       >
+                                         <SelectTrigger className="w-full bg-background border border-border/50 rounded-xl px-3 py-3 text-sm hover:bg-muted/40 h-[42px]">
+                                           <SelectValue placeholder="Mo" />
+                                         </SelectTrigger>
+                                         <SelectContent className="bg-card border border-border/85 rounded-xl max-h-60">
+                                           {['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                                         </SelectContent>
+                                       </Select>
+                                       <Select 
+                                         value={item.startYear ? String(item.startYear) : undefined} 
+                                         onValueChange={(val) => {
+                                           const newArr = [...arr];
+                                           newArr[idx] = { ...newArr[idx], startYear: val };
+                                           setFormData({...formData, experience: JSON.stringify(newArr)});
+                                         }}
+                                         disabled={isAutofilling}
+                                       >
+                                         <SelectTrigger className="w-full bg-background border border-border/50 rounded-xl px-3 py-3 text-sm hover:bg-muted/40 h-[42px]">
+                                           <SelectValue placeholder="Yr" />
+                                         </SelectTrigger>
+                                         <SelectContent className="bg-card border border-border/85 rounded-xl max-h-60">
+                                           {Array.from({length: 40}, (_, i) => String(new Date().getFullYear() - i)).map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                         </SelectContent>
+                                       </Select>
+                                     </div>
+                                   </div>
+
+                                   <div className="flex flex-col gap-2">
+                                     <div className="flex items-center justify-between">
+                                       <label className="text-small text-foreground-500">End Date</label>
+                                       <Checkbox 
+                                         isSelected={item.isCurrentRole || false}
+                                         onValueChange={(val) => {
+                                           const newArr = [...arr];
+                                           newArr[idx] = { ...newArr[idx], isCurrentRole: val };
+                                           setFormData({...formData, experience: JSON.stringify(newArr)});
+                                         }}
+                                         isDisabled={isAutofilling}
+                                         size="sm"
+                                       >
+                                         <span className="text-[10px] text-foreground-500">Current Role</span>
+                                       </Checkbox>
+                                     </div>
+                                     <div className="flex gap-2">
+                                       <Select 
+                                         value={item.endMonth ? String(item.endMonth).padStart(2, '0') : undefined} 
+                                         onValueChange={(val) => {
+                                           const newArr = [...arr];
+                                           newArr[idx] = { ...newArr[idx], endMonth: val };
+                                           setFormData({...formData, experience: JSON.stringify(newArr)});
+                                         }}
+                                         disabled={isAutofilling || item.isCurrentRole}
+                                       >
+                                         <SelectTrigger className="w-full bg-background border border-border/50 rounded-xl px-3 py-3 text-sm hover:bg-muted/40 h-[42px]">
+                                           <SelectValue placeholder="Mo" />
+                                         </SelectTrigger>
+                                         <SelectContent className="bg-card border border-border/85 rounded-xl max-h-60">
+                                           {['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                                         </SelectContent>
+                                       </Select>
+                                       <Select 
+                                         value={item.endYear ? String(item.endYear) : undefined} 
+                                         onValueChange={(val) => {
+                                           const newArr = [...arr];
+                                           newArr[idx] = { ...newArr[idx], endYear: val };
+                                           setFormData({...formData, experience: JSON.stringify(newArr)});
+                                         }}
+                                         disabled={isAutofilling || item.isCurrentRole}
+                                       >
+                                         <SelectTrigger className="w-full bg-background border border-border/50 rounded-xl px-3 py-3 text-sm hover:bg-muted/40 h-[42px]">
+                                           <SelectValue placeholder="Yr" />
+                                         </SelectTrigger>
+                                         <SelectContent className="bg-card border border-border/85 rounded-xl max-h-60">
+                                           {Array.from({length: 40}, (_, i) => String(new Date().getFullYear() - i)).map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                         </SelectContent>
+                                       </Select>
+                                     </div>
+                                   </div>
                                    <Input 
                                      label="Location" labelPlacement="outside"
                                      variant="bordered"
@@ -1233,7 +1333,8 @@ export default function Profile() {
                     placeholder="Describe relevant projects. E.g. Capstone design project, open-source contributions, portfolio projects." 
                     classNames={{ inputWrapper: "bg-background border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary shadow-sm", input: "text-sm text-foreground" }}
                   />
-                </div>                <div>
+                </div>
+                <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">Awards & Honors</label>
                   <Textarea 
                     value={formData.awards}
@@ -1372,7 +1473,7 @@ export default function Profile() {
                           <button
                             onClick={() => handleParseDocument(slot.id)}
                             disabled={isUploading || isParsing}
-                            title={`Analyze this ${slot.id === 'cv' ? 'resume' : slot.id === 'linkedin_pdf' ? 'LinkedIn export' : 'diploma'} with Gemini and auto-fill your profile details.`}
+                            title={`Analyze this ${slot.id === 'cv' ? 'resume' : slot.id === 'linkedin_pdf' ? 'LinkedIn export' : 'diploma'} with Scout AI and auto-fill your profile details.`}
                             className="flex items-center gap-1 bg-secondary hover:bg-secondary/80 text-foreground px-4 py-2 rounded-xl text-xs font-bold border border-border/80 transition-all select-none active:scale-95 disabled:opacity-50"
                           >
                             {isParsing ? (

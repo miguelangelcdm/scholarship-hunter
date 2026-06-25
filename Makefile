@@ -17,7 +17,7 @@ test:
 	@node menu.js --run-tests
 
 help:
-	@echo "Scholarship Hunter Developer Automation"
+	@echo "Educational Pathfinder Developer Automation"
 	@echo ""
 	@echo "Available commands:"
 	@echo "  make (or make menu) - Launch interactive developer menu"

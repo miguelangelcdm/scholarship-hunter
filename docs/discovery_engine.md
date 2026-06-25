@@ -53,8 +53,8 @@ Before performing a deep extraction, the worker relies on a highly efficient pip
 3. If the density of these translated keywords is below `0.2 per 1000 words` (meaning roughly 0 hits), the page is dropped. This serves as a safety net to ensure the Scout didn't hallucinate an empty page.
 This ensures only highly relevant, organically discovered academic pages reach the Deep Extraction LLM.
 
-## Tier 2: Deep Extraction via Local AI (Gemma4)
-Pages that pass Tier 1 are fed to the `gemma4:e2b` (7.2GB) instance running natively on the Host OS via Ollama (configured in `main.py` and `ai_agent.py` through LangChain). 
+### Tier 2: Deep Extraction via Local AI (Llama 3.1)
+Pages that pass Tier 1 are fed to the local `llama3.1` (8B) model running natively on the Host OS via Ollama (configured in `main.py` and `ai_agent.py` through LangChain).
 
 **Data Standardization (Pre-LLM)**
 To maximize accuracy, we feed the LLM highly curated seed data:
@@ -75,8 +75,33 @@ During extraction, the LLM uses highly engineered strict logic to calculate scor
 
 To accurately reflect the real-world admissions journey, the UI is heavily **University-Centric**:
 1. **University Clusters**: Target Programs are grouped under their host institution.
-2. **Targeted Funding Scans**: Financial aid is inherently tied to specific institutions and programs. The global scan discovers programs; then, users trigger a highly specific `POST /api/programs/{id}/find-funding` pipeline. 
+2. **Targeted Funding Scans**: Financial aid is inherently tied to specific institutions and programs. The global scan discovers programs; then, users trigger a highly specific `POST /api/programs/{id}/find-funding` pipeline.
 3. **Nested Secured Funding**: Targeted scholarships render visually nested under the specific academic program they support.
 
 **Machine Learning Feedback Loop & Soft Deletes**:
 Users can click a "Not Interested" (Discard) button on any program card. This triggers a `PATCH` request updating the database item to `status = "Discarded"`. The item is preserved in the database (Soft Delete) to eventually train future search-accuracy ML models on the user's rejection patterns.
+
+---
+
+## CV Profile Autofill Pipeline
+
+Educational Pathfinder includes an AI-assisted onboarding flow where users upload their CV/Resume to automatically populate their matching profiles. To ensure pristine, hallucination-free data extraction, the agent relies on a multi-pass focused pipeline:
+
+### 1. Spacing Normalization (Pre-LLM)
+* **Problem**: PDF parser text extractions often yield text with single spaces between every letter (e.g. `C o o r d i n a t e d`). This tokenizes extremely poorly in local models, causing massive hallucinations.
+* **Solution**: `clean_pdf_spaces` dynamically merges characters back into proper words before feeding the raw text to the model.
+
+### 2. High-Precision 3-Pass Focused Pipeline
+Instead of running a single extraction pass (which overwhelms smaller local models like Llama 3.1 8B), the parser runs three sequential focused passes:
+1. **Pass 1: Core Profile**: Extracts name, major, degree level, nationalities, languages, and goals.
+2. **Pass 2: Work Experience**: Focused pass under strict rules to extract paid jobs and internships only, enforcing exact CV dates. It explicitly forbids academic degrees, certifications, or volunteer roles from appearing as experience.
+3. **Pass 3: Highlights & Projects**: Focused pass to extract projects, awards, publications, volunteer activities, and hobbies.
+
+### 3. Frontend Dropdown Mapping & Typo Tolerance
+To ensure extracted values match the strict select options on the frontend, Python helper functions (`normalize_major` and `normalize_degree_level`) dynamically clean and map text variations (e.g., mapping `"Information and Systems Engineering"` to `"Systems Engineering"`, and `"Bachellor"` to `"Bachelors"`).
+
+### 4. Recursive Plain-Text Bullet Formatting
+To prevent raw JSON brackets, curly braces, and quotes from displaying inside the textareas, `format_list_to_plain_text` recursively formats nested lists or dictionary elements (e.g. nested lists of project bullet points) into clean, human-readable indented bullet points.
+
+### 5. Mock Data Leakage Prevention
+To prevent pre-seeded mock user details from persisting, `parse_profile_from_document` returns a complete model dump of all CV-derived fields. The endpoint `/profile/parse-doc/{doc_type}` explicitly clears and overwrites fields in the database with empty string defaults (or `"[]"` / `None` depending on type) if the uploaded CV does not contain them.

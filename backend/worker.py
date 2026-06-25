@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 import json
 import logging
 from huey import SqliteHuey
@@ -136,7 +138,8 @@ def calculate_relevance_density(html_text: str, translated_keywords: list) -> fl
         
     text = html_text.lower()
     total_words = len(text.split())
-    if total_words < 50:
+    min_words = int(os.getenv('GATEKEEPER_MIN_WORDS', 50))
+    if total_words < min_words:
         return 0.0
         
     matches = sum(len(re.findall(r'\b' + re.escape(kw) + r'\b', text)) for kw in translated_keywords)
@@ -144,16 +147,20 @@ def calculate_relevance_density(html_text: str, translated_keywords: list) -> fl
     # We just want to ensure AT LEAST 1 keyword is found.
     # Calculate density (matches per 1000 words)
     density = (matches / total_words) * 1000
-    if matches > 0 and density < 0.2:
-        density = 0.2 # boost slightly if they at least have a match so we don't reject purely on length
+    min_density = float(os.getenv('GATEKEEPER_MIN_DENSITY', 0.2))
+    if matches > 0 and density < min_density:
+        density = min_density # boost slightly if they at least have a match so we don't reject purely on length
         
     return density
 
 @huey.task()
-def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = 100):
+def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None):
     """
     Background job to scan hundreds of universities asynchronously.
     """
+    if scan_limit is None:
+        scan_limit = int(os.getenv('MASS_DISCOVERY_SCAN_LIMIT', 100))
+        
     import time
     start_time = time.time()
     
@@ -354,8 +361,9 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = 100):
                     
                     # Tier 1 Heuristic Gatekeeper
                     density = calculate_relevance_density(html_text, translated_keywords)
-                    if density < 0.2:  # Arbitrary threshold for relevancy
-                        logger.info(f"Tier 1 Gatekeeper rejected {url} (Density: {density:.2f} < 0.2)")
+                    min_density = float(os.getenv('GATEKEEPER_MIN_DENSITY', 0.2))
+                    if density < min_density:  # Arbitrary threshold for relevancy
+                        logger.info(f"Tier 1 Gatekeeper rejected {url} (Density: {density:.2f} < {min_density})")
                         stats["gatekeeper_rejected"] += 1
                         continue
                         

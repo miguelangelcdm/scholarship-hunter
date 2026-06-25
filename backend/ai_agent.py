@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 import requests
 from typing import Optional, List
 from pydantic import BaseModel, Field
@@ -32,6 +34,10 @@ def evaluate_navigation_links(links: list, profile_data: dict, university_name: 
             
     parser = PydanticOutputParser(pydantic_object=ScoutNavigationResponse)
     
+        # Calculate total experience years and inject into target_info
+    exp_years = calculate_experience_years(profile_data.get("experience", ""))
+    target_info += f" User has {exp_years} total chronological years of professional experience."
+
     prompt = PromptTemplate(
         template="""
         You are an intelligent "Scout" AI navigating a university website.
@@ -54,10 +60,11 @@ def evaluate_navigation_links(links: list, profile_data: dict, university_name: 
     
     import json
     try:
+        scout_limit = int(os.getenv('SCOUT_MAX_LINKS', 200))
         formatted = prompt.format(
             university_name=university_name,
             profile=str(profile_data),
-            links=json.dumps(links[:200], indent=2) # limit to first 200 links
+            links=json.dumps(links[:scout_limit], indent=2) # limit to first X links
         )
         
         response = llm.invoke(formatted)
@@ -153,12 +160,20 @@ def get_ollama_llm():
         res = requests.get(f"{base_url}/api/tags", timeout=1.0)
         if res.status_code == 200:
             models = res.json().get("models", [])
-            has_model = any("gemma2:2b" in m.get("name", "") for m in models)
-            if has_model:
+            
+            # Check for llama3.1 first
+            has_llama = any("llama3.1" in m.get("name", "") for m in models)
+            if has_llama:
+                print("Local Ollama detected with llama3.1! Routing inference to local hardware.")
+                return ChatOllama(base_url=base_url, model="llama3.1", temperature=float(os.getenv('LLM_TEMPERATURE', 0.1)))
+                
+            # Fallback to gemma2:2b
+            has_gemma = any("gemma2:2b" in m.get("name", "") for m in models)
+            if has_gemma:
                 print("Local Ollama detected with gemma2:2b! Routing inference to local hardware.")
-                return ChatOllama(base_url=base_url, model="gemma2:2b", temperature=0.1)
-            else:
-                print("Local Ollama detected but gemma2:2b is missing. Falling back.")
+                return ChatOllama(base_url=base_url, model="gemma2:2b", temperature=float(os.getenv('LLM_TEMPERATURE', 0.1)))
+                
+            print("Local Ollama detected but preferred models (llama3.1, gemma2:2b) are missing. Falling back.")
     except Exception as e:
         pass
     return None
@@ -173,8 +188,8 @@ def get_hf_llm():
         # Using a highly capable open-source model that fully supports Chat endpoints
         llm = HuggingFaceEndpoint(
             repo_id="Qwen/Qwen2.5-7B-Instruct",
-            max_new_tokens=4000,
-            temperature=0.1,
+            max_new_tokens=int(os.getenv('LLM_MAX_TOKENS', 4000)),
+            temperature=float(os.getenv('LLM_TEMPERATURE', 0.1)),
             huggingfacehub_api_token=api_key
         )
         return ChatHuggingFace(llm=llm)
@@ -232,7 +247,7 @@ class ExtractedScholarship(BaseModel):
     description: str = Field(description="A 2-3 sentence summary of the grant and its core requirements")
     probability_score: float = Field(description="Score out of 100 on how likely the user is to win based on requirements vs profile")
     desire_score: float = Field(description="Score out of 100 on how much this matches the user's field and interests")
-    improvement_projection: Optional[str] = Field(None, description="Actionable advice on what hard requirement the user must fulfill to bypass the 30% ceiling and boost probability to 90%+.")
+    improvement_projection: Optional[str] = Field(None, description=f"Actionable advice on what hard requirement the user must fulfill to bypass the {os.getenv('SCORE_CAP_MISSING_REQUIREMENTS', 30)}% ceiling and boost probability to {os.getenv('SCORE_TARGET_IMPROVEMENT', 90)}%+.")
     requires_outreach: bool = Field(False, description="True if the details are too vague and the user should email them to ask for clarification")
     benefits_summary: Optional[str] = Field(None, description="Short summary of what it covers (e.g., 'Tuition + Stipend', 'Family Housing Included')")
 
@@ -252,12 +267,59 @@ class ExtractedProgram(BaseModel):
     next_steps: Optional[str] = Field(None, description="Recommended immediate next actions for the user to apply")
     desire_score: float = Field(description="Score out of 100 on how much this matches the user's field and interests")
     probability_score: float = Field(description="Score out of 100 on how likely the user is to be admitted based on requirements vs profile")
-    improvement_projection: Optional[str] = Field(None, description="Actionable advice on what hard requirement the user must fulfill to bypass the 30% ceiling and boost probability to 90%+.")
+    improvement_projection: Optional[str] = Field(None, description=f"Actionable advice on what hard requirement the user must fulfill to bypass the {os.getenv('SCORE_CAP_MISSING_REQUIREMENTS', 30)}% ceiling and boost probability to {os.getenv('SCORE_TARGET_IMPROVEMENT', 90)}%+.")
 
 class ExtractedPageData(BaseModel):
     is_valid: bool = Field(description="True ONLY if this page actually contains ANY relevant university program, scholarship, or financial aid grant. False if it is just a generic article or unrelated page.")
     scholarships: List[ExtractedScholarship] = Field(default_factory=list, description="List of relevant scholarships found on the page")
     programs: List[ExtractedProgram] = Field(default_factory=list, description="List of relevant academic programs/degrees found on the page")
+
+import json
+from datetime import datetime
+
+def calculate_experience_years(experience_json_str: str) -> float:
+    if not experience_json_str:
+        return 0.0
+    try:
+        exp_list = json.loads(experience_json_str)
+        if not isinstance(exp_list, list): return 0.0
+        
+        periods = []
+        current_date = datetime.now()
+        for exp in exp_list:
+            if not exp.get("startYear") or not exp.get("startMonth"):
+                continue
+            try:
+                start = datetime(int(exp["startYear"]), int(exp["startMonth"]), 1)
+                if exp.get("isCurrentRole"):
+                    end = current_date
+                elif exp.get("endYear") and exp.get("endMonth"):
+                    end = datetime(int(exp["endYear"]), int(exp["endMonth"]), 1)
+                else:
+                    end = start # Fallback if missing end date
+                
+                if end < start: end = start
+                periods.append((start, end))
+            except ValueError:
+                pass
+                
+        if not periods: return 0.0
+        
+        # Merge overlapping periods
+        periods.sort(key=lambda x: x[0])
+        merged = [periods[0]]
+        for current in periods[1:]:
+            prev = merged[-1]
+            if current[0] <= prev[1]:
+                # Overlap, merge
+                merged[-1] = (prev[0], max(prev[1], current[1]))
+            else:
+                merged.append(current)
+                
+        total_days = sum((end - start).days for start, end in merged)
+        return round(total_days / 365.25, 1)
+    except Exception:
+        return 0.0
 
 def extract_page_content(profile_data: dict, page_data: dict, target_program_context: dict = None, is_mass_scan: bool = False):
     llm = get_primary_llm()
@@ -295,10 +357,10 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
         {rejection_rule}
         
         SCORING FORMULAS:
-        1. 'desire_score' (Compatibility): Calculate this as 40% Target Disciplines Match (does it match what the user wants to study next?) + 30% Location/Modality Match + 30% Career Goals Match.
-        2. 'probability_score' (Acceptance Likelihood): Hard requirements act as a ceiling. If the user is missing a mandatory test (like IELTS/GRE) or has a GPA below the minimum, cap the score at a maximum of 30%, regardless of their work experience. If they meet all hard requirements, base the score on their experience and soft factors.
-        3. 'improvement_projection': If the user is capped at 30%, explicitly state what hard requirement (IELTS, GRE, documents) they must upload to bypass the ceiling and reach a 90%+ probability.
-        4. 'language_feasibility': Check the extracted 'instruction_languages'. If none of them are English, check the user's profile languages. If the user does not possess the required proficiency (e.g., B2/C1) in the required languages AND 'offers_language_training' is False, cap the 'probability_score' to a maximum of 15% and note the language barrier in the 'improvement_projection'. DO NOT discard the program.
+        1. 'desire_score' (Compatibility): Calculate this as {w_disc}% Target Disciplines Match (does it match what the user wants to study next?) + {w_loc}% Location/Modality Match + {w_goals}% Career Goals Match.
+        2. 'probability_score' (Acceptance Likelihood): Hard requirements act as a ceiling. If the user is missing a mandatory test (like IELTS/GRE) or has a GPA below the minimum, cap the score at a maximum of {cap_req}%, regardless of their work experience. If the user does not meet the minimum years of experience required by the program, DO NOT discard the program. Instead, cap the probability_score at {cap_exp}% and explicitly state in the improvement_projection that they lack the required experience but should 'pin this program for the future'. Also consider the 'Employment Type' (e.g. Freelance vs Full-time) when evaluating the caliber of the experience.
+        3. 'improvement_projection': If the user is capped at {cap_req}% (or {cap_exp}%), explicitly state what hard requirement (IELTS, GRE, documents, or years of experience) they must fulfill to bypass the ceiling and reach a {cap_imp}%+ probability.
+        4. 'language_feasibility': Check the extracted 'instruction_languages'. If none of them are English, check the user's profile languages. If the user does not possess the required proficiency (e.g., B2/C1) in the required languages AND 'offers_language_training' is False, cap the 'probability_score' to a maximum of {cap_lang}% and note the language barrier in the 'improvement_projection'. DO NOT discard the program.
         
         User Profile:
         {profile}
@@ -311,14 +373,24 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
         {format_instructions}
         """,
         input_variables=["profile", "page_title", "page_url", "page_text", "target_info", "rejection_rule"],
-        partial_variables={"format_instructions": parser.get_format_instructions()}
+        partial_variables={
+            "format_instructions": parser.get_format_instructions(),
+            "w_disc": os.getenv('WEIGHT_TARGET_DISCIPLINES', 40),
+            "w_loc": os.getenv('WEIGHT_LOCATION', 30),
+            "w_goals": os.getenv('WEIGHT_CAREER_GOALS', 30),
+            "cap_req": os.getenv('SCORE_CAP_MISSING_REQUIREMENTS', 30),
+            "cap_exp": os.getenv('SCORE_CAP_MISSING_EXPERIENCE', 20),
+            "cap_lang": os.getenv('SCORE_CAP_LANGUAGE_BARRIER', 15),
+            "cap_imp": os.getenv('SCORE_TARGET_IMPROVEMENT', 90)
+        }
     )
     
     try:
         # Smart Content Truncation: Restrict to first ~25000 chars (~6000 tokens) to save credits and ignore footers
         safe_page_text = page_data.get("text", "")
-        if len(safe_page_text) > 25000:
-            safe_page_text = safe_page_text[:25000] + "\n...[Content Truncated]..."
+        max_page_len = int(os.getenv('MAX_PAGE_TEXT_LENGTH', 25000))
+        if len(safe_page_text) > max_page_len:
+            safe_page_text = safe_page_text[:max_page_len] + "\n...[Content Truncated]..."
             
         formatted = prompt.format(
             profile=str(profile_data),
@@ -366,14 +438,15 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
 
 class ProfileExtraction(BaseModel):
     name: Optional[str] = Field(None, description="The user's full name if found in the text")
-    major: Optional[str] = Field(None, description="Field of study or major (e.g. Computer Science)")
+    major: Optional[str] = Field(None, description="Field of study or major. Choose the closest matching value from this list: 'Computer Science', 'Software Engineering', 'Systems Engineering', 'Information Technology', 'Data Science', 'Cybersecurity', 'Mechanical Engineering', 'Civil Engineering', 'Electrical Engineering', 'Chemical Engineering', 'Aerospace Engineering', 'Biomedical Engineering', 'Industrial Engineering', 'Business Administration', 'Finance', 'Economics', 'Accounting', 'Marketing', 'Medicine', 'Nursing', 'Public Health', 'Pharmacy', 'Biology', 'Chemistry', 'Physics', 'Mathematics', 'Statistics', 'Environmental Science', 'Veterinary Medicine', 'Psychology', 'Sociology', 'Political Science', 'International Relations', 'Law', 'History', 'Philosophy', 'English Literature', 'Linguistics', 'Journalism', 'Communications', 'Architecture', 'Graphic Design', 'Fine Arts', 'Music', 'Education', 'Social Work'.")
+    degree_level: Optional[str] = Field(None, description="The highest completed degree level of the user. Must be exactly one of: 'Bachelors', 'Masters', or 'PhD'.")
     gpa: Optional[float] = Field(None, description="Cumulative GPA (e.g. 3.8)")
     demographics: Optional[str] = Field(None, description="Comma-separated demographic tags or background characteristics (first-generation, minority, etc.)")
     extracurriculars: Optional[str] = Field(None, description="Brief summary of clubs, student activities, or leadership positions")
     hobbies: Optional[str] = Field(None, description="Brief summary of hobbies, interests, or personal projects")
     volunteer_work: Optional[str] = Field(None, description="Brief summary of volunteer activities, community service, or non-profit involvement")
     projects: Optional[str] = Field(None, description="Brief summary of important academic, technical, or personal projects")
-    experience: Optional[str] = Field(None, description="Must be a valid JSON array string of objects: [{\"company\": \"...\", \"role\": \"...\", \"dates\": \"...\", \"location\": \"...\", \"multinational_roots\": \"Inferred HQ country (e.g. Vietnam for Bitel, UK for Paysafe)\", \"description\": \"...\"}]")
+    experience: Optional[str] = Field(None, description="Must be a valid JSON array string of objects: [{\"company\": \"...\", \"role\": \"...\", \"dates\": \"MM/YYYY - MM/YYYY or Present\", \"employmentType\": \"Full-time/Part-time/Freelance/Internship\", \"location\": \"...\", \"multinational_roots\": \"Inferred HQ country (e.g. Vietnam for Bitel, UK for Paysafe)\", \"description\": \"...\"}]")
     awards: Optional[str] = Field(None, description="List of awards, academic honors, or notable achievements")
     nationalities: Optional[str] = Field(None, description="Comma-separated list of citizenships or nationalities")
     languages: Optional[str] = Field(None, description="Must be a valid JSON array string of objects: [{\"language\": \"name\", \"is_native\": true/false, \"level\": \"Native/A1/A2/B1/B2/C1/C2\"}]")
@@ -382,6 +455,211 @@ class ProfileExtraction(BaseModel):
     career_goals: Optional[str] = Field(None, description="Career or educational aspirations")
     relocation_feasibility_score: Optional[int] = Field(None, description="Score 0-100 evaluating feasibility of studying/working abroad based on languages, multinational experience, and caliber of work history.")
     primary_goal: Optional[str] = Field(None, description="Infer from goals if user wants to 'Migrate', 'Brain-Circulation', or 'Local Growth'.")
+
+class ExperienceOnlyExtraction(BaseModel):
+    experience: Optional[str] = Field(None, description="Must be a valid JSON array string of objects: [{\"company\": \"...\", \"role\": \"...\", \"dates\": \"MM/YYYY - MM/YYYY or Present\", \"employmentType\": \"Full-time/Part-time/Freelance/Internship\", \"location\": \"...\", \"multinational_roots\": \"Inferred HQ country (e.g. Vietnam for Bitel, UK for Paysafe)\", \"description\": \"...\"}]")
+
+class HighlightsOnlyExtraction(BaseModel):
+    extracurriculars: Optional[str] = Field(None, description="Summary of clubs, student activities, or leadership positions.")
+    hobbies: Optional[str] = Field(None, description="Summary of hobbies, interests, or personal projects.")
+    volunteer_work: Optional[str] = Field(None, description="Summary of volunteer activities, community service, or non-profit involvement.")
+    projects: Optional[str] = Field(None, description="Summary of important academic, technical, or personal projects.")
+    awards: Optional[str] = Field(None, description="List of awards, academic honors, or notable achievements.")
+    publications: Optional[str] = Field(None, description="Academic publications, research papers, or conference presentations.")
+    financial_need: Optional[str] = Field(None, description="Mentions of financial constraints, working part-time, or socioeconomic background.")
+
+import re
+
+def convert_dates_to_fields(experience_list):
+    months = {'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
+              'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12',
+              'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04', 'mayo': '05', 'junio': '06',
+              'julio': '07', 'agosto': '08', 'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'}
+    
+    for item in experience_list:
+        if 'dates' in item and isinstance(item['dates'], str):
+            dates_str = item['dates'].lower()
+            parts = [p.strip() for p in dates_str.split('-')]
+            
+            # Start date parsing
+            start_part = parts[0]
+            start_year_match = re.search(r'\b(19|20)\d{2}\b', start_part)
+            if start_year_match:
+                item['startYear'] = start_year_match.group()
+            
+            for m_name, m_num in months.items():
+                if m_name in start_part:
+                    item['startMonth'] = m_num
+                    break
+            if 'startMonth' not in item:
+                month_match = re.search(r'\b(0?[1-9]|1[0-2])/', start_part)
+                if month_match: item['startMonth'] = month_match.group(1).zfill(2)
+
+            # End date parsing
+            if len(parts) > 1:
+                end_part = parts[1]
+                if 'present' in end_part or 'actual' in end_part or 'now' in end_part:
+                    item['isCurrentRole'] = True
+                else:
+                    item['isCurrentRole'] = False
+                    end_year_match = re.search(r'\b(19|20)\d{2}\b', end_part)
+                    if end_year_match:
+                        item['endYear'] = end_year_match.group()
+                    
+                    for m_name, m_num in months.items():
+                        if m_name in end_part:
+                            item['endMonth'] = m_num
+                            break
+                    if 'endMonth' not in item:
+                        month_match = re.search(r'\b(0?[1-9]|1[0-2])/', end_part)
+                        if month_match: item['endMonth'] = month_match.group(1).zfill(2)
+            else:
+                item['isCurrentRole'] = True
+
+            del item['dates']
+    return experience_list
+
+def clean_pdf_spaces(text: str) -> str:
+    words = text.split()
+    if len(words) < 10:
+        return text
+    single_char_words = sum(1 for w in words if len(w) == 1)
+    if (single_char_words / len(words)) > 0.6:
+        lines = text.split('\n')
+        cleaned_lines = []
+        for line in lines:
+            marked = re.sub(r'\s{2,}', ' || ', line.strip())
+            parts = marked.split('||')
+            cleaned_parts = []
+            for part in parts:
+                cleaned_word = part.replace(' ', '')
+                if cleaned_word:
+                    cleaned_parts.append(cleaned_word)
+            cleaned_lines.append(' '.join(cleaned_parts))
+        return '\n'.join(cleaned_lines)
+    return text
+
+def format_list_to_plain_text(value):
+    if value is None:
+        return None
+    if isinstance(value, str):
+        try:
+            loaded = json.loads(value)
+            if isinstance(loaded, (list, dict)):
+                return format_list_to_plain_text(loaded)
+        except Exception:
+            return value
+            
+    if isinstance(value, list):
+        if not value:
+            return ""
+        if isinstance(value[0], dict):
+            formatted_items = []
+            for item in value:
+                comp = item.get("company") or item.get("name") or item.get("title")
+                role = item.get("role") or item.get("position")
+                dates = item.get("dates")
+                desc = item.get("description") or item.get("details")
+                
+                header = ""
+                if comp:
+                    header += comp
+                if role:
+                    header += f" ({role})" if header else role
+                if dates:
+                    header += f" [{dates}]" if header else f"[{dates}]"
+                
+                item_str = ""
+                if header:
+                    item_str += f"- {header}"
+                if desc:
+                    desc_str = format_list_to_plain_text(desc)
+                    if "\n" in desc_str:
+                        desc_str = "\n  " + desc_str.replace("\n", "\n  ")
+                    item_str += f": {desc_str}" if item_str else desc_str
+                else:
+                    item_str = f"- {comp}" if not item_str else item_str
+                
+                formatted_items.append(item_str)
+            return "\n".join(formatted_items)
+        else:
+            cleaned_items = []
+            for item in value:
+                formatted_item = format_list_to_plain_text(item)
+                if "\n" in formatted_item:
+                    formatted_item = formatted_item.replace("\n", "\n  ")
+                cleaned_items.append(formatted_item)
+            return "\n".join(f"- {item}" if not str(item).startswith('-') else str(item) for item in cleaned_items)
+            
+    if isinstance(value, dict):
+        formatted_items = []
+        for k, v in value.items():
+            formatted_val = format_list_to_plain_text(v)
+            if "\n" in formatted_val:
+                formatted_val = "\n  " + formatted_val.replace("\n", "\n  ")
+                formatted_items.append(f"- {k}:{formatted_val}")
+            else:
+                formatted_items.append(f"- {k}: {formatted_val}")
+        return "\n".join(formatted_items)
+        
+    return value
+
+ALLOWED_MAJORS = [
+    "Computer Science", "Software Engineering", "Systems Engineering", "Information Technology",
+    "Data Science", "Cybersecurity", "Mechanical Engineering", "Civil Engineering",
+    "Electrical Engineering", "Chemical Engineering", "Aerospace Engineering", "Biomedical Engineering",
+    "Industrial Engineering", "Business Administration", "Finance", "Economics",
+    "Accounting", "Marketing", "Medicine", "Nursing", "Public Health",
+    "Pharmacy", "Biology", "Chemistry", "Physics", "Mathematics",
+    "Statistics", "Environmental Science", "Veterinary Medicine", "Psychology",
+    "Sociology", "Political Science", "International Relations", "Law",
+    "History", "Philosophy", "English Literature", "Linguistics",
+    "Journalism", "Communications", "Architecture", "Graphic Design",
+    "Fine Arts", "Music", "Education", "Social Work"
+]
+
+def normalize_major(major_str: str) -> str:
+    if not major_str:
+        return None
+    major_lower = major_str.lower()
+    for allowed in sorted(ALLOWED_MAJORS, key=len, reverse=True):
+        if allowed.lower() in major_lower:
+            return allowed
+    for allowed in ALLOWED_MAJORS:
+        if allowed.lower() in major_lower or major_lower in allowed.lower():
+            return allowed
+    return major_str
+
+def normalize_degree_level(degree_str: str) -> str:
+    if not degree_str:
+        return None
+    deg_lower = degree_str.lower()
+    if 'bachelor' in deg_lower or 'bachiller' in deg_lower or 'b.s.' in deg_lower or 'b.a.' in deg_lower:
+        return 'Bachelors'
+    if 'master' in deg_lower or 'magister' in deg_lower or 'm.s.' in deg_lower or 'mba' in deg_lower:
+        return 'Masters'
+    if 'phd' in deg_lower or 'doctor' in deg_lower:
+        return 'PhD'
+    return degree_str
+
+def robust_json_load(raw_text: str, parser):
+    if "```json" in raw_text:
+        raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+    try:
+        start = raw_text.find('{')
+        end = raw_text.rfind('}')
+        if start != -1 and end != -1:
+            json_str = raw_text[start:end+1]
+            return json.loads(json_str)
+        return json.loads(raw_text)
+    except Exception as e:
+        print(f"Direct JSON load failed, using Pydantic parser: {e}")
+        try:
+            parsed = parser.parse(raw_text)
+            return parsed.model_dump()
+        except Exception as pe:
+            print(f"Pydantic parser also failed: {pe}")
+            return {}
 
 def parse_profile_from_document(text: str) -> dict:
     llm = get_primary_llm()
@@ -396,7 +674,7 @@ def parse_profile_from_document(text: str) -> dict:
             "hobbies": "Competitive programming, reading sci-fi, hiking",
             "volunteer_work": "Coding tutor for local middle school students",
             "projects": "Built an open-source health tracker app with React and FastAPI",
-            "experience": "[{\"company\": \"TechCorp\", \"role\": \"Software Engineering Intern\", \"dates\": \"Summer 2024\", \"location\": \"San Francisco, CA\", \"multinational_roots\": \"United States\", \"description\": \"Developed APIs and maintained services\"}]",
+            "experience": "[{\"company\": \"TechCorp\", \"role\": \"Software Engineering Intern\", \"startMonth\": \"06\", \"startYear\": \"2024\", \"endMonth\": \"08\", \"endYear\": \"2024\", \"isCurrentRole\": false, \"employmentType\": \"Internship\", \"location\": \"San Francisco, CA\", \"multinational_roots\": \"United States\", \"description\": \"Developed APIs and maintained services\"}]",
             "awards": "Dean's List 2024-2025, Regional Hackathon Winner",
             "nationalities": "United States",
             "languages": "[{\"language\": \"English\", \"is_native\": true, \"level\": \"Native\"}, {\"language\": \"Spanish\", \"is_native\": false, \"level\": \"B2\"}]",
@@ -407,15 +685,20 @@ def parse_profile_from_document(text: str) -> dict:
             "primary_goal": "Brain-Circulation"
         }
     
+    # Clean spacing issues from PDF text
+    text = clean_pdf_spaces(text)
+    
+    # 1. CORE EXTRACTION PASS
     parser = PydanticOutputParser(pydantic_object=ProfileExtraction)
     prompt = PromptTemplate(
         template="""
-        You are an expert document parser. Extract the user's scholarship profile information from the following document text (which is typically a resume, CV, or academic profile).
+        You are an expert document parser. Extract the user's core profile information from the following document text (which is typically a resume, CV, or academic profile).
         Provide a summary of details for each of the requested fields if available in the text.
         
+        CRITICAL INSTRUCTION FOR EDUCATION: Identify the user's major and degree level from their educational history (e.g., if you see 'Information and Sysyems Engineering Bachellor', the major is 'Systems Engineering' and the degree level is 'Bachelors'). Choose the closest matching major option from the allowed list.
         CRITICAL INSTRUCTION: Calculate the 'relocation_feasibility_score' by evaluating the applicant's spoken languages, multinational work experience, and overall career caliber. 0 means impossible, 100 means highly competitive globally. Also infer the 'primary_goal' (e.g. Brain-Circulation vs Migrate).
         CRITICAL INSTRUCTION FOR EXPERIENCE: Use your internal world knowledge to identify the company's global origin/headquarters and populate the 'multinational_roots' field (e.g., if you see Bitel, infer Vietnam; if you see Paysafe, infer UK).
-        
+
         Document Text:
         {text}
         
@@ -424,11 +707,103 @@ def parse_profile_from_document(text: str) -> dict:
         input_variables=["text"],
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
-    chain = prompt | llm | parser
+    chain = prompt | llm
     try:
-        result = chain.invoke({"text": text})
-        # Return only fields that are NOT null so we don't overwrite user fields with nulls
-        return {k: v for k, v in result.model_dump().items() if v is not None}
+        response = chain.invoke({"text": text})
+        data = robust_json_load(response.content, parser)
+        
+        # Normalize core dropdown values
+        if 'major' in data:
+            data['major'] = normalize_major(data['major'])
+        if 'degree_level' in data:
+            data['degree_level'] = normalize_degree_level(data['degree_level'])
+            
+        # 2. EXPERIENCES FOCUSED PASS
+        print("Running second-pass focused experience extraction...")
+        exp_parser = PydanticOutputParser(pydantic_object=ExperienceOnlyExtraction)
+        exp_prompt = PromptTemplate(
+            template="""
+            You are an expert resume/CV parser. Extract ONLY the user's professional work experience (employment history) from the text.
+            
+            CRITICAL RULES FOR WORK EXPERIENCE EXTRACTION:
+            1. ONLY extract paid employment, jobs, internships, or long-term contract roles.
+            2. DO NOT extract academic degrees, universities, certifications, courses, or language institutes (e.g., British-Peruvian Cultural Institute, CoderHouse, San Ignacio de Loyola University) as work experience. These are education and must be ignored.
+            3. DO NOT extract volunteer work or unpaid community projects as work experience (e.g., volunteer coordinators or Red Cross volunteer projects).
+            4. DO NOT extract companies mentioned under Referrals or Recommendations unless the user actually worked there as an employee.
+            5. For the 'dates' field, extract the date string exactly as written in the CV (e.g., 'Jun 2025 - Present', 'Dec 2024 - May 2025', or 'Feb 2024 - Jul 2024'). Do not make up dates or shift them to other years.
+            6. Identify the headquarters or global origin country of the company for 'multinational_roots' (e.g., UK for Paysafe, Peru for Electroperu, Peru for Nebulab).
+
+            Document Text:
+            {text}
+            
+            {format_instructions}
+            """,
+            input_variables=["text"],
+            partial_variables={"format_instructions": exp_parser.get_format_instructions()}
+        )
+        exp_chain = exp_prompt | llm
+        try:
+            exp_res = exp_chain.invoke({"text": text})
+            exp_data = robust_json_load(exp_res.content, exp_parser)
+            if 'experience' in exp_data and exp_data['experience']:
+                if isinstance(exp_data['experience'], str):
+                    try:
+                        exp_data['experience'] = json.loads(exp_data['experience'])
+                    except Exception:
+                        pass
+                data['experience'] = exp_data['experience']
+            else:
+                data['experience'] = []
+        except Exception as exp_e:
+            print(f"Second pass failed: {exp_e}")
+            if 'experience' not in data:
+                data['experience'] = []
+
+        # 3. HIGHLIGHTS & PROJECTS PASS
+        print("Running third-pass focused highlights extraction...")
+        hl_parser = PydanticOutputParser(pydantic_object=HighlightsOnlyExtraction)
+        hl_prompt = PromptTemplate(
+            template="""
+            You are an expert resume/CV parser. Extract the user's highlights, projects, awards, publications, volunteer activities, and hobbies from the following text.
+            
+            CRITICAL RULES:
+            1. Return all fields as clean, human-readable plain text descriptions or list of bullet points.
+            2. DO NOT return JSON arrays or stringified lists (like `["Award 1", "Award 2"]`) for awards, projects, or publications. Write them out naturally as plain text.
+            3. Extract actual items from the text. If a section is not mentioned, return null.
+
+            Document Text:
+            {text}
+            
+            {format_instructions}
+            """,
+            input_variables=["text"],
+            partial_variables={"format_instructions": hl_parser.get_format_instructions()}
+        )
+        hl_chain = hl_prompt | llm
+        try:
+            hl_res = hl_chain.invoke({"text": text})
+            hl_data = robust_json_load(hl_res.content, hl_parser)
+            for k in hl_data:
+                if k in ['extracurriculars', 'hobbies', 'volunteer_work', 'projects', 'awards', 'publications', 'financial_need']:
+                    data[k] = hl_data[k]
+        except Exception as hl_e:
+            print(f"Third pass highlights extraction failed: {hl_e}")
+
+        # Use Python helper to reliably parse dates from small LLMs
+        if 'experience' in data and isinstance(data['experience'], list):
+            data['experience'] = convert_dates_to_fields(data['experience'])
+
+        # Format and serialize fields appropriately for database vs frontend textareas
+        for field in list(data.keys()):
+            if field in ['experience', 'languages']:
+                if isinstance(data[field], (list, dict)):
+                    data[field] = json.dumps(data[field])
+            else:
+                data[field] = format_list_to_plain_text(data[field])
+        
+        parsed = ProfileExtraction(**data)
+        return parsed.model_dump()
+            
     except Exception as e:
         print(f"Error parsing document: {e}")
         return {}
@@ -473,8 +848,9 @@ def extract_deep_program_details(page_text: str, profile_data: dict, target_prog
     
     try:
         safe_page_text = page_text
-        if len(safe_page_text) > 25000:
-            safe_page_text = safe_page_text[:25000] + "\n...[Content Truncated]..."
+        max_page_len = int(os.getenv('MAX_PAGE_TEXT_LENGTH', 25000))
+        if len(safe_page_text) > max_page_len:
+            safe_page_text = safe_page_text[:max_page_len] + "\n...[Content Truncated]..."
             
         formatted = prompt.format(
             target_program=target_program_context.get("title", "Unknown Program"),

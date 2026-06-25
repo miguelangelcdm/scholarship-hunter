@@ -57,7 +57,7 @@ const Index = () => {
           </div>
 
           <footer className="mt-10 text-center text-[11px] text-muted-foreground">
-            Orbix Studio · Health Records · Live mock data refreshes every 2s
+            Educational Pathfinder · Dashboard · Live mock data refreshes every 2s
           </footer>
         </main>
       </div>

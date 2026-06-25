@@ -42,15 +42,15 @@ export const Header = () => {
     <header className="sticky top-0 z-50 flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-4 bg-card/75 backdrop-blur-md rounded-b-3xl border-b border-border/80 shadow-sm">
       <div className="flex items-center gap-3">
         <button
-          onClick={() => notify("Orbix Studio · Dashboard")}
+          onClick={() => notify("Educational Pathfinder · Dashboard")}
           className="flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-2 pr-3 py-1.5 shadow-glow hover:opacity-90 transition"
-          aria-label="Orbix Studio"
+          aria-label="Educational Pathfinder"
         >
           <div className="w-7 h-7 rounded-full bg-dark text-primary flex items-center justify-center">
             <Activity className="w-4 h-4" strokeWidth={2.5} />
           </div>
           <div className="leading-tight text-left">
-            <p className="text-[13px] font-semibold">Orbix Studio</p>
+            <p className="text-[13px] font-semibold">Educational Pathfinder</p>
             <p className="text-[10px] opacity-70 -mt-0.5">Dashboard</p>
           </div>
         </button>

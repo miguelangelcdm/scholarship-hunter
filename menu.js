@@ -261,7 +261,7 @@ function runWipeDB() {
 function showMenu() {
   console.clear();
   console.log('\x1b[36m==================================================\x1b[0m');
-  console.log('\x1b[1;36m       ★  SCHOLARSHIP HUNTER DEVELOPER MENU  ★    \x1b[0m');
+  console.log('\x1b[1;36m       ★  EDUCATIONAL PATHFINDER DEVELOPER MENU  ★    \x1b[0m');
   console.log('\x1b[36m==================================================\x1b[0m');
   console.log('  \x1b[32m[1]\x1b[0m Start Services & Open PM2 Dashboard');
   console.log('  \x1b[32m[2]\x1b[0m Stop All Services');

@@ -1,4 +1,4 @@
-# Orbix Health Record Dashboard
+# Educational Pathfinder Dashboard
 
 **A modern, responsive health metrics monitoring platform built with React, TypeScript, and real-time data visualization.**
 
@@ -9,7 +9,7 @@
 
 ---
 
-!["Orbix Studio Health Dashboard](preview.png) 
+!["Educational Pathfinder Dashboard](preview.png) 
 
 ## 📋 Table of Contents
 
@@ -27,7 +27,7 @@
 
 ## 🎯 Overview
 
-**Orbix Health Record Dashboard** is a pixel-perfect health monitoring application designed to display comprehensive vital signs and wellness metrics in real-time. The platform provides healthcare professionals and individuals with an intuitive interface to track multiple health parameters simultaneously, including oxygen saturation, heart rate, temperature, breath analysis, and calorie expenditure.
+**Educational Pathfinder Dashboard** is a pixel-perfect health monitoring application designed to display comprehensive vital signs and wellness metrics in real-time. The platform provides healthcare professionals and individuals with an intuitive interface to track multiple health parameters simultaneously, including oxygen saturation, heart rate, temperature, breath analysis, and calorie expenditure.
 
 ### Key Objectives
 
@@ -283,7 +283,7 @@ Index Page Component
 
 ### Project Context
 
-**Client**: Orbix Studio - Digital Health Technologies  
+**Client**: Educational Pathfinder  
 **Duration**: Single sprint development  
 **Team Size**: 1 developer  
 **Objective**: Create a pixel-perfect health monitoring dashboard for real-time vital sign visualization
@@ -479,9 +479,9 @@ import { render, screen } from '@testing-library/react';
 import { Header } from '@/components/dashboard/Header';
 
 describe('Header Component', () => {
-  it('renders Orbix Studio title', () => {
+  it('renders Educational Pathfinder title', () => {
     render(<Header />);
-    expect(screen.getByText('Orbix Studio')).toBeInTheDocument();
+    expect(screen.getByText('Educational Pathfinder')).toBeInTheDocument();
   });
 });
 ```
@@ -555,7 +555,7 @@ Contributions welcome! Please ensure:
 
 ## 📞 Support & Contact
 
-For questions or issues, please contact Orbix Studio development team.
+For questions or issues, please contact the Educational Pathfinder development team.
 
 ---
 

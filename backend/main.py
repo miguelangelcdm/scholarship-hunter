@@ -18,7 +18,7 @@ from scraper import fetch_scholarships_real
 from search_seeder import get_seed_urls
 from ai_agent import score_scholarship, draft_essay, draft_outreach_email, parse_profile_from_document, extract_page_content, suggest_target_disciplines
 
-app = FastAPI(title="Scholarship Hunter API")
+app = FastAPI(title="Educational Pathfinder API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,7 +39,7 @@ def on_startup():
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the Scholarship Hunter API"}
+    return {"message": "Welcome to the Educational Pathfinder API"}
 
 # --- Profile Endpoints ---
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
@@ -157,9 +157,26 @@ def parse_profile_document(
         
     extracted_data = parse_profile_from_document(doc.parsed_text)
     
-    for key, value in extracted_data.items():
-        if hasattr(profile, key) and value is not None:
-            setattr(profile, key, value)
+    cv_fields = [
+        "name", "major", "degree_level", "gpa", "demographics", 
+        "extracurriculars", "hobbies", "volunteer_work", "projects", 
+        "experience", "awards", "nationalities", "languages", 
+        "publications", "financial_need", "career_goals", 
+        "relocation_feasibility_score", "primary_goal"
+    ]
+    
+    for key in cv_fields:
+        if hasattr(profile, key):
+            val = extracted_data.get(key)
+            if val is None:
+                if key in ["experience", "languages"]:
+                    setattr(profile, key, "[]")
+                elif key == "relocation_feasibility_score":
+                    setattr(profile, key, None)
+                else:
+                    setattr(profile, key, "")
+            else:
+                setattr(profile, key, val)
             
     db.commit()
     db.refresh(profile)
@@ -526,8 +543,9 @@ def run_deep_program_scan(program_id: int, db: Session = Depends(get_db)):
         page = fetch(target_url)
         page_text = page.text
         # Limit text size to avoid token limits
-        if len(page_text) > 40000:
-            page_text = page_text[:40000]
+        max_page_len = int(os.getenv('DEEP_SCAN_MAX_PAGE_LENGTH', 40000))
+        if len(page_text) > max_page_len:
+            page_text = page_text[:max_page_len]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to scrape URL {target_url}: {str(e)}")
         

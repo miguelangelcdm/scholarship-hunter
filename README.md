@@ -1,6 +1,6 @@
 # Educational Pathfinder (formerly Scholarship Hunter)
 
-An AI-powered academic program discovery, financial aid matching, and career migration platform built on the Orbix Dashboard architecture.
+An AI-powered academic program discovery, financial aid matching, and career migration platform built on the Educational Pathfinder architecture.
 
 ## What We Are Doing
 We have pivoted the project from a simple "Scholarship Hunter" into a holistic **Educational Pathfinder**. The platform now embraces "Brain-Circulation", supports local, hybrid, and online study alternatives (not just emigration), and acts as a reality check for adult learners by calculating Relocation Feasibility scores based on their CVs.
@@ -44,13 +44,9 @@ Scholarship-hunter/
 │   ├── uploads/              # Local uploaded files (CVs, Recommendations, Diplomas)
 │   ├── main.py               # API Endpoints (Upload, Parse, Scan, Draft, etc.)
 │   └── ai_agent.py           # LangChain + Gemini LLM integration for scoring, parsing, drafting
-├── docs/
-│   ├── agents/                   # AI Persona Rules (Taste, Impeccable, Memanto, etc.)
-│   ├── database_schema.md        # Data Dictionary and Entity Relationship Diagram
-│   ├── token_cost_analysis.md    # Cost projections for Gemini AI token usage
-│   ├── gemini_scaling_strategy.md # Operational constraints and roadmap to scale Gemini API to production
-│   └── research_foundation.md    # Academic research justifying the Educational Pathfinder pivot
-├── frontend/                 # Vite + React (Orbix Base)
+├── docs/                     # Project documentation folder (mapped in the Documentation Hub below)
+│   └── agents/                   # AI Persona Rules (Taste, Impeccable, Memanto, etc.)
+├── frontend/                 # Vite + React
 │   ├── src/
 │   │   ├── components/       # Reusable UI components
 │   │   │   ├── dashboard/    # Header, Sidebar, MetricCards
@@ -91,10 +87,10 @@ or
 make menu
 ```
 
-This will launch the interactive **Scholarship Hunter Developer Menu**:
+This will launch the interactive **Educational Pathfinder Developer Menu**:
 ```text
 ==================================================
-       ★  SCHOLARSHIP HUNTER DEVELOPER MENU  ★    
+       ★  EDUCATIONAL PATHFINDER DEVELOPER MENU  ★    
 ==================================================
   [1] Run Full Project (Frontend + Backend Concurrently)
   [2] Run FastAPI Backend Only
@@ -310,23 +306,47 @@ node menu.js
 5. **[5/6] Seed/Unseed Database**: Populates the database with mock profile and program data for testing.
 6. **[7/8] Database Cleanup**: Purges invalid programs or completely wipes all scraped data to start fresh.
 
-### Gemini-Powered AI Autofill
-When a user uploads their CV/Resume, they can click the **AI Extract** button. The backend extracts text from the document (using `pypdf`) and prompts Gemini (`gemini-3.5-flash`) to parse all details. The database profile is automatically populated, and the UI values update instantly.
+### Local & Cloud AI Autofill from CV
+When a user uploads their CV/Resume, they can click the **AI Extract** button. The backend extracts text from the document and parses all details. It primarily routes the inference locally using **Ollama (llama3.1)** to maintain data privacy, handle complex JSON structures, and save API costs, with a cloud fallback if local hardware is not configured.
 
+To ensure pristine data extraction from CVs, the AI Agent employs a robust multi-step pipeline:
+- **PDF Text Spacing Normalization**: PDF text extractions often contain rendering anomalies where letters are separated by single spaces (e.g., `C o o r d i n a t e d`). The parser dynamically detects and heals these spacing anomalies before feeding text to the LLM to prevent broken tokenization and model hallucinations.
+- **Dedicated Focused Experience Pass**: Instead of extracting all complex structures at once, the engine uses a dedicated second-pass focused extraction for work experience. This prompt runs under strict constraints to explicitly exclude academic degrees, courses, certifications, language schools, and volunteer work from the professional experience section.
+- **Dedicated Focused Highlights Pass & Recursive Bullet Formatting**: A third pass extracts projects, awards, and hobbies. A recursive plain-text formatter `format_list_to_plain_text` automatically cleans nested lists and JSON dictionary shapes into clean, nested markdown bullet points, avoiding raw JSON or Python stringified brackets in the textareas.
+- **Mock Data Leakage Prevention**: When parsing a new document, any fields not present in the CV are explicitly overwritten and cleared in the database to prevent leftover mock user values (like Jane Doe's hobbies/publications) from persisting on the active profile.
 - **Robust API Type Coercion**: To prevent FastAPI `ResponseValidationError` when GPA values are stored or parsed as floats/integers, the backend response schemas utilize a custom Pydantic `field_validator` (`coerce_gpa`) to dynamically cast any numeric GPAs to string formats before returning them to the client.
 
-## Frontend UI/UX Standards
 
-For detailed information on frontend styling, UI components, animation profiles, loading skeletons, and E2E performance testing, please refer to the dedicated [Frontend UI Standards](docs/frontend_ui_standards.md) document.
+## 📖 Project Documentation Hub
+
+Welcome to the central documentation hub for the **Educational Pathfinder** platform. Below you can find detailed architectural, strategic, and technical guides detailing how the system is structured, how its AI and programmatic layers interact, and how cost/scaling concerns are handled.
+
+### 🏗️ Architecture & System Logic
+* **[Pipeline Architecture & Logic Routing](docs/pipeline_architecture.md)**: Details the "hybrid-filter" architecture, describing where programmatic Python rules handle bulk pruning and where LLM reasoning is applied.
+* **[Discovery Engine Technical Breakdown](docs/discovery_engine.md)**: A deep dive into the Mass Discovery Pipeline, covering the duckduckgo crawler seeder, the Scrapling stealth fetcher, and parallel LLM extraction.
+* **[Database Schema & ERD](docs/database_schema.md)**: Full database catalog and Entity Relationship Diagram mapping relationships between Profiles, Target Programs, and Scholarships.
+
+### ⚙️ Rules & Configuration
+* **[Business Rules & Configuration Constants](docs/business_rules_configuration.md)**: Exhaustive guide to all customizable environment variables (`.env`) governing probability caps, language barriers, keyword density triggers, and token safeguards.
+
+### 💰 Cost & Scaling
+* **[Token Cost Analysis & LLM Strategy](docs/token_cost_analysis.md)**: Cost projections, pricing profiles, and token formulas detailing Gemini usage per CV parse, essay draft, and university scan.
+* **[Gemini API Scaling Strategy & Constraints](docs/gemini_scaling_strategy.md)**: Development constraints, rate-limit analyses, and a road map for production scaling.
+
+### 🎨 Frontend & Background
+* **[Frontend UI/UX Standards](docs/frontend_ui_standards.md)**: Design guidelines for UI layouts, component structures, dark mode, loading state UX, and E2E visual/performance testing.
+* **[Divergent Pathways Research Foundation](docs/research_foundation.md)**: Academic and market research backing the "push-pull" mobility framework and justifying the pivot from simple scholarship hunting to pathfinding.
+
+
 
 ## Progress & TODOs
 
 ### Already Done
 - [x] Initial FastAPI backend setup with Database models (Profile, Scholarship).
-- [x] Cloned and integrated the Orbix Health Dashboard base as the new Vite/React frontend.
+- [x] Cloned and integrated the template base as the new Vite/React frontend.
 - [x] Installed and orchestrated visual AI skills (`impeccable`, `huashu-design`, `ui-ux-pro-max`, `taste`).
 - [x] Installed frontend dependencies and configured React Router.
-- [x] Migrated the custom Scholarship UI (Desire vs Probability matches, Kanban Tracker) into the Orbix layout.
+- [x] Migrated the custom Scholarship UI (Desire vs Probability matches, Kanban Tracker) into the new layout.
 - [x] Added Dark Mode toggle and horizontal scrolling to the Kanban tracker.
 - [x] Setup Memanto memory logging.
 - [x] Implemented automatic SQLite schema migrations in `backend/database.py` to seamlessly add new columns (e.g. Wizard Preferences, Research metrics, and modality/psychology preferences like `has_dependents`, `primary_goal`, `preferred_modality`, `relocation_feasibility_score`, and `target_diaspora_regions`) on app startup.
@@ -382,3 +402,8 @@ For detailed information on frontend styling, UI components, animation profiles,
 
 ### TODOs
 - [x] Connect the remaining frontend UI components to the FastAPI backend endpoints (Dashboard and Tracker).
+
+### Recent Updates
+- **Structured Experience Tracking**: The profile section now captures exact Start/End dates (Month/Year) and Employment Types (Full-time, Freelance, etc.) via Shadcn Select components. 
+- **Chronological Experience Calculation**: Overlapping roles are accurately merged so that 1 calendar year of working 2 jobs concurrently counts as exactly 1 year of total professional experience. 
+- **Future Pinning Logic**: Programs where the user lacks the required years of professional experience are no longer hidden. They are surfaced with a low probability score (20%) and a specific prompt to "pin" them for future consideration once the experience requirement is met.

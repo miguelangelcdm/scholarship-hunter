@@ -1,6 +1,13 @@
 # Changelog
 
-All notable changes to the **Educational Pathfinder (formerly Scholarship Hunter)** platform, organized by repository commits.
+All notable changes to the **Educational Pathfinder** platform, organized by repository commits.
+
+---
+
+## [Unreleased] - Rebranding & White-labeling
+### Changed
+- **Rebranding:** Renamed all instances of "Scholarship Hunter" to "Educational Pathfinder" across the codebase (documentation, backend, UI, and tooling).
+- **Template Scrubbing:** Removed legacy template strings (Orbix Studio Dashboard) from the initial Vite/React integration and replaced them with Educational Pathfinder branding.
 
 ---
 
@@ -58,5 +65,5 @@ All notable changes to the **Educational Pathfinder (formerly Scholarship Hunter
 ## [3d595bd] - Project Setup & UI Layout Migration
 ### Added
 - **Project Structure:** Migrated Vite/React UI dashboard into main `frontend/` workspace directories.
-- **Original Template:** Archived original Orbix Health Dashboard under `orbix-original-template/`.
+- **Original Template:** Archived original template dashboard under `orbix-original-template/`.
 - **docs/ Scaffold:** Added Database Schema details, research foundations, and token cost analysis.
