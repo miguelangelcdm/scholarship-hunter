@@ -24,10 +24,9 @@ To maintain a fluid, premium tactile feel, all page transitions, tab switches, a
 
 ## UI Patterns & Components
 
-* **HeroUI Component Usage & Constraints**: 
-  - Use simple HeroUI components (like `Input`, `Textarea`, `Checkbox`, `Select`) to achieve consistent, beautiful form controls with minimal manual styling.
-  - **Crucial Constraint**: Do **NOT** use complex composite components (like `DisclosureGroup` or `Accordion`) from the `@heroui/react` package, as they may have strict peer dependency requirements (e.g., React 19) that conflict with the project's current stable React 18.x environment and break the build.
-  - When you need collapsible or complex list layouts, implement them natively using standard maps, divs, and transitions to ensure build stability.
+* **Component Selection & Styling Constraints**: 
+  - **Inputs & Textareas**: Use `@heroui/react` (`Input`, `Textarea`, `Checkbox`, `Accordion`) to achieve consistent, beautiful form controls and collapsible sections with minimal manual styling.
+  - **Dropdowns & Selects**: **Strictly** use the Shadcn `Select` component (`@/components/ui/select`) for ALL dropdowns. Do NOT use the HeroUI `Select` or native `<select>`. The project relies on Shadcn's specific styling (particularly the `focus:bg-accent` neon green highlight) for its primary dropdown aesthetic.
 * **Sticky Action Panels**: For long forms like the Profile tabs, always use sticky panels at the bottom of the viewport for action buttons (e.g., "Save Profile"). Ensure the panel floats above the content with `z-40`, has `pointer-events-none` on the wrapper, and `pointer-events-auto` on the button itself so it does not block the user from interacting with the content behind it.
 * **Responsive Data Rendering**: When presenting AI-generated tags (like Target Disciplines), use CSS Multi-Column layout (`columns-1 md:columns-2`) or responsive grids to maximize screen real-estate instead of long vertical single columns. Use LocalStorage caching (`scholarship_suggested_pivots`) to persist generated options across tab changes.
 * **Form Integrity Lock**: During asynchronous processes like AI extraction, all input fields, textareas, and save buttons must be programmatically disabled to prevent conflict. On input-centric tabs, use a translucent glassmorphic loader overlay that visually blocks edits while keeping the inputs underneath readable. Users should be able to freely navigate through tabs to monitor progress in real-time.

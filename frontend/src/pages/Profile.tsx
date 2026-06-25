@@ -24,7 +24,9 @@ import {
 import PreferencesTab from "@/components/profile/PreferencesTab";
 import LanguageManager from "@/components/profile/LanguageManager";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox, Select, SelectItem, SelectSection, Input, Textarea } from "@heroui/react";
+import { Accordion, AccordionItem } from "@heroui/react";
+import { Checkbox, Input, Textarea } from "@heroui/react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { CATEGORIZED_MAJORS } from "@/lib/majors";
 export default function Profile() {
   const queryClient = useQueryClient();
@@ -774,44 +776,43 @@ export default function Profile() {
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">Current Background (Major)</label>
                   <div className="flex gap-2">
-                    <Select
-                      aria-label="Degree Level"
-                      placeholder="Degree"
-                      selectedKeys={formData.degree_level ? [formData.degree_level] : []}
-                      onChange={e => setFormData({...formData, degree_level: e.target.value})}
-                      isDisabled={isAutofilling}
-                      className="w-1/3"
-                      classNames={{
-                        trigger: "bg-background border border-border rounded-xl shadow-sm h-[42px]",
-                        value: "text-sm text-foreground",
-                        popoverContent: "bg-popover border border-border text-popover-foreground rounded-xl shadow-md"
-                      }}
-                    >
-                      <SelectItem key="Bachelors">Bachelors</SelectItem>
-                      <SelectItem key="Masters">Masters</SelectItem>
-                      <SelectItem key="PhD">PhD</SelectItem>
-                    </Select>
-                    <Select 
-                      aria-label="Current Major"
-                      placeholder="Select your Major..."
-                      selectedKeys={formData.major ? [formData.major] : []}
-                      onChange={e => setFormData({...formData, major: e.target.value})}
-                      isDisabled={isAutofilling}
-                      className="w-2/3"
-                      classNames={{
-                        trigger: "bg-background border border-border rounded-xl shadow-sm h-[42px]",
-                        value: "text-sm text-foreground",
-                        popoverContent: "bg-popover border border-border text-popover-foreground rounded-xl shadow-md"
-                      }}
-                    >
-                      {Object.entries(CATEGORIZED_MAJORS).map(([category, majors]) => (
-                        <SelectSection key={category} title={category} classNames={{ heading: "text-xs font-bold opacity-70 bg-secondary/30 px-2 py-1 rounded" }}>
-                          {majors.map((m) => (
-                            <SelectItem key={m} textValue={m}>{m}</SelectItem>
+                    <div className="w-1/3">
+                      <Select 
+                        value={formData.degree_level || ""} 
+                        onValueChange={v => setFormData({...formData, degree_level: v})}
+                        disabled={isAutofilling}
+                      >
+                        <SelectTrigger className="w-full bg-background border border-border/50 rounded-xl px-4 py-3 text-sm hover:bg-muted/40 h-[42px]">
+                          <SelectValue placeholder="Degree" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border border-border/85 rounded-xl">
+                          <SelectItem value="Bachelors">Bachelors</SelectItem>
+                          <SelectItem value="Masters">Masters</SelectItem>
+                          <SelectItem value="PhD">PhD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-2/3">
+                      <Select 
+                        value={formData.major || ""} 
+                        onValueChange={v => setFormData({...formData, major: v})}
+                        disabled={isAutofilling}
+                      >
+                        <SelectTrigger className="w-full bg-background border border-border/50 rounded-xl px-4 py-3 text-sm hover:bg-muted/40 h-[42px]">
+                          <SelectValue placeholder="Select your Major..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border border-border/85 rounded-xl max-h-[300px]">
+                          {Object.entries(CATEGORIZED_MAJORS).map(([category, majors]) => (
+                            <SelectGroup key={category}>
+                              <SelectLabel className="text-xs font-bold opacity-70 bg-secondary/30 px-2 py-1 rounded mb-1 mt-2">{category}</SelectLabel>
+                              {majors.map((m) => (
+                                <SelectItem key={m} value={m}>{m}</SelectItem>
+                              ))}
+                            </SelectGroup>
                           ))}
-                        </SelectSection>
-                      ))}
-                    </Select>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">This is what you have already studied. The AI will use this to determine eligibility for Masters/PhDs.</p>
                 </div>
@@ -1039,121 +1040,117 @@ export default function Profile() {
                          return <div className="p-4 border border-dashed border-border rounded-xl bg-muted/10 flex items-center justify-center"><p className="text-xs text-muted-foreground italic">No experience added yet. Click above to add.</p></div>;
                        }
 
-                       return arr.map((item, idx) => (
-                         <div key={idx} className="flex flex-col gap-3 p-4 bg-muted/20 border border-border/60 rounded-xl transition-all relative">
-                           <button 
-                             type="button"
-                             onClick={() => {
-                               const newArr = [...arr];
-                               newArr.splice(idx, 1);
-                               setFormData({...formData, experience: JSON.stringify(newArr)});
-                             }}
-                             disabled={isAutofilling}
-                             className="absolute top-3 right-3 flex items-center justify-center w-6 h-6 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600 transition-colors"
-                             title="Remove experience"
-                           >
-                             <span className="text-sm leading-none font-medium mb-0.5">&times;</span>
-                           </button>
+                        return (
+<Accordion variant="splitted" selectionMode="multiple">
+                           {arr.map((item, idx) => (
+                             <AccordionItem
+                               key={idx}
+                               aria-label={item.company || `Experience ${idx + 1}`}
+                               title={item.company || `New Experience`}
+                               subtitle={item.role || "Role not specified"}
+                             >
+                               <div className="flex flex-col gap-4 pb-4">
+                                 <div className="flex justify-end">
+                                   <button 
+                                     type="button"
+                                     onClick={() => {
+                                       const newArr = [...arr];
+                                       newArr.splice(idx, 1);
+                                       setFormData({...formData, experience: JSON.stringify(newArr)});
+                                     }}
+                                     disabled={isAutofilling}
+                                     className="flex items-center justify-center w-6 h-6 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600 transition-colors"
+                                     title="Remove experience"
+                                   >
+                                     <span className="text-sm leading-none font-medium mb-0.5">&times;</span>
+                                   </button>
+                                 </div>
 
-                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-8">
-                             <div>
-                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Company / Organization</label>
-                               <input 
-                                 type="text" 
-                                 value={item.company || ''} 
-                                 onChange={(e) => {
-                                   const newArr = [...arr];
-                                   newArr[idx] = { ...newArr[idx], company: e.target.value };
-                                   setFormData({...formData, experience: JSON.stringify(newArr)});
-                                 }}
-                                 disabled={isAutofilling}
-                                 placeholder="e.g. Paysafe"
-                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                               />
-                             </div>
-                             <div>
-                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Role / Title</label>
-                               <input 
-                                 type="text" 
-                                 value={item.role || ''} 
-                                 onChange={(e) => {
-                                   const newArr = [...arr];
-                                   newArr[idx] = { ...newArr[idx], role: e.target.value };
-                                   setFormData({...formData, experience: JSON.stringify(newArr)});
-                                 }}
-                                 disabled={isAutofilling}
-                                 placeholder="e.g. IT Ops System Engineer"
-                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                               />
-                             </div>
-                           </div>
+                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                   <Input 
+                                     label="Company / Organization" labelPlacement="outside"
+                                     variant="bordered"
+                                     value={item.company || ''} 
+                                     onChange={(e) => {
+                                       const newArr = [...arr];
+                                       newArr[idx] = { ...newArr[idx], company: e.target.value };
+                                       setFormData({...formData, experience: JSON.stringify(newArr)});
+                                     }}
+                                     isDisabled={isAutofilling}
+                                     placeholder="e.g. Paysafe"
+                                   />
+                                   <Input 
+                                     label="Role / Title" labelPlacement="outside"
+                                     variant="bordered"
+                                     value={item.role || ''} 
+                                     onChange={(e) => {
+                                       const newArr = [...arr];
+                                       newArr[idx] = { ...newArr[idx], role: e.target.value };
+                                       setFormData({...formData, experience: JSON.stringify(newArr)});
+                                     }}
+                                     isDisabled={isAutofilling}
+                                     placeholder="e.g. IT Ops System Engineer"
+                                   />
+                                 </div>
 
-                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                             <div>
-                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Dates</label>
-                               <input 
-                                 type="text" 
-                                 value={item.dates || ''} 
-                                 onChange={(e) => {
-                                   const newArr = [...arr];
-                                   newArr[idx] = { ...newArr[idx], dates: e.target.value };
-                                   setFormData({...formData, experience: JSON.stringify(newArr)});
-                                 }}
-                                 disabled={isAutofilling}
-                                 placeholder="e.g. June 2024 - Present"
-                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                               />
-                             </div>
-                             <div>
-                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Location</label>
-                               <input 
-                                 type="text" 
-                                 value={item.location || ''} 
-                                 onChange={(e) => {
-                                   const newArr = [...arr];
-                                   newArr[idx] = { ...newArr[idx], location: e.target.value };
-                                   setFormData({...formData, experience: JSON.stringify(newArr)});
-                                 }}
-                                 disabled={isAutofilling}
-                                 placeholder="e.g. Lima, Peru"
-                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                               />
-                             </div>
-                             <div>
-                               <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Company Origins / Roots</label>
-                               <input 
-                                 type="text" 
-                                 value={item.multinational_roots || ''} 
-                                 onChange={(e) => {
-                                   const newArr = [...arr];
-                                   newArr[idx] = { ...newArr[idx], multinational_roots: e.target.value };
-                                   setFormData({...formData, experience: JSON.stringify(newArr)});
-                                 }}
-                                 disabled={isAutofilling}
-                                 placeholder="e.g. United Kingdom"
-                                 title="The origin country or headquarters of the company. Vital for matching bilateral scholarships."
-                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                               />
-                             </div>
-                           </div>
+                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                   <Input 
+                                     label="Dates" labelPlacement="outside"
+                                     variant="bordered"
+                                     value={item.dates || ''} 
+                                     onChange={(e) => {
+                                       const newArr = [...arr];
+                                       newArr[idx] = { ...newArr[idx], dates: e.target.value };
+                                       setFormData({...formData, experience: JSON.stringify(newArr)});
+                                     }}
+                                     isDisabled={isAutofilling}
+                                     placeholder="e.g. June 2024 - Present"
+                                   />
+                                   <Input 
+                                     label="Location" labelPlacement="outside"
+                                     variant="bordered"
+                                     value={item.location || ''} 
+                                     onChange={(e) => {
+                                       const newArr = [...arr];
+                                       newArr[idx] = { ...newArr[idx], location: e.target.value };
+                                       setFormData({...formData, experience: JSON.stringify(newArr)});
+                                     }}
+                                     isDisabled={isAutofilling}
+                                     placeholder="e.g. Lima, Peru"
+                                   />
+                                   <Input 
+                                     label="Company Origins / Roots" labelPlacement="outside"
+                                     variant="bordered"
+                                     value={item.multinational_roots || ''} 
+                                     onChange={(e) => {
+                                       const newArr = [...arr];
+                                       newArr[idx] = { ...newArr[idx], multinational_roots: e.target.value };
+                                       setFormData({...formData, experience: JSON.stringify(newArr)});
+                                     }}
+                                     isDisabled={isAutofilling}
+                                     placeholder="e.g. United Kingdom"
+                                     title="The origin country or headquarters of the company. Vital for matching bilateral scholarships."
+                                   />
+                                 </div>
 
-                           <div>
-                             <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Description</label>
-                             <textarea 
-                               value={item.description || ''} 
-                               onChange={(e) => {
-                                 const newArr = [...arr];
-                                 newArr[idx] = { ...newArr[idx], description: e.target.value };
-                                 setFormData({...formData, experience: JSON.stringify(newArr)});
-                               }}
-                               disabled={isAutofilling}
-                               rows={3}
-                               placeholder="- Monitoreo de la infraestructura TI..."
-                               className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none scrollbar-hide"
-                             />
-                           </div>
-                         </div>
-                       ));
+                                 <Textarea 
+                                   label="Description" labelPlacement="outside"
+                                   variant="bordered"
+                                   value={item.description || ''} 
+                                   onChange={(e) => {
+                                     const newArr = [...arr];
+                                     newArr[idx] = { ...newArr[idx], description: e.target.value };
+                                     setFormData({...formData, experience: JSON.stringify(newArr)});
+                                   }}
+                                   isDisabled={isAutofilling}
+                                   minRows={3}
+                                   placeholder="- Monitoreo de la infraestructura TI..."
+                                 />
+                               </div>
+                             </AccordionItem>
+                           ))}
+                         </Accordion>
+                        );
                     })()}
                   </div>
                 </div>

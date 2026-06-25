@@ -378,7 +378,7 @@ For detailed information on frontend styling, UI components, animation profiles,
 - [x] Added Soft-Delete Discarding & Machine Learning Hook: Users can discard irrelevant programs from the dashboard via a new `PATCH /discard` endpoint. Items are hidden but preserved (`status = "Discarded"`) to eventually train ML ranking models.
 - [x] Implemented University-Centric Dashboard UI: Programs are logically grouped under their host universities, replacing the fragmented global list.
 - [x] Built Targeted Funding Engine: Added `POST /api/programs/{id}/find-funding` endpoint. Each program now has a dedicated "Find Funding" button that launches an isolated SSE scan, searching exclusively for financial aid at that specific university and rendering secured matches nested directly underneath the academic program.
-- [x] Improved Profile UI forms: Standardized inputs with HeroUI components, added two-column masonry layouts and localStorage caching for AI-generated Target Disciplines, and implemented sticky "Save Profile" action panels for better usability on long forms.
+- [x] Improved Profile UI forms: Standardized inputs with HeroUI components, standardized all dropdowns to use the premium Shadcn `Select` component with distinct hover highlights, added two-column masonry layouts and localStorage caching for AI-generated Target Disciplines, and implemented sticky "Save Profile" action panels for better usability on long forms.
 
 ### TODOs
 - [x] Connect the remaining frontend UI components to the FastAPI backend endpoints (Dashboard and Tracker).
