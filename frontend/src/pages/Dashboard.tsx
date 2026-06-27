@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, API_BASE } from "@/lib/api";
 import { toast } from "sonner";
@@ -30,6 +30,8 @@ export default function Dashboard() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStatus, setScanStatus] = useState("Initiating scan...");
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [isBlacklistOpen, setIsBlacklistOpen] = useState(false);
   
   const [isDeepDiveOpen, setIsDeepDiveOpen] = useState(false);
   const [selectedUniversityName, setSelectedUniversityName] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function Dashboard() {
 
   const { data: scholarships = [], isLoading: isLoadingScholarships } = useQuery({
     queryKey: ['scholarships'],
-    queryFn: api.getScholarships
+    queryFn: api.getFunding
   });
 
   const { data: lastScanData, refetch: refetchLastScan } = useQuery({
@@ -51,99 +53,110 @@ export default function Dashboard() {
     queryFn: api.getLastScan
   });
 
-  const scanMutation = useMutation({
-    mutationFn: async () => {
-      setScanProgress(0);
-      setScanStatus("Initiating scan...");
-      setIsScanning(true);
-      
-      const response = await fetch(`${API_BASE}/scholarships/scan`, { method: 'POST' });
-      if (!response.ok) {
-        throw new Error("Failed to start scan. Please check your network or server status.");
-      }
-      
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No response reader available.");
-      
-      const decoder = new TextDecoder();
-      let buffer = "";
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-        
-        for (const line of lines) {
-          if (line.trim()) {
-            try {
-              const data = JSON.parse(line);
-              if (data.progress !== undefined) {
-                setScanProgress(data.progress);
-              }
-              if (data.message) {
-                setScanStatus(data.message);
-              }
-            } catch (e) {
-              console.error("Failed to parse progress event:", e);
-            }
-          }
-        }
-      }
-    },
-    onSuccess: () => {
-      toast.success("Scan complete! Results have been updated.");
-      queryClient.invalidateQueries({ queryKey: ['scholarships'] });
-      queryClient.invalidateQueries({ queryKey: ['programs'] });
-      refetchLastScan();
-      setIsScanning(false);
-    },
-    onError: (err: any) => {
-      toast.error(err?.message || "Failed to run scan.");
-      setIsScanning(false);
-    }
-  });
 
-  const massScanMutation = useMutation({
-    mutationFn: async () => {
-      setScanProgress(0);
-      setScanStatus("Initiating deep mass scan...");
-      setIsScanning(true);
-      
-      const response = await fetch(`${API_BASE}/scholarships/mass-scan`, { method: 'POST' });
-      if (!response.ok) {
-        throw new Error("Failed to start mass scan.");
-      }
-      const data = await response.json();
-      const jobId = data.job_id;
-      
+  const startPolling = async (jobId: string) => {
+    setIsScanning(true);
+    setActiveJobId(jobId);
+    
+    try {
       while (true) {
         await new Promise(r => setTimeout(r, 2000));
-        const statusRes = await fetch(`${API_BASE}/scholarships/mass-scan/${jobId}/status`);
+        const statusRes = await fetch(`${API_BASE}/discovery/mass-scan/${jobId}/status`);
         if (!statusRes.ok) continue;
         
         const statusData = await statusRes.json();
         setScanProgress(statusData.progress || 0);
         setScanStatus(statusData.message || "Scanning...");
         
-        if (statusData.status === "completed" || statusData.status === "failed") {
+        if (statusData.status === "completed" || statusData.status === "failed" || statusData.status === "canceled") {
           if (statusData.status === "failed") throw new Error(statusData.message || "Scan failed.");
           break;
         }
       }
-    },
-    onSuccess: () => {
-      toast.success("Mass scan complete! Results updated.");
+      toast.success("Discovery scan complete! Results updated.");
       queryClient.invalidateQueries({ queryKey: ['scholarships'] });
       queryClient.invalidateQueries({ queryKey: ['programs'] });
       refetchLastScan();
       setIsScanning(false);
+      setActiveJobId(null);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to run discovery scan.");
+      setIsScanning(false);
+      setActiveJobId(null);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const checkActiveJob = async () => {
+      try {
+        const activeJobData = await api.getActiveScan();
+        if (activeJobData && activeJobData.active_job_id && isMounted) {
+          setScanProgress(activeJobData.progress || 0);
+          setScanStatus(activeJobData.message || "Resuming scan progress...");
+          startPolling(activeJobData.active_job_id);
+        }
+      } catch (err) {
+        console.error("Failed to check active scan on load:", err);
+      }
+    };
+    
+    checkActiveJob();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const massScanMutation = useMutation({
+    mutationFn: async () => {
+      setScanProgress(0);
+      setScanStatus("Initiating discovery scan...");
+      setIsScanning(true);
+      
+      const response = await fetch(`${API_BASE}/discovery/mass-scan`, { method: 'POST' });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to start discovery scan.");
+      }
+      const data = await response.json();
+      return data.job_id;
+    },
+    onSuccess: (jobId) => {
+      startPolling(jobId);
     },
     onError: (err: any) => {
-      toast.error(err?.message || "Failed to run mass scan.");
+      toast.error(err?.message || "Failed to run discovery scan.");
       setIsScanning(false);
+      setActiveJobId(null);
+    }
+  });
+
+  const cancelScanMutation = useMutation({
+    mutationFn: async () => {
+      if (!activeJobId) return;
+      setScanStatus("Cancelling search... saving partial results...");
+      await api.cancelScan(activeJobId);
+    },
+    onSuccess: () => {
+      toast.success("Discovery scan cancelled. Partial results saved!");
+      queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      refetchLastScan();
+      setIsScanning(false);
+      setActiveJobId(null);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to cancel discovery scan.");
+    }
+  });
+
+  const restoreProgramMutation = useMutation({
+    mutationFn: api.restoreProgram,
+    onSuccess: () => {
+      toast.success("Program restored to opportunities list!");
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
     }
   });
 
@@ -159,8 +172,8 @@ export default function Dashboard() {
     }
   });
 
-  const discardScholarshipMutation = useMutation({
-    mutationFn: api.discardScholarship,
+  const discardFundingMutation = useMutation({
+    mutationFn: api.discardFunding,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scholarships'] });
     }
@@ -168,7 +181,7 @@ export default function Dashboard() {
 
   const desireMatches = scholarships.filter((s: any) => s.desire_score > 70).sort((a: any, b: any) => b.desire_score - a.desire_score);
   
-  const displayPrograms = programs.map((p: any) => ({
+  const displayPrograms = programs.filter((p: any) => p.status !== "Discarded").map((p: any) => ({
     id: p.id,
     title: p.title,
     institution: p.university,
@@ -179,7 +192,7 @@ export default function Dashboard() {
     improvementProjection: p.improvement_projection || null,
     tuition: p.country === "Germany" ? "Free (Public)" : p.country === "Switzerland" ? "CHF 1,500 / yr" : "$25,000 / yr",
     status: p.status,
-    instructionLanguages: p.instruction_languages ? (() => { try { return JSON.parse(p.instruction_languages); } catch { return []; } })() : [],
+    instructionLanguages: Array.isArray(p.instruction_languages) ? p.instruction_languages : (p.instruction_languages ? (() => { try { return JSON.parse(p.instruction_languages); } catch { try { return p.instruction_languages.split(","); } catch { return []; } } })() : []),
     offersLanguageTraining: p.offers_language_training,
     foreignerFriendly: p.foreigner_friendly
   })).sort((a: any, b: any) => b.desireScore - a.desireScore);
@@ -201,13 +214,6 @@ export default function Dashboard() {
     profile.target_countries && 
     profile.target_countries !== "[]";
 
-  const handleScanClick = () => {
-    if (!isProfileComplete) {
-      setIsModalOpen(true);
-    } else {
-      scanMutation.mutate();
-    }
-  };
 
   const handleMassScanClick = () => {
     if (!isProfileComplete) {
@@ -268,25 +274,12 @@ export default function Dashboard() {
 
           <div className="relative flex gap-2" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>
             <button 
-              onClick={handleScanClick}
-              disabled={isScanning}
-              className={`px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm shrink-0 flex items-center gap-2 text-sm
-                ${!isProfileComplete 
-                  ? 'bg-muted text-muted-foreground border border-border/80 cursor-not-allowed hover:bg-muted/80' 
-                  : 'bg-secondary hover:bg-secondary/90 text-secondary-foreground border border-border/50 active:scale-95'
-                }
-              `}
-            >
-              {!isProfileComplete && <Lock className="w-3 h-3" />}
-              {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : "Quick Scan"}
-            </button>
-            <button 
               onClick={handleMassScanClick}
               disabled={isScanning}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shrink-0 flex items-center gap-2
                 ${!isProfileComplete 
                   ? 'bg-muted text-muted-foreground border border-border/80 cursor-not-allowed hover:bg-muted/80' 
-                  : 'bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg active:scale-95'
+                  : 'bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-glow active:scale-95'
                 }
               `}
             >
@@ -296,7 +289,7 @@ export default function Dashboard() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Scanning Web...
                 </>
-              ) : "Deep Mass Scan"}
+              ) : "Start Discovery Scan"}
             </button>
 
             {/* Hover Popover Tooltip for disabled state */}
@@ -331,6 +324,16 @@ export default function Dashboard() {
               className="bg-gradient-to-r from-primary via-lime-400 to-primary h-full rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(180,244,60,0.4)]"
               style={{ width: `${scanProgress}%` }}
             />
+          </div>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={() => cancelScanMutation.mutate()}
+              disabled={cancelScanMutation.isPending}
+              className="font-bold text-xs bg-red-500/10 text-red-500 hover:bg-red-500/20 px-4 py-2.5 rounded-xl border border-red-500/20 active:scale-95 duration-200 flex items-center gap-1.5 disabled:opacity-50"
+            >
+              {cancelScanMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Cancel Search
+            </button>
           </div>
         </div>
       )}
@@ -489,7 +492,52 @@ export default function Dashboard() {
             setIsFundingLoading(null);
           }
         }}
+        onDiscardProgram={(programId) => {
+          discardProgramMutation.mutate(programId);
+          setIsDeepDiveOpen(false);
+          toast.success("Opportunity moved to blacklist!");
+        }}
       />
+
+      {/* Collapsed Discrete Blacklisted Opportunities */}
+      {programs.filter((p: any) => p.status === "Discarded").length > 0 && (
+        <div className="mt-12 border-t border-border/40 pt-8">
+          <div className="bg-secondary/10 dark:bg-zinc-900/20 border border-border/40 rounded-3xl overflow-hidden">
+            <button
+              onClick={() => setIsBlacklistOpen(!isBlacklistOpen)}
+              className="w-full flex items-center justify-between p-6 hover:bg-secondary/20 transition-colors text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-lg">🛡️</span>
+                <div>
+                  <h3 className="font-bold text-foreground text-sm">Blacklisted Opportunities</h3>
+                  <p className="text-xs text-muted-foreground">{programs.filter((p: any) => p.status === "Discarded").length} programs hidden from matches</p>
+                </div>
+              </div>
+              <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${isBlacklistOpen ? 'rotate-90' : ''}`} />
+            </button>
+
+            {isBlacklistOpen && (
+              <div className="px-6 pb-6 border-t border-border/20 pt-4 space-y-3 max-h-80 overflow-y-auto">
+                {programs.filter((p: any) => p.status === "Discarded").map((p: any) => (
+                  <div key={p.id} className="flex justify-between items-center p-4 bg-background/60 border border-border/50 rounded-2xl hover:border-indigo-500/20 transition-colors">
+                    <div>
+                      <span className="font-bold text-foreground text-sm block">{p.title}</span>
+                      <span className="text-xs text-muted-foreground">{p.university} • {p.country}</span>
+                    </div>
+                    <button 
+                      onClick={() => restoreProgramMutation.mutate(p.id)}
+                      className="font-bold text-xs bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/25 px-4 py-2 rounded-xl border border-indigo-500/25 active:scale-95 duration-200"
+                    >
+                      Restore Opportunity
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

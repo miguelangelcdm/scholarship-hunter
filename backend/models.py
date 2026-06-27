@@ -134,3 +134,9 @@ class TargetProgram(Base):
     status = Column(String, default="Discovered") # Discovered, Preparing, Applied, Rejected, Accepted, Discarded
     
     scholarships = relationship("Scholarship", back_populates="program")
+
+class ScannedUniversity(Base):
+    __tablename__ = "scanned_universities"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    scanned_at = Column(DateTime, default=datetime.utcnow)

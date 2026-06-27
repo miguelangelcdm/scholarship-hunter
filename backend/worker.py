@@ -153,6 +153,18 @@ def calculate_relevance_density(html_text: str, translated_keywords: list) -> fl
         
     return density
 
+def format_elapsed_time(seconds: float) -> str:
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0 or hours > 0:
+        parts.append(f"{minutes}m")
+    parts.append(f"{secs}s")
+    return " ".join(parts)
+
 @huey.task()
 def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None):
     """
@@ -168,12 +180,24 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
     
     # Update job status tracking
     status_file = os.path.join(os.path.dirname(__file__), "discovery_logs", f"job_{job_id}.json")
-    
-    def update_status(status, progress, message):
-        with open(status_file, "w") as f:
-            json.dump({"status": status, "progress": progress, "message": message}, f)
-            
     os.makedirs(os.path.dirname(status_file), exist_ok=True)
+    
+    processed_pages = []
+    
+    def update_status(status, progress, message, extra_stats=None):
+        status_data = {
+            "status": status,
+            "progress": progress,
+            "message": message,
+            "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        if extra_stats:
+            status_data["stats"] = extra_stats
+        if processed_pages:
+            status_data["processed_pages"] = processed_pages
+            
+        with open(status_file, "w", encoding="utf-8") as f:
+            json.dump(status_data, f, indent=2)
     update_status("running", 5, "Initializing mass discovery...")
     
     db: Session = SessionLocal()
@@ -199,35 +223,15 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
         desired_iso = set()
         try:
             profile_targets = json.loads(profile.target_countries) if profile.target_countries else []
-            desired_countries_raw = [t.get("country").strip().lower() for t in profile_targets if t.get("country")]
+            desired_countries_raw = [t.get("country").strip() for t in profile_targets if t.get("country")]
             
             profile_undesired = json.loads(profile.undesired_countries) if profile.undesired_countries else []
-            undesired_countries_raw = [t.get("country").strip().lower() for t in profile_undesired if t.get("country")]
+            undesired_countries_raw = [t.get("country").strip() for t in profile_undesired if t.get("country")]
             
-            import pycountry
+            from continent_mapper import expand_continents_to_iso
             
-            # Helper to map a list of string names to ISO sets
-            def map_to_iso(country_list):
-                iso_set = set()
-                for c in country_list:
-                    if c == "europe":
-                        # Add common European codes
-                        iso_set.update(["GB", "FR", "DE", "IT", "ES", "NL", "BE", "CH", "SE", "DK", "NO", "FI", "IE", "AT", "PT", "PL", "CZ", "GR", "RO", "HU", "BG", "SK", "HR", "LT", "LV", "EE", "SI", "CY", "LU", "MT", "IS", "MD", "BY", "UA", "RU"])
-                    else:
-                        try:
-                            res = pycountry.countries.get(name=c.title())
-                            if res:
-                                iso_set.add(res.alpha_2)
-                            else:
-                                res = pycountry.countries.search_fuzzy(c)
-                                if res:
-                                    iso_set.add(res[0].alpha_2)
-                        except Exception:
-                            pass
-                return iso_set
-                
-            desired_iso = map_to_iso(desired_countries_raw)
-            undesired_iso = map_to_iso(undesired_countries_raw)
+            desired_iso = expand_continents_to_iso(desired_countries_raw)
+            undesired_iso = expand_continents_to_iso(undesired_countries_raw)
             
             # Remove avoided countries
             desired_iso = desired_iso - undesired_iso
@@ -250,6 +254,15 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
         from ai_agent import evaluate_navigation_links
         
         target_unis = []
+        from models import ScannedUniversity
+        try:
+            scanned_list = {su.name for su in db.query(ScannedUniversity).all()}
+            blacklisted_unis = {p.university for p in db.query(TargetProgram).filter(TargetProgram.status == "Discarded").all()}
+        except Exception as se:
+            logger.error(f"Failed to query scanned/blacklisted universities: {se}")
+            scanned_list = set()
+            blacklisted_unis = set()
+
         for uni in universities:
             # Check country alignment
             if desired_iso and uni.get("country") not in desired_iso:
@@ -258,6 +271,11 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
             if domains:
                 domain = domains[0]
                 uni_name = uni.get("name", domain)
+                if uni_name in scanned_list:
+                    continue
+                if uni_name in blacklisted_unis:
+                    logger.info(f"Skipping blacklisted university: {uni_name}")
+                    continue
                 target_unis.append((uni_name, domain))
                 
             if len(target_unis) >= max(1, scan_limit // 2):
@@ -267,10 +285,27 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
             update_status("completed", 100, "No target domains matched profile preferences.")
             return
             
+        def is_cancelled() -> bool:
+            try:
+                if os.path.exists(status_file):
+                    with open(status_file, "r") as f:
+                        data = json.load(f)
+                        return data.get("status") == "canceled" or data.get("canceled") is True
+            except Exception:
+                pass
+            return False
+
         update_status("running", 20, f"Scout AI exploring {len(target_unis)} university homepages...")
         logger.info(f"Scout AI started exploration for {len(target_unis)} universities.")
         
-        for uni_name, domain in target_unis:
+        total_unis = len(target_unis)
+        for idx, (uni_name, domain) in enumerate(target_unis):
+            if is_cancelled():
+                logger.info(f"Mass discovery job {job_id} cancelled during Scout phase.")
+                break
+                
+            progress = 20 + int(10 * (idx / total_unis))
+            update_status("running", progress, f"Scout AI analyzing website {idx+1} of {total_unis}...")
             try:
                 homepage = f"https://{domain}"
                 logger.info(f"[Scout] Fetching homepage for {uni_name} ({homepage})...")
@@ -307,13 +342,27 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
                 else:
                     logger.info(f"[Scout] AI decided the {len(selected)} most relevant links are: {', '.join(selected)}")
                     for s in selected:
-                        seed_urls.append({"url": s, "uni_name": uni_name})
+                        full_s = urljoin(homepage, s)
+                        seed_urls.append({"url": full_s, "uni_name": uni_name})
                         
             except Exception as e:
                 logger.error(f"[Scout] Error exploring {domain}: {e}")
+            finally:
+                # Mark university as scanned internally so it is not processed again
+                try:
+                    from models import ScannedUniversity
+                    if not db.query(ScannedUniversity).filter(ScannedUniversity.name == uni_name).first():
+                        db.add(ScannedUniversity(name=uni_name))
+                        db.commit()
+                except Exception as se:
+                    logger.error(f"Error marking university {uni_name} as scanned: {se}")
+                    db.rollback()
                 
         if not seed_urls:
-            update_status("completed", 100, "Scout AI failed to find any valid URLs.")
+            if is_cancelled():
+                update_status("canceled", 20, "Scan cancelled by user. No URLs were processed.")
+            else:
+                update_status("completed", 100, "Scout AI failed to find any valid URLs.")
             return
             
         update_status("running", 30, f"Beginning Deep Crawl of {len(seed_urls)} AI-selected pages...")
@@ -342,19 +391,43 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
         from main import get_db
         
         for i, seed in enumerate(seed_urls):
+            if is_cancelled():
+                logger.info(f"Mass scan job {job_id} cancelled during Crawl phase.")
+                break
+                
             url = seed["url"]
             uni_name = seed["uni_name"]
             processed_count += 1
             progress = 30 + int(70 * (processed_count / total_seeds))
             
             elapsed_time = time.time() - start_time
-            update_status("running", progress, f"Scanning {url} (URL {processed_count}/{total_seeds}) [Elapsed: {elapsed_time:.1f}s]")
+            avg_time = elapsed_time / processed_count
+            elapsed_str = format_elapsed_time(elapsed_time)
+            update_status("running", progress, f"Extracting opportunities (page {processed_count} of {total_seeds})... [Elapsed: {elapsed_str}, Avg: {avg_time:.1f}s/page]")
             
             try:
                 # Crawl the page
                 result = fetch_scholarships_real([url], profile_dict)
                 pages = result.get("pages", [])
                 stats["crawled"] += 1
+                
+                if not pages:
+                    err_msg = "Unknown scraping error"
+                    errors = result.get("errors", [])
+                    if errors:
+                        for err in errors:
+                            if isinstance(err, dict) and err.get("url") == url:
+                                err_msg = err.get("error", err_msg)
+                                break
+                            elif isinstance(err, str) and url in err:
+                                err_msg = err
+                                break
+                    processed_pages.append({
+                        "url": url,
+                        "uni_name": uni_name,
+                        "status": "failed (scraping failed)",
+                        "error_detail": err_msg
+                    })
                 
                 for page in pages:
                     html_text = page.get("text", "")
@@ -365,6 +438,13 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
                     if density < min_density:  # Arbitrary threshold for relevancy
                         logger.info(f"Tier 1 Gatekeeper rejected {url} (Density: {density:.2f} < {min_density})")
                         stats["gatekeeper_rejected"] += 1
+                        processed_pages.append({
+                            "url": url,
+                            "uni_name": uni_name,
+                            "status": "rejected (gatekeeper)",
+                            "keyword_density": round(density, 4),
+                            "min_required_density": min_density
+                        })
                         continue
                         
                     logger.info(f"Tier 1 Gatekeeper PASSED {url} (Density: {density:.2f}). Sending to LLM...")
@@ -372,25 +452,71 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
                     
                     # Tier 2 Deep Extraction
                     target_context = {"university": uni_name, "title": "Any relevant academic program or scholarship"}
-                    extracted = extract_page_content(profile_dict, page, target_program_context=target_context, is_mass_scan=True)
-                    if extracted and extracted.get("is_valid"):
-                        # Save to db
-                        save_discovered_data(db, extracted, profile)
-                        stats["programs_found"] += len(extracted.get("programs", []))
-                        stats["scholarships_found"] += len(extracted.get("scholarships", []))
+                    try:
+                        extracted = extract_page_content(profile_dict, page, target_program_context=target_context, is_mass_scan=True)
+                        if extracted:
+                            is_valid = extracted.get("is_valid", False)
+                            p_count = len(extracted.get("programs", []))
+                            s_count = len(extracted.get("scholarships", []))
+                            
+                            processed_pages.append({
+                                "url": url,
+                                "uni_name": uni_name,
+                                "status": "completed",
+                                "keyword_density": round(density, 4),
+                                "is_valid": is_valid,
+                                "relevance_rejection_reason": extracted.get("relevance_rejection_reason"),
+                                "programs_found": p_count,
+                                "scholarships_found": s_count
+                            })
+                            
+                            if is_valid:
+                                # Save to db
+                                save_discovered_data(db, extracted, profile)
+                                stats["programs_found"] += p_count
+                                stats["scholarships_found"] += s_count
+                        else:
+                            stats["errors"] += 1
+                            processed_pages.append({
+                                "url": url,
+                                "uni_name": uni_name,
+                                "status": "failed (LLM returned None)",
+                                "keyword_density": round(density, 4)
+                            })
+                    except Exception as le:
+                        stats["errors"] += 1
+                        processed_pages.append({
+                            "url": url,
+                            "uni_name": uni_name,
+                            "status": "failed (LLM error)",
+                            "keyword_density": round(density, 4),
+                            "error_detail": str(le)
+                        })
                         
             except Exception as e:
                 logger.error(f"Error processing {url}: {e}")
                 stats["errors"] += 1
+                if not any(p.get("url") == url for p in processed_pages):
+                    processed_pages.append({
+                        "url": url,
+                        "uni_name": uni_name,
+                        "status": "failed (crashed)",
+                        "error_detail": str(e)
+                    })
                 
         total_time = time.time() - start_time
-        final_msg = f"Mass discovery scan complete in {total_time:.1f}s. Scanned: {stats['crawled']}, Passed Gatekeeper: {stats['gatekeeper_passed']}, Errors: {stats['errors']}. Discovered {stats['programs_found']} programs and {stats['scholarships_found']} scholarships."
-        logger.info(final_msg)
-        update_status("completed", 100, final_msg)
+        if is_cancelled():
+            final_msg = f"Mass discovery scan cancelled by user after {total_time:.1f}s. Scanned: {stats['crawled']}, Discovered {stats['programs_found']} programs and {stats['scholarships_found']} scholarships."
+            logger.info(final_msg)
+            update_status("canceled", progress, final_msg, extra_stats=stats)
+        else:
+            final_msg = f"Mass discovery scan complete in {total_time:.1f}s. Scanned: {stats['crawled']}, Passed Gatekeeper: {stats['gatekeeper_passed']}, Errors: {stats['errors']}. Discovered {stats['programs_found']} programs and {stats['scholarships_found']} scholarships."
+            logger.info(final_msg)
+            update_status("completed", 100, final_msg, extra_stats=stats)
         
     except Exception as e:
         total_time = time.time() - start_time
         logger.error(f"Mass discovery job failed after {total_time:.1f}s: {e}")
-        update_status("failed", 0, f"Failed after {total_time:.1f}s: {str(e)}")
+        update_status("failed", 0, f"Failed after {total_time:.1f}s: {str(e)}", extra_stats={"errors": 1})
     finally:
         db.close()

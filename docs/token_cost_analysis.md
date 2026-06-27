@@ -1,11 +1,17 @@
 # Token Cost Analysis & LLM Strategy
 
-The Educational Pathfinder relies heavily on `gemini-3.5-flash` for high-throughput, low-latency reasoning tasks. This document outlines the expected API usage metrics and cost projections.
+The Educational Pathfinder uses a **3-tier LLM routing strategy** that minimizes costs by preferring free, local, or open-source inference over paid cloud APIs:
 
-## Pricing Model (Gemini 1.5 Flash)
+1. **Tier 1 — Ollama (Local):** `llama3.1` (8B) → `gemma2:2b` fallback. $0.00 cost. GPU-accelerated on host machine.
+2. **Tier 2 — HuggingFace Serverless:** `Qwen2.5-7B-Instruct`. $0.00 within free-tier limits.
+3. **Tier 3 — Gemini Flash (Last Resort):** `gemini-3.5-flash`. Only incurs cost if Ollama and HuggingFace are both unavailable.
+
+Cost projections below assume **Gemini is the active inference provider** (worst-case scenario, for SaaS planning purposes).
+
+## Pricing Model (Gemini 1.5 Flash — Worst-Case Baseline)
 - **Input Tokens**: ~$0.075 / 1 Million tokens
 - **Output Tokens**: ~$0.30 / 1 Million tokens
-*Note: We assume Gemini 3.5 Flash maintains parity or drops slightly from 1.5 Flash pricing.*
+*Note: In most local development setups, Ollama or HuggingFace handles inference at $0.00.*
 
 ## Application Features & Usage Profile
 
@@ -23,8 +29,14 @@ The Educational Pathfinder relies heavily on `gemini-3.5-flash` for high-through
 
 ### 2. Scholarship / Program Scoring (Batch processing)
 **Trigger**: When the discovery engine scans new scholarships/programs.
-**Cost Model**: **$0.00 (Zero)**.
-Because batch scraping requires parsing huge amounts of unstructured university HTML, we have offloaded this entirely to **Hugging Face Serverless Inference** (specifically `Qwen2.5-7B-Instruct`). This bypasses Gemini completely for discovery, saving massive token costs. The dual-extraction (finding both programs and scholarships on a single page) is performed natively by the open-source model.
+
+| Inference Tier | Cost Model |
+|---|---|
+| Ollama (local llama3.1 / gemma2:2b) | **$0.00** — fully local |
+| HuggingFace Qwen2.5-7B-Instruct | **$0.00** — within free HF serverless limits |
+| Gemini Flash (fallback only) | **~$0.000525 per page** |
+
+In the typical development setup, discovery is handled by the open-source Tier 1/2 models. **Gemini is not called during mass scans** unless both Ollama and HuggingFace are unavailable. The dual-extraction (finding both academic programs and scholarships from a single page) runs natively on whichever model is resolved.
 
 ### 3. AI Essay Drafting
 **Trigger**: Clicking "Draft Essay" in the Kanban tracker.
@@ -54,14 +66,16 @@ Assuming an average user per month:
 - Drafts 5 essays.
 - Sends 10 outreach emails.
 
-**Cost Breakdown (Per User):**
+**Cost Breakdown (Per User) — Gemini-only worst case:**
 - Onboarding (2 parses): $0.0008
-- Scanning (200 * $0.000135): $0.0270
-- Drafting (5 * $0.000525): $0.0026
-- Outreach (10 * $0.0001575): $0.0016
-**Total Estimated Cost per User**: ~$0.032 / month.
+- Scanning (200 pages × $0.000525): $0.1050 *(if Gemini handles all — extremely unlikely)*
+- Scanning (200 pages × $0.00): $0.00 *(if Ollama or HuggingFace active — typical)*
+- Drafting (5 × $0.000525): $0.0026
+- Outreach (10 × $0.0001575): $0.0016
+**Total Estimated Cost per User (Gemini-only)**: ~$0.11 / month.
+**Total Estimated Cost per User (Ollama/HF for scanning)**: ~$0.004 / month.
 
-**Total for 1,000 active users**: **HTML/API cost of ~$32.00 / month**
+**Total for 1,000 active users (typical setup)**: **~$4.00 / month**
 
 ---
 
@@ -69,5 +83,5 @@ Assuming an average user per month:
 1. **Model Selection**: Using Flash instead of Pro drastically reduces cost without sacrificing JSON structured output quality.
 2. **Field Pruning**: The outreach and scoring endpoints filter out heavy, irrelevant profile fields (like hobbies or publications) from the input prompt payload unless strictly required.
 3. **Structured Inputs**: Standardizing experience and languages into compact JSON database arrays reduces delimiters and prompt formatting overhead, lowering input tokens.
-4. **Tier-1 Heuristic Gatekeeper**: During broad discovery scans, the Scrapy worker applies a pure-Python keyword density gatekeeper. Raw web pages that do not mention core financial aid or major keywords are immediately discarded before *any* AI extraction occurs, preventing thousands of wasted tokens on irrelevant university pages (e.g., faculty directories or campus news).
+4.  **Tier-1 Heuristic Gatekeeper**: During discovery scans, `worker.py` applies a pure-Python keyword density gatekeeper (`calculate_relevance_density()`). Raw web pages that do not meet the minimum keyword density threshold (`GATEKEEPER_MIN_DENSITY`, default: `0.2` per 1000 words) are immediately discarded before *any* AI extraction occurs, preventing thousands of wasted tokens on irrelevant university pages (e.g., faculty directories or campus news) via Scrapling.
 5. **Caching**: Future improvements should include caching identical program descriptions in a vector DB to prevent re-submitting standard university data repeatedly.

@@ -19,6 +19,7 @@ interface UniversityDeepDiveModalProps {
   scholarships: any[];
   onFindFunding: (programId: number) => void;
   isFundingLoading: number | null;
+  onDiscardProgram: (programId: number) => void;
 }
 
 export default function UniversityDeepDiveModal({ 
@@ -28,7 +29,8 @@ export default function UniversityDeepDiveModal({
   programs,
   scholarships,
   onFindFunding,
-  isFundingLoading
+  isFundingLoading,
+  onDiscardProgram
 }: UniversityDeepDiveModalProps) {
   const [data, setData] = useState<DeepDiveData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -193,16 +195,27 @@ export default function UniversityDeepDiveModal({
                               <h4 className="font-bold text-foreground text-sm tracking-wide">
                                 Secured Funding ({programFunding.length})
                               </h4>
-                              <Button 
-                                size="sm" 
-                                color="primary" 
-                                variant="shadow"
-                                className="font-semibold text-xs"
-                                isLoading={isFundingLoading === p.id}
-                                onPress={() => onFindFunding(p.id)}
-                              >
-                                Run Full Deep Dive
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  color="danger" 
+                                  variant="flat"
+                                  className="font-semibold text-xs border border-danger/10"
+                                  onPress={() => onDiscardProgram(p.id)}
+                                >
+                                  Not Interested
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  color="primary" 
+                                  variant="shadow"
+                                  className="font-semibold text-xs"
+                                  isLoading={isFundingLoading === p.id}
+                                  onPress={() => onFindFunding(p.id)}
+                                >
+                                  Run Full Deep Dive
+                                </Button>
+                              </div>
                             </div>
                             
                             {programFunding.length > 0 ? (

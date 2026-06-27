@@ -1,6 +1,6 @@
 # Discovery Engine Technical Breakdown
 
-The Discovery Engine is the core of the Scholarship Hunter platform. It utilizes a **Standardized Pipeline** to find university programs and financial aid worldwide, parse unstructured university web pages, and match them against a user's rich profile.
+The Discovery Engine is the core of the **Educational Pathfinder** platform. It utilizes a **Standardized Pipeline** to find university programs and financial aid worldwide, parse unstructured university web pages, and match them against a user's rich profile.
 
 ## The Two-Wave Discovery Architecture
 
@@ -16,7 +16,7 @@ sequenceDiagram
     participant AI2 as Phase 2: Details & Funding
 
     User->>Wave1: Generate Search Queries or Seed ROR URLs
-    Note over Wave1: Scrapes top universities via DDG (Quick)<br/>or queries local ROR db (Mass).
+    Note over Wave1: Quick Scan: DDG seeds → Scrapling StealthyFetcher<br/>Mass Scan: ROR db → requests + BeautifulSoup homepage crawl
     Wave1->>AI1: Initial Evaluation (Heuristic Gatekeeper)
     Note over AI1: CRITICAL RULE: Drops any program<br/>without financial aid keywords.
     AI1-->>UI: Renders Sleek University Cards
@@ -32,17 +32,16 @@ sequenceDiagram
     deactivate Wave2
 ```
 
-### Phase 1: Quick Scan vs. Deep Mass Scan
-
-**1. Quick Scan (Synchronous)**
-The Quick Scan uses `ddgs` (DuckDuckGo) to search for broad keywords based on the user's major and target countries. It seeds the scraper with ~10 results and streams the extraction progress via Server-Sent Events (SSE) directly to the UI.
-
-**2. Deep Mass Scan (Asynchronous Background Task)**
-For a comprehensive search, the user triggers the Deep Mass Scan.
+### Wave 1: Broad Discovery Scan (Asynchronous Background Task)
+To ensure comprehensive coverage and discover as many opportunities as possible, broad discovery operates exclusively through the background Mass Scan pipeline:
 - **Task Queue System**: We utilize **Huey** backed by **SQLite** (`SqliteHuey`). This offloads the heavy AI scraping from FastAPI's request cycle to a background `worker.py` process.
-- **University Domain Database (ROR)**: Instead of DDG, we rely on the **Research Organization Registry (ROR)**. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR open-source data dump, filtering it down to ~24,000 educational domains (`universities.json`). 
-- **AI Scout Navigation**: The background worker fetches the homepage of each matching domain, extracts all internal links via BeautifulSoup, and feeds them to an AI "Scout". The Scout evaluates the links against the user's profile and returns the top 2-3 specific URLs most likely to contain academic programs or admissions info, completely eliminating the need to blindly guess URL paths.
-- **Frontend Interfacing**: The frontend receives a `job_id` and runs an active polling loop against `GET /scholarships/mass-scan/{job_id}/status`, reading static JSON log files without stressing the backend.
+- **University Domain Database (ROR)**: The **Research Organization Registry (ROR)** serves as the database seeding source. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR dataset, filtering it down to ~24,000 educational domains (`universities.json`).
+- **Homepage Crawling**: The Mass Scan worker uses lightweight `requests` + `BeautifulSoup` to fetch each university's homepage and extract all internal `<a href>` navigation links.
+- **AI Scout Navigation**: The extracted link list is fed to the Scout AI, which selects the top 2-3 specific URLs most likely to contain academic programs or admissions info matching the user's profile.
+- **Frontend Interfacing**: The frontend receives a `job_id` and runs an active polling loop against `GET /discovery/mass-scan/{job_id}/status`, reading static JSON log files without stressing the backend.
+
+> [!NOTE]
+> **Quick Scan Deprecation**: The synchronous DuckDuckGo-based broad "Quick Scan" has been fully deprecated as it was prone to search-engine rate limits and provided narrow coverage compared to the systematic ROR-based Mass Scan.
 
 ### Phase 2: Tier 1 Heuristic Gatekeeper & Crawling
 
@@ -53,16 +52,28 @@ Before performing a deep extraction, the worker relies on a highly efficient pip
 3. If the density of these translated keywords is below `0.2 per 1000 words` (meaning roughly 0 hits), the page is dropped. This serves as a safety net to ensure the Scout didn't hallucinate an empty page.
 This ensures only highly relevant, organically discovered academic pages reach the Deep Extraction LLM.
 
-### Tier 2: Deep Extraction via Local AI (Llama 3.1)
-Pages that pass Tier 1 are fed to the local `llama3.1` (8B) model running natively on the Host OS via Ollama (configured in `main.py` and `ai_agent.py` through LangChain).
+### Tier 2: Deep Extraction via the Primary LLM
+Pages that pass Tier 1 are fed to the primary LLM, resolved through the priority configuration in `ai_agent.py`:
+
+1. **Ollama (Local, Default):** Checks if Ollama is running locally. It dynamically searches for `llama3` first (as well as `llama3.1` or the model configured via `OLLAMA_MODEL` env var), then falls back to `gemma2:2b`. Local inference is **free and private** — no data leaves the machine.
+2. **Cloud Inference (Optional):** If the environment variable `PRIORITIZE_CLOUD_LLM=True` is enabled and API keys are provided, the system routes to `gemini-1.5-flash` or HuggingFace (`Qwen2.5-7B-Instruct`).
+
+> [!WARNING]
+> **No Silent Fallbacks**: If Ollama is offline and cloud inference is not explicitly prioritized/configured, the scan will fail immediately and report a configuration error instead of executing silently with fake scores or mock data.
 
 **Data Standardization (Pre-LLM)**
 To maximize accuracy, we feed the LLM highly curated seed data:
-- **Categorized Major Standardization**: The UI explicitly groups 40+ recognized global academic majors (e.g. Engineering, Business). By forcing the user to pick from this structured `CATEGORIZED_MAJORS` dictionary (in `Profile.tsx`), the LLM avoids misinterpreting niche or non-translatable degree titles, granting it a universally understood anchor point.
+- **Categorized Major Standardization**: The UI explicitly groups 40+ recognized global academic majors (e.g. Engineering, Business). By forcing the user to pick from this structured `CATEGORIZED_MAJORS` dictionary (in `majors.ts`), the LLM avoids misinterpreting niche or non-translatable degree titles, granting it a universally understood anchor point.
+
+**Text Truncation Layers (Pre-LLM)**
+To minimize token usage, scraped page text passes through three sequential truncation stages before reaching the LLM:
+1. **`SCRAPER_MAX_TEXT_LENGTH`** (default: `50,000` chars) — Raw page text cap applied by `scraper.py` immediately after BeautifulSoup extraction.
+2. **`filter_text_with_nltk()`** (default: `2,000` chars) — NLTK sentence tokenizer that keeps only sentences containing financial aid or admissions keywords, discarding irrelevant body copy.
+3. **`MAX_PAGE_TEXT_LENGTH`** (default: `25,000` chars) — Final cap applied inside `ai_agent.py` before the text is injected into the LLM prompt.
 
 During extraction:
-- The LLM extracts structured data adhering to `schemas.py`.
-- **Language Feasibility**: It checks if the `instruction_languages` match the user's known languages. If not, and no `offers_language_training` is available, it caps the `probability_score` to 15%.
+- The LLM extracts structured data adhering to `ExtractedPageData` and `ExtractedProgram` Pydantic schemas.
+- **Language Feasibility**: It checks if the `instruction_languages` match the user's known languages. If not, and no `offers_language_training` is available, it caps the `probability_score` to the `SCORE_CAP_LANGUAGE_BARRIER` value (default: 15%).
 
 #### Strict Scoring Algorithm
 During extraction, the LLM uses highly engineered strict logic to calculate scores and discard irrelevant items:
@@ -78,8 +89,22 @@ To accurately reflect the real-world admissions journey, the UI is heavily **Uni
 2. **Targeted Funding Scans**: Financial aid is inherently tied to specific institutions and programs. The global scan discovers programs; then, users trigger a highly specific `POST /api/programs/{id}/find-funding` pipeline.
 3. **Nested Secured Funding**: Targeted scholarships render visually nested under the specific academic program they support.
 
-**Machine Learning Feedback Loop & Soft Deletes**:
-Users can click a "Not Interested" (Discard) button on any program card. This triggers a `PATCH` request updating the database item to `status = "Discarded"`. The item is preserved in the database (Soft Delete) to eventually train future search-accuracy ML models on the user's rejection patterns.
+**Already-Scanned & Blacklist Filters**:
+- **Scanned Domain Registry**: When a university is processed (regardless of success, rejection, or failure), it is added to the `scanned_universities` table. Future scans automatically skip registered domains to prevent redundant crawling and API token usage.
+- **Blacklisted Universities**: If a university contains any program marked as `Discarded` by the user, the entire university domain is blacklisted and skipped in future mass discovery scans.
+- **Discrete Blacklist Panel**: Discarded programs are automatically filtered out from matches and rendered under a collapsible, discrete "Blacklisted Opportunities" panel at the bottom of the dashboard, where they can be restored back to "Discovered" status.
+
+**Asynchronous Job Cancellation**:
+- Users can abort enqueued or running scans via the "Cancel Search" button. This triggers `POST /discovery/mass-scan/{job_id}/cancel`, updating the job's status file to `"canceled"`.
+- The background worker checks the cancellation flag before processing each university and gracefully exits the loops, saving whatever partial matching results were found prior to cancellation.
+
+**Asynchronous Job Recovery & Failsafe**:
+- **Scan Status Recovery:** On mount, the frontend queries `GET /discovery/active-job` to check if a mass discovery scan is already active in the background. If one is found, it automatically displays the progress bar and resumes polling the status endpoint `GET /discovery/mass-scan/{job_id}/status`, allowing seamless page reloads and browser restarts without losing track of progress.
+- **Backend Failsafe:** To prevent overloading the local system with multiple concurrent LLM/scraping jobs, `POST /discovery/mass-scan` checks for any existing job logs with a `"running"` or `"pending"` status. If an active job is found, it blocks execution and returns an `HTTP 400 Bad Request` error.
+- **Elapsed Time & Processing Metrics Formatting:** Elapsed time tracking during the crawling phase is formatted into a human-readable duration (e.g. `1h 12m 30s`) and includes a real-time average processing speed per page (e.g. `Avg: 33.0s/page`) to give users transparent, precise progress updates.
+
+**Machine Learning Feedback Loop**:
+- Discarded opportunities are preserved under the soft-delete status `"Discarded"` to allow offline or asynchronous ML models to search for preference patterns and improve subsequent discovery scores.
 
 ---
 

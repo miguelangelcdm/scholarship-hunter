@@ -12,7 +12,7 @@ export default function Tracker() {
 
   const { data: scholarships = [], isLoading } = useQuery({
     queryKey: ['scholarships'],
-    queryFn: api.getScholarships
+    queryFn: api.getFunding
   });
 
   const draftMutation = useMutation({

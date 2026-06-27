@@ -183,15 +183,15 @@ def parse_profile_document(
     return profile
 
 # --- Scholarship Endpoints ---
-@app.get("/scholarships", response_model=list[ScholarshipResponse])
+@app.get("/funding", response_model=list[ScholarshipResponse])
 def get_all_scholarships(db: Session = Depends(get_db)):
     return db.query(Scholarship).filter(Scholarship.status != "Discarded").all()
 
-@app.patch("/scholarships/{id}/discard")
+@app.patch("/funding/{id}/discard")
 def discard_scholarship(id: int, db: Session = Depends(get_db)):
     item = db.query(Scholarship).filter(Scholarship.id == id).first()
     if not item:
-        raise HTTPException(status_code=404, detail="Scholarship not found")
+        raise HTTPException(status_code=404, detail="Funding not found")
     item.status = "Discarded"
     db.commit()
     return {"status": "discarded"}
@@ -199,7 +199,7 @@ def discard_scholarship(id: int, db: Session = Depends(get_db)):
 # --- Target Program Endpoints ---
 @app.get("/programs", response_model=list[TargetProgramResponse])
 def get_all_programs(db: Session = Depends(get_db)):
-    return db.query(TargetProgram).filter(TargetProgram.status != "Discarded").all()
+    return db.query(TargetProgram).all()
 
 @app.patch("/programs/{id}/discard")
 def discard_program(id: int, db: Session = Depends(get_db)):
@@ -210,7 +210,16 @@ def discard_program(id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "discarded"}
 
-@app.get("/scholarships/last-scan")
+@app.patch("/programs/{id}/restore")
+def restore_program(id: int, db: Session = Depends(get_db)):
+    item = db.query(TargetProgram).filter(TargetProgram.id == id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Program not found")
+    item.status = "Discovered"
+    db.commit()
+    return {"status": "restored"}
+
+@app.get("/discovery/last-scan")
 def get_last_scan():
     logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "discovery_logs")
     if not os.path.exists(logs_dir):
@@ -233,245 +242,6 @@ def get_last_scan():
         print(f"Error retrieving last scan time: {e}")
         return {"last_scan": None}
 
-@app.post("/scholarships/scan")
-def run_discovery_scan(db: Session = Depends(get_db)):
-    from fastapi.responses import StreamingResponse
-    from ai_agent import get_primary_llm
-    
-    if not get_primary_llm():
-        raise HTTPException(
-            status_code=400,
-            detail="No active LLM available. Please ensure Ollama is running and has the llama3 model, or configure prioritized cloud LLM in your .env."
-        )
-    
-    profile = db.query(Profile).first()
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile required to scan")
-    
-    def scan_generator():
-        import json
-        
-        yield json.dumps({"step": "init", "message": "Starting discovery engine...", "progress": 5}) + "\n"
-        
-        try:
-            targets = json.loads(profile.target_countries) if profile.target_countries else []
-            desired_countries = [t.get("country") for t in targets if t.get("country")]
-        except:
-            desired_countries = []
-            
-        try:
-            undesired = json.loads(profile.undesired_countries) if profile.undesired_countries else []
-            undesired_countries = [u.get("country") for u in undesired if u.get("country")]
-        except:
-            undesired_countries = []
-
-        try:
-            target_conts = json.loads(profile.target_continents) if profile.target_continents else []
-        except:
-            target_conts = []
-            
-        try:
-            undesired_conts = json.loads(profile.undesired_continents) if profile.undesired_continents else []
-        except:
-            undesired_conts = []
-
-        try:
-            langs = json.loads(profile.languages) if profile.languages else []
-            spoken_languages = [l.get("language") for l in langs if l.get("language")]
-        except:
-            spoken_languages = ["English"] # Default
-
-        import random
-        import os
-        offset = random.randint(0, 30)
-        
-        # 1. Search Seeding (Phase 1)
-        yield json.dumps({"step": "seeding", "message": "Searching DuckDuckGo for matching scholarships...", "progress": 15}) + "\n"
-        
-        search_limit = int(os.getenv("SEARCH_MAX_RESULTS", 10))
-        seed_urls = get_seed_urls(profile, offset=offset, limit=search_limit)
-        
-        # 2. Web Crawling (Phase 2)
-        yield json.dumps({"step": "crawling", "message": f"Found {len(seed_urls)} seed URLs. Initializing crawler...", "progress": 30}) + "\n"
-        
-        profile_dict = {
-            "major": profile.major,
-            "gpa": profile.gpa,
-            "degree_level": getattr(profile, "degree_level", ""),
-            "demographics": profile.demographics,
-            "hobbies": profile.hobbies,
-            "volunteer_work": profile.volunteer_work,
-            "projects": profile.projects,
-            "experience": profile.experience,
-            "awards": profile.awards,
-            "languages": profile.languages,
-            "publications": profile.publications,
-            "financial_need": profile.financial_need,
-            "career_goals": profile.career_goals,
-            "has_dependents": getattr(profile, "has_dependents", False)
-        }
-        
-        scraper_result = fetch_scholarships_real(seed_urls, profile_dict)
-        raw_pages = scraper_result.get("pages", [])
-        scraper_errors = scraper_result.get("errors", [])
-        
-        # Initialize discovery scan log structure
-        scan_time = datetime.utcnow()
-        scan_log = {
-            "timestamp": scan_time.isoformat() + "Z",
-            "profile_id": profile.id,
-            "criteria": {
-                "name": profile.name,
-                "major": profile.major,
-                "gpa": profile.gpa,
-                "preferred_modality": profile.preferred_modality,
-                "target_countries": desired_countries,
-                "has_dependents": getattr(profile, "has_dependents", False)
-            },
-            "search_phase": {
-                "max_results_limit": search_limit,
-                "offset": offset,
-                "seed_urls": seed_urls
-            },
-            "scraper_phase": {
-                "pages_scraped_count": len(raw_pages),
-                "pages": [{"url": p.get("url"), "title": p.get("title")} for p in raw_pages],
-                "errors": scraper_errors
-            },
-            "extraction_phase": {
-                "processed_pages": []
-            },
-            "aggregate_metrics": {
-                "total_scholarships_added": 0,
-                "total_programs_added": 0,
-                "total_input_tokens": 0,
-                "total_output_tokens": 0,
-                "total_cost_usd": 0.0
-            }
-        }
-        
-        # 3. AI Extractor & Scorer (Phase 3)
-        new_scholarship_count = 0
-        new_program_count = 0
-        total_in = 0
-        total_out = 0
-        total_cost = 0.0
-        
-        pages_to_process = len(raw_pages)
-        if pages_to_process > 0:
-            yield json.dumps({"step": "analyzing", "message": f"Scraped {pages_to_process} pages. Starting AI analysis and relevance check...", "progress": 45}) + "\n"
-        else:
-            yield json.dumps({"step": "analyzing", "message": "No pages scraped. Skipping AI analysis...", "progress": 45}) + "\n"
-            
-        for idx, page_data in enumerate(raw_pages):
-            yield json.dumps({
-                "step": "analyzing", 
-                "message": f"Analyzing page {idx+1} of {pages_to_process}: {page_data.get('title', '')[:30]}...", 
-                "progress": 45 + int(((idx + 1) / pages_to_process) * 45)
-            }) + "\n"
-            
-            extracted = extract_page_content(profile_dict, page_data)
-            if not extracted:
-                scan_log["extraction_phase"]["processed_pages"].append({
-                    "url": page_data["url"],
-                    "title": page_data.get("title"),
-                    "status": "failed (LLM error)"
-                })
-                continue
-                
-            # Accumulate token metrics
-            tokens = extracted.get("token_usage", {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0})
-            total_in += tokens.get("input_tokens", 0)
-            total_out += tokens.get("output_tokens", 0)
-            total_cost += tokens.get("cost_usd", 0.0)
-            
-            page_log = {
-                "url": page_data["url"],
-                "title": page_data.get("title"),
-                "is_valid": extracted.get("is_valid", False),
-                "scholarships_found": len(extracted.get("scholarships", [])),
-                "programs_found": len(extracted.get("programs", [])),
-                "token_usage": tokens
-            }
-            scan_log["extraction_phase"]["processed_pages"].append(page_log)
-            
-            if extracted.get("is_valid"):
-                # Handle Scholarships
-                for sch in extracted.get("scholarships", []):
-                    existing = db.query(Scholarship).filter(Scholarship.url == page_data["url"], Scholarship.title == sch.get("title")).first()
-                    if not existing:
-                        new_scholarship = Scholarship(
-                            title=sch.get("title", page_data["title"]),
-                            provider=sch.get("provider", "Unknown Provider"),
-                            amount=sch.get("amount"),
-                            deadline=None, 
-                            description=sch.get("description", ""),
-                            url=page_data.get("url"),
-                            desire_score=sch.get("desire_score", 0),
-                            probability_score=sch.get("probability_score", 0),
-                            improvement_projection=sch.get("improvement_projection", ""),
-                            requires_outreach=sch.get("requires_outreach", False),
-                            benefits_summary=sch.get("benefits_summary", "")
-                        )
-                        db.add(new_scholarship)
-                        new_scholarship_count += 1
-
-                # Handle Programs
-                for prog in extracted.get("programs", []):
-                    if prog.get("university") == "Unknown University" or not prog.get("university"):
-                        continue # Skip invalid universities per wave 1 strict rule
-
-                    existing = db.query(TargetProgram).filter(TargetProgram.url == page_data["url"], TargetProgram.title == prog.get("title")).first()
-                    if not existing:
-                        new_program = TargetProgram(
-                            title=prog.get("title", "Unknown Program"),
-                            university=prog.get("university", "Unknown University"),
-                            country=prog.get("country", ""),
-                            url=page_data.get("url"),
-                            is_online=prog.get("is_online", False),
-                            is_hybrid=prog.get("is_hybrid", False),
-                            accepts_international=prog.get("accepts_international", True),
-                            details=prog.get("details", ""),
-                            steps=prog.get("steps", ""),
-                            important_info=prog.get("important_info", ""),
-                            next_steps=prog.get("next_steps", ""),
-                            desire_score=prog.get("desire_score", 0),
-                            probability_score=prog.get("probability_score", 0),
-                            improvement_projection=prog.get("improvement_projection", "")
-                        )
-                        db.add(new_program)
-                        new_program_count += 1
-                        
-        yield json.dumps({"step": "saving", "message": "Saving matches and generating execution logs...", "progress": 95}) + "\n"
-        db.commit()
-        
-        # Save aggregate metrics
-        scan_log["aggregate_metrics"]["total_scholarships_added"] = new_scholarship_count
-        scan_log["aggregate_metrics"]["total_programs_added"] = new_program_count
-        scan_log["aggregate_metrics"]["total_input_tokens"] = total_in
-        scan_log["aggregate_metrics"]["total_output_tokens"] = total_out
-        scan_log["aggregate_metrics"]["total_cost_usd"] = total_cost
-        
-        # Write to log file
-        logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "discovery_logs")
-        os.makedirs(logs_dir, exist_ok=True)
-        
-        log_filename = f"scan_{scan_time.strftime('%Y%m%d_%H%M%S')}.json"
-        log_filepath = os.path.join(logs_dir, log_filename)
-        try:
-            with open(log_filepath, "w", encoding="utf-8") as lf:
-                json.dump(scan_log, lf, indent=2)
-        except Exception as le:
-            print(f"Failed to write discovery scan log: {le}")
-            
-        yield json.dumps({
-            "step": "complete", 
-            "message": f"Scan complete! Discovered {new_program_count} universities.", 
-            "progress": 100,
-            "new_count": new_scholarship_count + new_program_count
-        }) + "\n"
-        
-    return StreamingResponse(scan_generator(), media_type="application/x-ndjson")
 
 @app.get("/universities/{university_name}/deep-dive")
 def get_university_deep_dive(university_name: str, db: Session = Depends(get_db)):
@@ -675,7 +445,7 @@ def run_targeted_funding_scan(program_id: int, db: Session = Depends(get_db)):
         
     return StreamingResponse(funding_generator(), media_type="application/x-ndjson")
 
-@app.post("/scholarships/{scholarship_id}/draft")
+@app.post("/funding/{scholarship_id}/draft")
 def generate_draft(scholarship_id: int, db: Session = Depends(get_db)):
     profile = db.query(Profile).first()
     scholarship = db.query(Scholarship).filter(Scholarship.id == scholarship_id).first()
@@ -706,7 +476,7 @@ def generate_draft(scholarship_id: int, db: Session = Depends(get_db)):
     
     return {"essay_draft": essay}
 
-@app.post("/scholarships/{scholarship_id}/outreach")
+@app.post("/funding/{scholarship_id}/outreach")
 def generate_outreach(scholarship_id: int, db: Session = Depends(get_db)):
     profile = db.query(Profile).first()
     scholarship = db.query(Scholarship).filter(Scholarship.id == scholarship_id).first()
@@ -727,8 +497,77 @@ def generate_outreach(scholarship_id: int, db: Session = Depends(get_db)):
     
     return {"email_draft": email}
 
-@app.post("/scholarships/mass-scan")
+def check_for_active_job():
+    """
+    Scans the discovery logs for any active job, sorting by newest first
+    and marking stale jobs (no updates for 15+ minutes) as failed.
+    Returns a dict with job details if active, or None.
+    """
+    import os
+    import json
+    import time
+    
+    logs_dir = os.path.join(os.path.dirname(__file__), "discovery_logs")
+    if not os.path.exists(logs_dir):
+        return None
+        
+    job_files = []
+    for f in os.listdir(logs_dir):
+        if f.startswith("job_") and f.endswith(".json"):
+            file_path = os.path.join(logs_dir, f)
+            try:
+                mtime = os.path.getmtime(file_path)
+                job_files.append((f, file_path, mtime))
+            except Exception:
+                pass
+                
+    # Sort by modification time, newest first
+    job_files.sort(key=lambda x: x[2], reverse=True)
+    
+    for f, file_path, mtime in job_files:
+        try:
+            with open(file_path, "r", encoding="utf-8") as jf:
+                data = json.load(jf)
+                status = data.get("status")
+                
+                # If the newest job is finished, then no job is active
+                if status in ["completed", "failed", "canceled"]:
+                    return None
+                    
+                if status in ["running", "pending"]:
+                    current_time = time.time()
+                    if current_time - mtime > 900: # 15 minutes
+                        # Mark as failed/stale so it's ignored in the future
+                        try:
+                            data["status"] = "failed"
+                            data["message"] = "Job timed out or was interrupted."
+                            with open(file_path, "w", encoding="utf-8") as out_f:
+                                json.dump(data, out_f, indent=2)
+                        except Exception:
+                            pass
+                        continue
+                        
+                    job_id = f.replace("job_", "").replace(".json", "")
+                    return {
+                        "active_job_id": job_id,
+                        "status": status,
+                        "progress": data.get("progress", 0),
+                        "message": data.get("message", "Running...")
+                    }
+        except Exception:
+            pass
+            
+    return None
+
+@app.post("/discovery/mass-scan")
 def trigger_mass_discovery_scan(db: Session = Depends(get_db)):
+    active_job = check_for_active_job()
+    if active_job:
+        raise HTTPException(
+            status_code=400,
+            detail="A mass discovery scan is already running. Please cancel or wait for it to finish."
+        )
+
     from ai_agent import get_primary_llm
     if not get_primary_llm():
         raise HTTPException(
@@ -747,7 +586,15 @@ def trigger_mass_discovery_scan(db: Session = Depends(get_db)):
     
     return {"job_id": job_id, "message": "Mass discovery job enqueued"}
 
-@app.get("/scholarships/mass-scan/{job_id}/status")
+@app.get("/discovery/active-job")
+def get_active_job():
+    active_job = check_for_active_job()
+    if active_job:
+        return active_job
+    return {"active_job_id": None}
+
+
+@app.get("/discovery/mass-scan/{job_id}/status")
 def get_mass_discovery_status(job_id: str):
     import os
     import json
@@ -761,3 +608,39 @@ def get_mass_discovery_status(job_id: str):
             return data
     except Exception:
         return {"status": "pending", "progress": 0, "message": "Reading status..."}
+
+@app.post("/discovery/mass-scan/{job_id}/cancel")
+def cancel_mass_discovery_scan(job_id: str):
+    import os
+    import json
+    
+    status_file = os.path.join(os.path.dirname(__file__), "discovery_logs", f"job_{job_id}.json")
+    if not os.path.exists(status_file):
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    try:
+        progress = 0
+        message = "Job cancelled."
+        with open(status_file, "r") as f:
+            data = json.load(f)
+            progress = data.get("progress", 0)
+            message = data.get("message", "Job cancelled.")
+            
+        with open(status_file, "w") as f:
+            json.dump({
+                "status": "canceled",
+                "progress": progress,
+                "message": "Cancelling scan... saving partial results.",
+                "canceled": True,
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }, f, indent=2)
+            
+        try:
+            from worker import huey
+            huey.revoke_by_id(job_id)
+        except Exception as he:
+            print(f"Failed to revoke Huey task: {he}")
+            
+        return {"status": "cancelling", "message": "Cancellation request received."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to cancel job: {e}")

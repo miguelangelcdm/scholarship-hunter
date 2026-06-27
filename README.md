@@ -255,13 +255,18 @@ To prevent frontend crashes and keep the user informed during long scanning proc
 - **Real-Time Scan Progress Bar**: Replaced the synchronous, blocking scan endpoint with a Server-Sent Events (SSE) `StreamingResponse` inside [main.py](file:///c:/Users/migue/.gemini/antigravity/scratch/Scholarship-hunter/backend/main.py#L166). The frontend reads the stream chunk-by-chunk and renders a premium, glowing progress bar showing the exact execution phase (e.g. searching, crawling, analyzing, saving) and percentage completion (0-100%). This keeps the HTTP connection alive, prevents browser request timeouts, and provides immediate visual feedback.
 - **Custom Error Boundary**: A premium, glassmorphic class-component `ErrorBoundary` (located in [ErrorBoundary.tsx](file:///c:/Users/migue/.gemini/antigravity/scratch/Scholarship-hunter/frontend/src/components/ErrorBoundary.tsx)) is wrapped around the entire application in `App.tsx`. In the event of a runtime error (e.g. ReferenceError, TypeError, or component crash), it intercepts the failure and presents a beautiful recovery screen showing the error details, stack trace (in a styled scrollable viewport), and buttons to reload the application or go to the home route.
 - **Robust API Response Checking**: In `frontend/src/lib/api.ts`, a unified `handleResponse` helper processes all fetch requests. If the backend returns a non-2xx code (e.g., a 500 server error or validation failure), it extracts the detail field and raises a descriptive `Error` that is propagated directly to React Query query and mutation callbacks (e.g. displaying error toast notifications instead of failing silently).
-- **2. Deep Mass Scan (Asynchronous Background Task)**
-For a comprehensive search, the user triggers the Deep Mass Scan.
-- **Task Queue System**: We utilize **Huey** backed by **SQLite** (`SqliteHuey`). This offloads the heavy AI scraping from FastAPI's request cycle to a background `worker.py` process.
-- **University Domain Database (ROR)**: Instead of DDG, we rely on the **Research Organization Registry (ROR)**. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR open-source data dump, filtering it down to ~24,000 educational domains (`universities.json`). 
-- **AI Scout Navigation**: The background worker fetches the homepage of each matching domain, extracts all internal links, and feeds them to an AI "Scout". The Scout evaluates the links and returns the top 2-3 specific URLs most likely to contain academic programs, organically mapping the website.
-- **Frontend Interfacing**: The frontend receives a `job_id` and runs an active polling loop against `GET /scholarships/mass-scan/{job_id}/status`, reading static JSON log files without stressing the backend.
-- **Last Scan Timestamp Indicator**: Exposes the `GET /scholarships/last-scan` endpoint to retrieve the timestamp of the latest log in `backend/discovery_logs/`. The frontend fetches this on load and refetches it when a scan successfully runs, displaying a styled glassmorphic label next to the scan button.
+- **Systematic Discovery Scan (Asynchronous Background Task)**: For a comprehensive search, the user triggers the Discovery Scan from the dashboard.
+  - **Task Queue System**: We utilize **Huey** backed by **SQLite** (`SqliteHuey`). This offloads the heavy AI scraping from FastAPI's request cycle to a background `worker.py` process.
+  - **University Domain Database (ROR)**: Instead of DDG, we rely on the **Research Organization Registry (ROR)**. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR open-source data dump, filtering it down to ~24,000 educational domains (`universities.json`). 
+  - **AI Scout Navigation**: The background worker fetches the homepage of each matching domain, extracts all internal links, and feeds them to an AI "Scout". The Scout evaluates the links and returns the top 2-3 specific URLs most likely to contain academic programs, organically mapping the website.
+  - **Frontend Interfacing**: The frontend receives a `job_id` and runs an active polling loop against `GET /discovery/mass-scan/{job_id}/status`, reading static JSON log files without stressing the backend.
+  - **Failsafe & Scan Recovery**: 
+    - The backend (`POST /discovery/mass-scan`) enforces a strict failsafe blocking the execution of duplicate or concurrent scan jobs if another scan is already `"running"` or `"pending"`.
+    - On page mount/reload, the frontend fetches `GET /discovery/active-job` to check if a scan is already running in the background. If detected, it automatically reconnects and resumes the progress bar updates, rendering the elapsed time in minutes (e.g. `[Elapsed: 15m]`) for cleaner readability.
+- **Last Scan Timestamp Indicator**: Exposes the `GET /discovery/last-scan` endpoint to retrieve the timestamp of the latest log in `backend/discovery_logs/`. The frontend fetches this on load and refetches it when a scan successfully runs, displaying a styled glassmorphic label next to the scan button.
+- **Quick Scan Deprecated**: The synchronous, DuckDuckGo-based broad "Quick Scan" has been fully deprecated and removed from the UI as it was prone to search-engine rate limits and did not reflect the systematic, university-first pathway of the platform.
+
+
 
 ## 2. Profile & Documents Feature
 The Profile section features a premium **Interactive Overview Landing Dashboard**:
@@ -407,3 +412,21 @@ Welcome to the central documentation hub for the **Educational Pathfinder** plat
 - **Structured Experience Tracking**: The profile section now captures exact Start/End dates (Month/Year) and Employment Types (Full-time, Freelance, etc.) via Shadcn Select components. 
 - **Chronological Experience Calculation**: Overlapping roles are accurately merged so that 1 calendar year of working 2 jobs concurrently counts as exactly 1 year of total professional experience. 
 - **Future Pinning Logic**: Programs where the user lacks the required years of professional experience are no longer hidden. They are surfaced with a low probability score (20%) and a specific prompt to "pin" them for future consideration once the experience requirement is met.
+- **Mass Scan Stability & Real-time Logs (June 27, 2026)**:
+  - **FastAPI /programs Response Serialization**: Added a Pydantic `@field_validator` to `TargetProgramBase` to dynamically parse database comma-separated strings into standard lists, resolving a 500 error that blocked discovered programs from showing in the dashboard UI.
+  - **Scout AI Relative URL Resolution**: Added an absolute URL parser using `urljoin` in the worker scan loop to resolve relative URLs selected by the LLM, preventing crawler navigations from crashing.
+  - **LLM Schema output confusion**: Supplemented prompt templates with a concrete JSON object example to guide local models (like `llama3.1`) away from returning empty JSON schema definitions containing `$ref` or `$defs`.
+  - **Human-Readable Logs & Metrics**: Added a scan time formatter to show elapsed duration in hours, minutes, and seconds (`Xh Ym Zs`) and real-time average processing times per page (`Avg: Z.Zs/page`) in the background worker logs.
+
+---
+
+## 🚀 Next Steps & Speed Optimization Roadmap
+
+### 1. Performance & Model Efficiency Audit (Planned)
+* **Goal**: Analyze current local LLM execution times and search results to optimize overall pipeline latency.
+* **Key Areas for Investigation**:
+  * **Batching & Parallelization**: Benchmark parallelizing the Scout AI phase or using thread pools to evaluate multiple university homepages concurrently (since CPU usage is low during fetching).
+  * **Prompt Prefill Caching**: Investigate ways to leverage prompt prefix caching in local Ollama instances to avoid processing static system prompts repeatedly.
+  * **Model Quantization & Alternatives**: Evaluate smaller, faster open-source models (e.g. Qwen2.5-3B-Instruct or Llama3-3B) specifically for the Scout routing decision to minimize token prefill delays.
+  * **Heuristics Pre-filtering**: Implement basic regex-based link scoring (e.g. scoring links containing 'admissions', 'academics', 'international' higher) before sending them to the LLM, reducing the link cap to only 10-15 highly qualified anchors.
+

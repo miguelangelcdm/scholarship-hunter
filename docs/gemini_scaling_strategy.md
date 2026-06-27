@@ -5,9 +5,9 @@ This document outlines the operational constraints discovered during development
 ---
 
 ## 1. Executive Summary
-During end-to-end testing of the Discovery Scan engine (which queries, scrapes, parses, and scores scholarship opportunities using `gemini-3.5-flash`), we identified two critical bottlenecks:
+During end-to-end testing of the Discovery Scan engine (which queries, scrapes, parses, and scores scholarship opportunities), we identified two critical bottlenecks:
 1. **API Rate-Limiting**: The Gemini Free Tier has extremely low rate limits (15 Requests Per Minute). A single discovery scan crawling multiple pages easily exceeds this threshold, causing HTTP 429 (`RESOURCE_EXHAUSTED`) errors.
-2. **Synchronous Execution & Hangs**: The FastAPI endpoint blocks until the Scrapy crawler and LLM evaluation processes are complete. Because the LangChain client automatically retries on 429/503 errors using exponential backoff, a rate-limited scan can block the HTTP request thread for several minutes.
+2. **Synchronous Execution & Hangs**: The FastAPI endpoint blocks until the Scrapling/requests-based crawler and LLM evaluation processes are complete. Because the LangChain client automatically retries on 429/503 errors using exponential backoff, a rate-limited scan can block the HTTP request thread for several minutes.
 
 ---
 
@@ -20,9 +20,9 @@ The Gemini API free tier enforces the following default quotas on `gemini-3.5-fl
 *   **Tokens Per Minute (TPM)**: 1,000,000 TPM
 
 ### 2.2. The Scanning Operation Loop
-When a user runs a scan:
-1. **Search**: DuckDuckGo returns ~5 seed URLs.
-2. **Crawl**: Scraper crawls the seed URLs and optionally traverses child links.
+When a user runs a **Quick Scan**:
+1. **Search**: DuckDuckGo returns ~5-10 seed URLs.
+2. **Crawl**: Scrapling `StealthyFetcher` fetches the seed URLs, bypassing Cloudflare. (The Mass Scan path skips DDG entirely and uses the local ROR university database.)
 3. **Parse & Score**: The LLM is invoked in a loop to extract and score **each individual page** that matches pre-filter keywords.
 
 If the crawler scrapes 8 pages, the system attempts to make **8 concurrent or back-to-back LLM calls**. Under the free tier's 15 RPM constraint, this consumes over 50% of the minute's quota instantly. If two users scan concurrently, the system immediately hits the 429 quota ceiling.
@@ -30,7 +30,7 @@ If the crawler scrapes 8 pages, the system attempts to make **8 concurrent or ba
 ### 2.3. Retry Exhaustion & Blocked Threads
 LangChain's model client uses the `tenacity` library to handle network anomalies. On receiving a `429 Resource Exhausted` code, it waits for the API-returned retry delay (up to 60 seconds) and retries.
 *   **Symptoms**: The page loading spinner spins indefinitely, and the console reports uvicorn/HTTP request lag.
-*   **Cause**: The Python handler is blocked in a synchronous `p.join()` call waiting for the crawler/LLM pipeline to finish.
+*   **Cause**: The Python handler is blocked in a synchronous call waiting for the Scrapling crawler/LLM pipeline to finish.
 
 ---
 
@@ -58,8 +58,9 @@ flowchart TD
     API -.->|3. Response 202 Accepted| User
     
     Queue -->|Worker 1| Worker[Celery Worker Processes]
-    Worker -->|Fetch Seed URLs| DDG[DDG / Google API]
-    Worker -->|Scrape Pages| Crawl[Scrapy Crawler]
+    Worker-->|Fetch Seed URLs (Quick Scan)| DDG[DDG / DuckDuckGo]
+    Worker-->|Seed URLs (Mass Scan)| ROR[Local ROR Database ~24k universities]
+    Worker-->|Scrape Pages| Crawl[Scrapling StealthyFetcher / requests+BS4]
     
     Crawl -->|Scraped Text| LLM[LLM Rate-Limiter Pool]
     LLM -->|Check Leaky Bucket| RateLimit{Rate Limit Met?}

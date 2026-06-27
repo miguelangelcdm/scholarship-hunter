@@ -17,17 +17,19 @@ export const api = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(handleResponse),
-  getScholarships: () => fetch(`${API_BASE}/scholarships`).then(handleResponse),
+  getFunding: () => fetch(`${API_BASE}/funding`).then(handleResponse),
   getPrograms: () => fetch(`${API_BASE}/programs`).then(handleResponse),
   discardProgram: (id: number) => fetch(`${API_BASE}/programs/${id}/discard`, { method: 'PATCH' }).then(handleResponse),
-  discardScholarship: (id: number) => fetch(`${API_BASE}/scholarships/${id}/discard`, { method: 'PATCH' }).then(handleResponse),
-  getLastScan: () => fetch(`${API_BASE}/scholarships/last-scan`).then(handleResponse),
-  scanScholarships: () => fetch(`${API_BASE}/scholarships/scan`, { method: 'POST' }).then(handleResponse),
+  restoreProgram: (id: number) => fetch(`${API_BASE}/programs/${id}/restore`, { method: 'PATCH' }).then(handleResponse),
+  discardFunding: (id: number) => fetch(`${API_BASE}/funding/${id}/discard`, { method: 'PATCH' }).then(handleResponse),
+  getLastScan: () => fetch(`${API_BASE}/discovery/last-scan`).then(handleResponse),
+  getActiveScan: () => fetch(`${API_BASE}/discovery/active-job`).then(handleResponse),
+  cancelScan: (jobId: string) => fetch(`${API_BASE}/discovery/mass-scan/${jobId}/cancel`, { method: 'POST' }).then(handleResponse),
   findFunding: (programId: number) => fetch(`${API_BASE}/programs/${programId}/find-funding`, { method: 'POST' }),
   deepScanProgram: (programId: number) => fetch(`${API_BASE}/programs/${programId}/deep-scan`, { method: 'POST' }).then(handleResponse),
   getUniversityDeepDive: (universityName: string) => fetch(`${API_BASE}/universities/${encodeURIComponent(universityName)}/deep-dive`).then(handleResponse),
-  draftEssay: (id: number) => fetch(`${API_BASE}/scholarships/${id}/draft`, { method: 'POST' }).then(handleResponse),
-  draftOutreach: (id: number) => fetch(`${API_BASE}/scholarships/${id}/outreach`, { method: 'POST' }).then(handleResponse),
+  draftEssay: (id: number) => fetch(`${API_BASE}/funding/${id}/draft`, { method: 'POST' }).then(handleResponse),
+  draftOutreach: (id: number) => fetch(`${API_BASE}/funding/${id}/outreach`, { method: 'POST' }).then(handleResponse),
   uploadDocument: (docType: string, file: File) => {
     const formData = new FormData();
     formData.append('doc_type', docType);

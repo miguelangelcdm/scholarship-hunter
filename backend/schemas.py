@@ -96,6 +96,16 @@ class TargetProgramBase(BaseModel):
     next_steps: Optional[str] = None
     
     instruction_languages: Optional[List[str]] = []
+    
+    @field_validator("instruction_languages", mode="before")
+    @classmethod
+    def parse_languages(cls, v):
+        if isinstance(v, str):
+            if not v:
+                return []
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return v
+
     offers_language_training: Optional[bool] = False
     foreigner_friendly: Optional[bool] = True
 

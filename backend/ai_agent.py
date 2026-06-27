@@ -56,13 +56,16 @@ def evaluate_navigation_links(links: list, profile_data: dict, university_name: 
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
     
-    import json
     try:
-        scout_limit = int(os.getenv('SCOUT_MAX_LINKS', 200))
+        scout_limit = int(os.getenv('SCOUT_MAX_LINKS', 40))
+        links_str = ""
+        for item in links[:scout_limit]:
+            links_str += f"- {item.get('text', '').strip()} : {item.get('url', '').strip()}\n"
+            
         formatted = prompt.format(
             university_name=university_name,
             profile=str(profile_data),
-            links=json.dumps(links[:scout_limit], indent=2) # limit to first X links
+            links=links_str
         )
         
         response = llm.invoke(formatted)
@@ -288,6 +291,7 @@ class ExtractedProgram(BaseModel):
 
 class ExtractedPageData(BaseModel):
     is_valid: bool = Field(description="True ONLY if this page actually contains ANY relevant university program, scholarship, or financial aid grant. False if it is just a generic article or unrelated page.")
+    relevance_rejection_reason: Optional[str] = Field(None, description="If is_valid is False, provide a brief 1-sentence explanation of why this page is irrelevant or does not contain matching programs/scholarships.")
     scholarships: List[ExtractedScholarship] = Field(default_factory=list, description="List of relevant scholarships found on the page")
     programs: List[ExtractedProgram] = Field(default_factory=list, description="List of relevant academic programs/degrees found on the page")
 
@@ -383,6 +387,49 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
         Scraped Webpage URL: {page_url}
         Scraped Webpage Text:
         {page_text}
+        
+        CRITICAL OUTPUT FORMATTING RULE:
+        Your output MUST be a populated JSON instance of the schema. DO NOT output the schema itself. DO NOT use "$ref" or "$defs" in your response.
+        Example of a valid populated JSON structure:
+        {{
+          "is_valid": true,
+          "relevance_rejection_reason": null,
+          "programs": [
+            {{
+              "title": "MSc Systems Engineering",
+              "university": "Example University",
+              "country": "United Kingdom",
+              "is_online": false,
+              "is_hybrid": false,
+              "accepts_international": true,
+              "instruction_languages": ["English"],
+              "offers_language_training": false,
+              "foreigner_friendly": true,
+              "details": "A master's course in systems engineering...",
+              "steps": "1. Online application. 2. Interview.",
+              "important_info": "Deadline: June 1st.",
+              "next_steps": "Submit transcript.",
+              "desire_score": 85.0,
+              "probability_score": 75.0,
+              "improvement_projection": "Boost IELTS to 7.0."
+            }}
+          ],
+          "scholarships": [
+            {{
+              "title": "Excellence Scholarship",
+              "provider": "Example University",
+              "amount": "Full Tuition",
+              "description": "Covers tuition for international students.",
+              "probability_score": 60.0,
+              "desire_score": 90.0,
+              "improvement_projection": "Provide recommendation letter.",
+              "requires_outreach": false,
+              "benefits_summary": "Full tuition waiver"
+            }}
+          ]
+        }}
+        
+        If no programs or scholarships are found or the page is irrelevant, set is_valid to false and populate relevance_rejection_reason.
         
         {format_instructions}
         """,
