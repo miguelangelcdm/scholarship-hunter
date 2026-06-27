@@ -236,6 +236,13 @@ def get_last_scan():
 @app.post("/scholarships/scan")
 def run_discovery_scan(db: Session = Depends(get_db)):
     from fastapi.responses import StreamingResponse
+    from ai_agent import get_primary_llm
+    
+    if not get_primary_llm():
+        raise HTTPException(
+            status_code=400,
+            detail="No active LLM available. Please ensure Ollama is running and has the llama3 model, or configure prioritized cloud LLM in your .env."
+        )
     
     profile = db.query(Profile).first()
     if not profile:
@@ -722,6 +729,13 @@ def generate_outreach(scholarship_id: int, db: Session = Depends(get_db)):
 
 @app.post("/scholarships/mass-scan")
 def trigger_mass_discovery_scan(db: Session = Depends(get_db)):
+    from ai_agent import get_primary_llm
+    if not get_primary_llm():
+        raise HTTPException(
+            status_code=400,
+            detail="No active LLM available. Please ensure Ollama is running and has the llama3 model, or configure prioritized cloud LLM in your .env."
+        )
+        
     from worker import run_mass_discovery_job
     profile = db.query(Profile).first()
     if not profile:

@@ -44,10 +44,7 @@ def get_seed_urls(profile, offset=0, limit=10, targeted_university=None, targete
         print(f"[Search Seeder] DDGS API Error: {e}")
         
     if not urls:
-        print("[Search Seeder] Warning: No results found or DDG blocked. Using mock URLs.")
-        return [
-            "https://example.edu/admissions",
-            "https://example.edu/financial-aid"
-        ]
+        print("[Search Seeder] Warning: No results found or DDG blocked.")
+        return []
 
     return urls

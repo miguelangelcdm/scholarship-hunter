@@ -19,7 +19,8 @@ def get_llm():
     if not api_key:
         print("Warning: No GEMINI_API_KEY found in environment variables.")
         return None
-    return ChatGoogleGenerativeAI(model="gemini-3.5-flash", google_api_key=api_key)
+    model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+    return ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key)
 
 class ScoutNavigationResponse(BaseModel):
     selected_urls: List[str] = Field(description="The top 2-3 most relevant URLs selected from the list")
@@ -27,16 +28,13 @@ class ScoutNavigationResponse(BaseModel):
 def evaluate_navigation_links(links: list, profile_data: dict, university_name: str) -> list:
     llm = get_primary_llm()
     if not llm:
-        print("Falling back to Gemini for scout since primary is not configured...")
-        llm = get_llm()
-        if not llm:
-            return []
+        raise RuntimeError("No active LLM available. Please ensure Ollama is running or prioritized cloud LLM is configured.")
             
     parser = PydanticOutputParser(pydantic_object=ScoutNavigationResponse)
     
-        # Calculate total experience years and inject into target_info
+    # Calculate total experience years and inject into profile_data
     exp_years = calculate_experience_years(profile_data.get("experience", ""))
-    target_info += f" User has {exp_years} total chronological years of professional experience."
+    profile_data["total_experience_years"] = exp_years
 
     prompt = PromptTemplate(
         template="""
@@ -78,19 +76,6 @@ def evaluate_navigation_links(links: list, profile_data: dict, university_name: 
         return parsed.selected_urls
     except Exception as e:
         print(f"Error in scout evaluation: {e}")
-        # Try fallback to gemini if primary failed
-        if get_primary_llm().__class__.__name__ != "ChatGoogleGenerativeAI":
-            try:
-                print("Falling back to Gemini for Scout...")
-                llm = get_llm()
-                response = llm.invoke(formatted)
-                raw_content = response.content
-                if "```json" in raw_content:
-                    raw_content = raw_content.split("```json")[1].split("```")[0].strip()
-                parsed = parser.parse(raw_content)
-                return parsed.selected_urls
-            except Exception as e2:
-                print(f"Fallback also failed: {e2}")
         return []
 
 class PivotSuggestionsResponse(BaseModel):
@@ -99,10 +84,7 @@ class PivotSuggestionsResponse(BaseModel):
 def suggest_target_disciplines(major: str, career_goals: str) -> List[str]:
     llm = get_primary_llm()
     if not llm:
-        print("Falling back to Gemini for pivot suggestions since primary is not configured...")
-        llm = get_llm()
-        if not llm:
-            return []
+        raise RuntimeError("No active LLM available. Please ensure Ollama is running or prioritized cloud LLM is configured.")
             
     parser = PydanticOutputParser(pydantic_object=PivotSuggestionsResponse)
     
@@ -153,29 +135,61 @@ def suggest_target_disciplines(major: str, career_goals: str) -> List[str]:
         print(f"Error suggesting pivots: {e}")
         return []
 
-def get_ollama_llm():
+import time
+_ollama_status_cache = {"last_check": 0, "status": False, "models": []}
+
+def check_ollama_status() -> bool:
+    global _ollama_status_cache
+    now = time.time()
+    if now - _ollama_status_cache["last_check"] < 300:
+        return _ollama_status_cache["status"]
+        
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     try:
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        # Check if Ollama is running and model exists
         res = requests.get(f"{base_url}/api/tags", timeout=1.0)
         if res.status_code == 200:
             models = res.json().get("models", [])
+            _ollama_status_cache["models"] = models
+            _ollama_status_cache["status"] = True
+        else:
+            _ollama_status_cache["status"] = False
+            _ollama_status_cache["models"] = []
+    except Exception:
+        _ollama_status_cache["status"] = False
+        _ollama_status_cache["models"] = []
+        
+    _ollama_status_cache["last_check"] = now
+    return _ollama_status_cache["status"]
+
+def get_ollama_llm():
+    if not check_ollama_status():
+        return None
+        
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    models = _ollama_status_cache["models"]
+    
+    # Try OLLAMA_MODEL env first
+    env_model = os.getenv("OLLAMA_MODEL")
+    if env_model:
+        has_env_model = any(env_model in m.get("name", "") for m in models)
+        if has_env_model:
+            print(f"Local Ollama: routing to configured model {env_model}.")
+            return ChatOllama(base_url=base_url, model=env_model, temperature=float(os.getenv('LLM_TEMPERATURE', 0.1)))
             
-            # Check for llama3.1 first
-            has_llama = any("llama3.1" in m.get("name", "") for m in models)
-            if has_llama:
-                print("Local Ollama detected with llama3.1! Routing inference to local hardware.")
-                return ChatOllama(base_url=base_url, model="llama3.1", temperature=float(os.getenv('LLM_TEMPERATURE', 0.1)))
-                
-            # Fallback to gemma2:2b
-            has_gemma = any("gemma2:2b" in m.get("name", "") for m in models)
-            if has_gemma:
-                print("Local Ollama detected with gemma2:2b! Routing inference to local hardware.")
-                return ChatOllama(base_url=base_url, model="gemma2:2b", temperature=float(os.getenv('LLM_TEMPERATURE', 0.1)))
-                
-            print("Local Ollama detected but preferred models (llama3.1, gemma2:2b) are missing. Falling back.")
-    except Exception as e:
-        pass
+    # Try llama3/llama3.1
+    has_llama3 = any("llama3" in m.get("name", "") for m in models)
+    if has_llama3:
+        matched_model = next((m.get("name") for m in models if "llama3" in m.get("name")), "llama3")
+        print(f"Local Ollama detected with {matched_model}! Routing inference to local hardware.")
+        return ChatOllama(base_url=base_url, model=matched_model, temperature=float(os.getenv('LLM_TEMPERATURE', 0.1)))
+        
+    # Fallback to gemma2:2b
+    has_gemma = any("gemma2:2b" in m.get("name", "") for m in models)
+    if has_gemma:
+        print("Local Ollama detected with gemma2:2b! Routing inference to local hardware.")
+        return ChatOllama(base_url=base_url, model="gemma2:2b", temperature=float(os.getenv('LLM_TEMPERATURE', 0.1)))
+        
+    print("Local Ollama detected but preferred models (llama3, gemma2:2b) are missing.")
     return None
 
 def get_hf_llm():
@@ -185,7 +199,6 @@ def get_hf_llm():
         return None
     
     try:
-        # Using a highly capable open-source model that fully supports Chat endpoints
         llm = HuggingFaceEndpoint(
             repo_id="Qwen/Qwen2.5-7B-Instruct",
             max_new_tokens=int(os.getenv('LLM_MAX_TOKENS', 4000)),
@@ -198,16 +211,20 @@ def get_hf_llm():
         return None
 
 def get_primary_llm():
-    llm = get_ollama_llm()
-    if llm:
-        return llm
-    return get_hf_llm()
+    prioritize_cloud = os.getenv("PRIORITIZE_CLOUD_LLM", "false").lower() == "true"
+    if prioritize_cloud:
+        llm = get_llm()
+        if llm:
+            return llm
+        llm = get_hf_llm()
+        if llm:
+            return llm
+    return get_ollama_llm()
 
 def score_scholarship(profile_data: dict, scholarship_data: dict):
     llm = get_primary_llm()
     if not llm:
-        # Fallback fake scoring if no API key is provided
-        return {"probability_score": 88.0, "desire_score": 92.0}
+        raise RuntimeError("No active LLM available. Please ensure Ollama is running or prioritized cloud LLM is configured.")
     
     parser = PydanticOutputParser(pydantic_object=ScoreResponse)
     
@@ -324,10 +341,7 @@ def calculate_experience_years(experience_json_str: str) -> float:
 def extract_page_content(profile_data: dict, page_data: dict, target_program_context: dict = None, is_mass_scan: bool = False):
     llm = get_primary_llm()
     if not llm:
-        print("Falling back to Gemini for extraction since primary is not configured...")
-        llm = get_llm()
-        if not llm:
-            return None
+        raise RuntimeError("No active LLM available. Please ensure Ollama is running or prioritized cloud LLM is configured.")
         
     parser = PydanticOutputParser(pydantic_object=ExtractedPageData)
     
@@ -403,11 +417,8 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
         try:
             response = llm.invoke(formatted)
         except Exception as e:
-            print(f"Primary LLM failed ({e}). Falling back to Gemini...")
-            llm = get_llm()
-            if not llm:
-                return None
-            response = llm.invoke(formatted)
+            print(f"Primary LLM failed ({e}).")
+            return None
         
         input_tokens = 0
         output_tokens = 0
@@ -664,26 +675,7 @@ def robust_json_load(raw_text: str, parser):
 def parse_profile_from_document(text: str) -> dict:
     llm = get_primary_llm()
     if not llm:
-        # Fallback mock data for local testing if API key is not set
-        return {
-            "name": "Jane Doe",
-            "major": "Computer Science & Engineering",
-            "gpa": 3.92,
-            "demographics": "Woman in STEM, First-generation",
-            "extracurriculars": "VP of Women in Tech Club, Hackathon Organizer",
-            "hobbies": "Competitive programming, reading sci-fi, hiking",
-            "volunteer_work": "Coding tutor for local middle school students",
-            "projects": "Built an open-source health tracker app with React and FastAPI",
-            "experience": "[{\"company\": \"TechCorp\", \"role\": \"Software Engineering Intern\", \"startMonth\": \"06\", \"startYear\": \"2024\", \"endMonth\": \"08\", \"endYear\": \"2024\", \"isCurrentRole\": false, \"employmentType\": \"Internship\", \"location\": \"San Francisco, CA\", \"multinational_roots\": \"United States\", \"description\": \"Developed APIs and maintained services\"}]",
-            "awards": "Dean's List 2024-2025, Regional Hackathon Winner",
-            "nationalities": "United States",
-            "languages": "[{\"language\": \"English\", \"is_native\": true, \"level\": \"Native\"}, {\"language\": \"Spanish\", \"is_native\": false, \"level\": \"B2\"}]",
-            "publications": "Co-authored 'Machine Learning in Medical Imaging' in IEEE Trans",
-            "financial_need": "Funded studies through part-time tutoring jobs",
-            "career_goals": "Pursue a PhD in Artificial Intelligence and teach",
-            "relocation_feasibility_score": 85,
-            "primary_goal": "Brain-Circulation"
-        }
+        raise RuntimeError("No active LLM available. Please ensure Ollama is running or prioritized cloud LLM is configured.")
     
     # Clean spacing issues from PDF text
     text = clean_pdf_spaces(text)
@@ -817,10 +809,7 @@ class DeepProgramExtraction(BaseModel):
 def extract_deep_program_details(page_text: str, profile_data: dict, target_program_context: dict) -> dict:
     llm = get_primary_llm()
     if not llm:
-        print("Falling back to Gemini for deep extraction since primary is not configured...")
-        llm = get_llm()
-        if not llm:
-            return {}
+        raise RuntimeError("No active LLM available. Please ensure Ollama is running or prioritized cloud LLM is configured.")
         
     parser = PydanticOutputParser(pydantic_object=DeepProgramExtraction)
     
@@ -861,11 +850,8 @@ def extract_deep_program_details(page_text: str, profile_data: dict, target_prog
         try:
             response = llm.invoke(formatted)
         except Exception as e:
-            print(f"Primary LLM failed ({e}). Falling back to Gemini...")
-            llm = get_llm()
-            if not llm:
-                return {}
-            response = llm.invoke(formatted)
+            print(f"Primary LLM failed ({e}).")
+            return {}
         
         raw_content = response.content
         if "```json" in raw_content:
@@ -880,7 +866,7 @@ def extract_deep_program_details(page_text: str, profile_data: dict, target_prog
 def draft_essay(profile_data: dict, scholarship_data: dict):
     llm = get_primary_llm()
     if not llm:
-        return "Please ensure Ollama is running or configure GEMINI_API_KEY as a fallback."
+        return "Please ensure Ollama is running or configure prioritized cloud LLM."
         
     prompt = PromptTemplate(
         template="""
@@ -910,7 +896,7 @@ def draft_essay(profile_data: dict, scholarship_data: dict):
 def draft_outreach_email(profile_data: dict, scholarship_data: dict):
     llm = get_primary_llm()
     if not llm:
-        return "Please ensure Ollama is running or configure GEMINI_API_KEY as a fallback."
+        return "Please ensure Ollama is running or configure prioritized cloud LLM."
         
     prompt = PromptTemplate(
         template="""
