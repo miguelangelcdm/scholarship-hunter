@@ -1,0 +1,578 @@
+{
+  "status": "completed",
+  "progress": 100,
+  "message": "Mass discovery scan complete in 8387.1s. Scanned: 67, Passed Gatekeeper: 42, Errors: 6. Discovered 40 programs and 21 scholarships.",
+  "timestamp": "2026-06-27 14:30:10",
+  "stats": {
+    "crawled": 67,
+    "gatekeeper_passed": 42,
+    "gatekeeper_rejected": 16,
+    "errors": 6,
+    "programs_found": 40,
+    "scholarships_found": 21
+  },
+  "processed_pages": [
+    {
+      "url": "https://epipsi.gr",
+      "uni_name": "University Mental Health Research Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.lsbu.ac.uk/courses/postgraduate/taught/engineering",
+      "uni_name": "London South Bank University",
+      "status": "completed",
+      "keyword_density": 10.1862,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.lsbu.ac.uk/courses/postgraduate/taught/business",
+      "uni_name": "London South Bank University",
+      "status": "completed",
+      "keyword_density": 10.1862,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://www.lsbu.ac.uk/courses/postgraduate/taught/computing",
+      "uni_name": "London South Bank University",
+      "status": "completed",
+      "keyword_density": 10.1862,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://unwe.bg/bg/pages/11854/\u043d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u044f-\u0438-\u0441\u043f\u0435\u0446\u0438\u0430\u043b\u043d\u043e\u0441\u0442\u0438.html",
+      "uni_name": "University of National and World Economy",
+      "status": "failed (scraping failed)",
+      "error_detail": "Unknown scraping error"
+    },
+    {
+      "url": "https://magistri.unwe.bg/bg/pages/13976/specialities.html",
+      "uni_name": "University of National and World Economy",
+      "status": "completed",
+      "keyword_density": 4.8544,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.unwe.bg/bg/pages/134/\u0430\u043a\u0440\u0435\u0434\u0438\u0442\u0438\u0440\u0430\u043d\u0438-\u0434\u043e\u043a\u0442\u043e\u0440\u0430\u043d\u0442\u0441\u043a\u0438-\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0438.html",
+      "uni_name": "University of National and World Economy",
+      "status": "failed (scraping failed)",
+      "error_detail": "Unknown scraping error"
+    },
+    {
+      "url": "https://uantwerpen.be/nl/studeren/",
+      "uni_name": "University of Antwerp",
+      "status": "completed",
+      "keyword_density": 2.8736,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 3,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://uantwerpen.be/nl/studeren/aanbod/",
+      "uni_name": "University of Antwerp",
+      "status": "completed",
+      "keyword_density": 71.7085,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://uantwerpen.be/nl/studieren/studiekeuze/",
+      "uni_name": "University of Antwerp",
+      "status": "completed",
+      "keyword_density": 7.4813,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://www.lshtm.ac.uk/study/masters",
+      "uni_name": "London School of Hygiene & Tropical Medicine",
+      "status": "completed",
+      "keyword_density": 1.6639,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 0,
+      "scholarships_found": 2
+    },
+    {
+      "url": "https://www.lshtm.ac.uk/study/degrees",
+      "uni_name": "London School of Hygiene & Tropical Medicine",
+      "status": "completed",
+      "keyword_density": 5.1282,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.lshtm.ac.uk/study/prospective-students",
+      "uni_name": "London School of Hygiene & Tropical Medicine",
+      "status": "completed",
+      "keyword_density": 5.1282,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org",
+      "uni_name": "Universit\u00e0 Campus Bio-Medico",
+      "status": "completed",
+      "keyword_density": 1.2048,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://lp.edu.ua/news/lvivska-politekhnika-pidtverdyla-status-odnoho-z-naivplyvovishykh-ta-naistalishykh",
+      "uni_name": "Lviv Polytechnic National University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://lp.edu.ua/news/u-lvivskii-politekhnitsi-hotuiut-inzheneriv-iaki-stvoriuiut-maibutnie",
+      "uni_name": "Lviv Polytechnic National University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://lp.edu.ua/news/viina-zabrala-shche-odne-zhyttia-zahynuv-vypusknyk-lvivskoi-politekhniky-yaroslav-trots",
+      "uni_name": "Lviv Polytechnic National University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://westminster.ac.uk/study",
+      "uni_name": "University of Westminster",
+      "status": "completed",
+      "keyword_density": 20.0,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://westminster.ac.uk/course-search?f[0]=course_type%3A26",
+      "uni_name": "University of Westminster",
+      "status": "completed",
+      "keyword_density": 20.4604,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://westminster.ac.uk/study/postgraduate/research-degrees",
+      "uni_name": "University of Westminster",
+      "status": "completed",
+      "keyword_density": 28.7908,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://ltu.bg/university/\u0444\u0430\u043a\u0443\u043b\u0442\u0435\u0442\u0438-\u0438-\u043a\u0430\u0442\u0435\u0434\u0440\u0438/",
+      "uni_name": "University of Forestry",
+      "status": "failed (scraping failed)",
+      "error_detail": "Unknown scraping error"
+    },
+    {
+      "url": "https://ltu.bg/news-and-events/%d0%bb%d0%b5%d1%81%d0%be%d1%82%d0%b5%d1%85%d0%bd%d0%b8%d1%87%d0%b5%d1%81%d0%ba%d0%b8%d1%8f%d1%82-%d1%83%d0%bd%d0%b8%d0%b2%d0%b5%d1%80%d1%81%d0%b8%d1%82%d0%b5%d1%82-%d0%bf%d0%be%d0%b4%d0%b3%d0%be%d1%82/",
+      "uni_name": "University of Forestry",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://ltu.bg/visit/",
+      "uni_name": "University of Forestry",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Help:Introduction_to_Wikipedia",
+      "uni_name": "London Metropolitan University",
+      "status": "completed",
+      "keyword_density": 4.5767,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents/Portals",
+      "uni_name": "London Metropolitan University",
+      "status": "completed",
+      "keyword_density": 5.743,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_articles_(linked_from_TFAfooter)",
+      "uni_name": "London Metropolitan University",
+      "status": "completed",
+      "keyword_density": 1.8244,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://usmf.md",
+      "uni_name": "Nicolae Testemi\u021banu State University of Medicine and Pharmacy",
+      "status": "completed",
+      "keyword_density": 21.9561,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.isunet.edu/masters/",
+      "uni_name": "International Space University",
+      "status": "completed",
+      "keyword_density": 10.6762,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.isunet.edu/?page_id=2516",
+      "uni_name": "International Space University",
+      "status": "completed",
+      "keyword_density": 11.3636,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.isunet.edu/admissions-requirements/",
+      "uni_name": "International Space University",
+      "status": "completed",
+      "keyword_density": 27.1454,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org",
+      "uni_name": "University of Roehampton",
+      "status": "completed",
+      "keyword_density": 1.2048,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://meduniversity-plovdiv.bg/www.facebook.com/BASDM.PLD/",
+      "uni_name": "Medical University Plovdiv",
+      "status": "completed",
+      "keyword_density": 20.1149,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://meduniversity-plovdiv.bg/cdn-cgi/l/email-protection",
+      "uni_name": "Medical University Plovdiv",
+      "status": "completed",
+      "keyword_density": 8.3333,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://nubip.edu.ua/news/vid-vartosti-do-doviry-dialoh-pro-maybutnye-otsinochnoyi-diyalnosti-ukrayiny",
+      "uni_name": "National University of Life and Environmental Sciences of Ukraine",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://nubip.edu.ua/events/informatsiynyy-zakhid-instrumenty-pidtrymky-v-mezhakh-ramkovoyi-prohramy-yes-horyzont",
+      "uni_name": "National University of Life and Environmental Sciences of Ukraine",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://umit.at/page.cfm?vpath=universitaet/stellenangebote",
+      "uni_name": "UMIT - Private Universit\u00e4t f\u00fcr Gesundheitswissenschaften, Medizinische Informatik und Technik",
+      "status": "completed",
+      "keyword_density": 10.1862,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://umit.at/page.cfm?vpath=universitaet/shop",
+      "uni_name": "UMIT - Private Universit\u00e4t f\u00fcr Gesundheitswissenschaften, Medizinische Informatik und Technik",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 7.0922
+    },
+    {
+      "url": "https://www.hsu-hh.de/vorlesungsverzeichnis",
+      "uni_name": "Helmut Schmidt University",
+      "status": "completed",
+      "keyword_density": 70.4225,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.hsu-hh.de/geiso",
+      "uni_name": "Helmut Schmidt University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 33.0579
+    },
+    {
+      "url": "https://www.hsu-hh.de/alumni/",
+      "uni_name": "Helmut Schmidt University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://iuse.it",
+      "uni_name": "University Institute of European Studies",
+      "status": "completed",
+      "keyword_density": 2.2355,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://lnu.edu.ua/structure/faculties/",
+      "uni_name": "Lviv University",
+      "status": "completed",
+      "keyword_density": 4.2644,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://lnu.edu.ua/structure/departments/",
+      "uni_name": "Lviv University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 9.3817
+    },
+    {
+      "url": "https://lnu.edu.ua/en/",
+      "uni_name": "Lviv University",
+      "status": "completed",
+      "keyword_density": 20.7612,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://uzhnu.edu.ua/uk/anounce/2996.htm",
+      "uni_name": "Uzhhorod National University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 1.6863
+    },
+    {
+      "url": "https://uzhnu.edu.ua/uk/anounce/3003.htm",
+      "uni_name": "Uzhhorod National University",
+      "status": "completed",
+      "keyword_density": 2.6178,
+      "is_valid": false,
+      "relevance_rejection_reason": "No programs matched the user's field of interest (desire score below threshold).",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://ice.edu.pt/#content",
+      "uni_name": "Instituto Superior de Ci\u00eancias Educativas",
+      "status": "completed",
+      "keyword_density": 9.7847,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://ice.edu.pt/pre-inscricao/",
+      "uni_name": "Instituto Superior de Ci\u00eancias Educativas",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.291
+    },
+    {
+      "url": "https://www.worcester.ac.uk/study/find-a-course/?level=52",
+      "uni_name": "University of Worcester",
+      "status": "completed",
+      "keyword_density": 49.8534,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://www.worcester.ac.uk/study/find-a-course/?level=53",
+      "uni_name": "University of Worcester",
+      "status": "completed",
+      "keyword_density": 70.5128,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 3,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://www.worcester.ac.uk/study/find-a-course/home.aspx",
+      "uni_name": "University of Worcester",
+      "status": "completed",
+      "keyword_density": 70.5128,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://gembloux.ulg.ac.be/prog-cours",
+      "uni_name": "Gembloux Agro-Bio Tech",
+      "status": "completed",
+      "keyword_density": 15.0502,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://gembloux.ulg.ac.be/cms/c_4039827/en/gembloux-agro-bio-tech",
+      "uni_name": "Gembloux Agro-Bio Tech",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 14.8515
+    },
+    {
+      "url": "https://www.iukb.ch/enseignement-et-recherche",
+      "uni_name": "Institut Universitaire Kurt B\u00f6sch",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.iukb.ch/acces",
+      "uni_name": "Institut Universitaire Kurt B\u00f6sch",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.iukb.ch/unige",
+      "uni_name": "Institut Universitaire Kurt B\u00f6sch",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://msuft.by/en/",
+      "uni_name": "Mogilev State University of Food Technologies",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: net::ERR_NAME_NOT_RESOLVED at https://msuft.by/en/\nCall log:\n  - navigating to \"https://msuft.by/en/\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://msuft.by/en/faculties/",
+      "uni_name": "Mogilev State University of Food Technologies",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: net::ERR_NAME_NOT_RESOLVED at https://msuft.by/en/faculties/\nCall log:\n  - navigating to \"https://msuft.by/en/faculties/\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://msuft.by/en/admissions/",
+      "uni_name": "Mogilev State University of Food Technologies",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: net::ERR_NAME_NOT_RESOLVED at https://msuft.by/en/admissions/\nCall log:\n  - navigating to \"https://msuft.by/en/admissions/\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://conservatoriodegaia.org",
+      "uni_name": "Gaia Regional Conservatory Foundation",
+      "status": "completed",
+      "keyword_density": 0.793,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://www.isga.pt/estudar",
+      "uni_name": "Instituto Superior de Gest\u00e3o e Administra\u00e7\u00e3o de Santar\u00e9m",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.isga.pt/estudar\nCall log:\n  - navigating to \"https://www.isga.pt/estudar\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://www.isga.pt/cursos",
+      "uni_name": "Instituto Superior de Gest\u00e3o e Administra\u00e7\u00e3o de Santar\u00e9m",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.isga.pt/cursos\nCall log:\n  - navigating to \"https://www.isga.pt/cursos\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://www.isga.pt/admissao",
+      "uni_name": "Instituto Superior de Gest\u00e3o e Administra\u00e7\u00e3o de Santar\u00e9m",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.isga.pt/admissao\nCall log:\n  - navigating to \"https://www.isga.pt/admissao\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://www.isce.pt/pt/estudos/cursos-degraduados",
+      "uni_name": "Instituto Superior de Comunica\u00e7\u00e3o Empresarial",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.isce.pt/pt/estudos/mestrados",
+      "uni_name": "Instituto Superior de Comunica\u00e7\u00e3o Empresarial",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.isce.pt/pt/estudos/doutoramentos",
+      "uni_name": "Instituto Superior de Comunica\u00e7\u00e3o Empresarial",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    }
+  ]
+}

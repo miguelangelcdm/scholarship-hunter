@@ -245,6 +245,15 @@ Tracks all university domains that have already been explored by the Scout AI en
 | `name` | `String` | | `No` | *None* | Unique name/domain of the scanned university. |
 | `scanned_at` | `DateTime` | | `No` | `utcnow` | Timestamp indicating when the university homepage was explored. |
 
+### 7. `blacklisted_universities` Table
+Tracks all universities explicitly blocked by the user to skip them entirely in future crawler executions.
+
+| Field | Type | Key | Nullable | Default | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `id` | `Integer` | `PK` | `No` | *None* | Primary Key. Unique auto-incrementing row ID. |
+| `name` | `String` | | `No` | *None* | Unique name of the blacklisted university. |
+| `blacklisted_at` | `DateTime` | | `No` | `utcnow` | Timestamp indicating when the university was blacklisted. |
+
 ---
 
 ## Auxiliary Databases & Datasets

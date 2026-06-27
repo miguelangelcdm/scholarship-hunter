@@ -53,6 +53,11 @@ export default function Dashboard() {
     queryFn: api.getLastScan
   });
 
+  const { data: blacklistedUniversities = [], refetch: refetchBlacklist } = useQuery({
+    queryKey: ['blacklistedUniversities'],
+    queryFn: api.getBlacklistedUniversities
+  });
+
 
   const startPolling = async (jobId: string) => {
     setIsScanning(true);
@@ -176,6 +181,31 @@ export default function Dashboard() {
     mutationFn: api.discardFunding,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+    }
+  });
+
+  const blacklistUniversityMutation = useMutation({
+    mutationFn: api.blacklistUniversity,
+    onSuccess: () => {
+      toast.success("University blacklisted!");
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      queryClient.invalidateQueries({ queryKey: ['scholarships'] });
+      refetchBlacklist();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to blacklist university.");
+    }
+  });
+
+  const restoreUniversityMutation = useMutation({
+    mutationFn: api.restoreUniversity,
+    onSuccess: () => {
+      toast.success("University restored!");
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      refetchBlacklist();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to restore university.");
     }
   });
 
@@ -370,21 +400,7 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground mb-6">Target universities with matching programs based on your modality: <strong className="text-foreground">{profile?.preferred_modality || "Pending"}</strong></p>
           
           <div className="space-y-6">
-            {isScanning ? (
-              <div className="p-12 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
-                <div className="relative flex items-center justify-center w-16 h-16 mb-2">
-                  <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 animate-ping" />
-                  <div className="absolute inset-2 rounded-full border-2 border-indigo-500/40 animate-pulse" />
-                  <Radar className="w-8 h-8 text-indigo-500 animate-[spin_3s_linear_infinite]" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">Scanning for Universities</h3>
-                  <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
-                    Analyzing global databases for your ideal academic matches...
-                  </p>
-                </div>
-              </div>
-            ) : isLoadingPrograms ? (
+            {isLoadingPrograms ? (
               <div className="p-5 border border-border/50 bg-background/50 rounded-2xl space-y-3">
                 <Skeleton className="h-6 w-1/3 bg-muted/60" />
                 <Skeleton className="h-4 w-1/4 bg-muted/60" />
@@ -394,17 +410,33 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : displayPrograms.length === 0 ? (
-              <div className="p-12 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
-                <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                  <Search className="w-8 h-8 text-indigo-400 opacity-80" />
+              isScanning ? (
+                <div className="p-12 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner animate-pulse">
+                  <div className="relative flex items-center justify-center w-16 h-16 mb-2">
+                    <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 animate-ping" />
+                    <div className="absolute inset-2 rounded-full border-2 border-indigo-500/40 animate-pulse" />
+                    <Radar className="w-8 h-8 text-indigo-500 animate-[spin_3s_linear_infinite]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">Scanning for Universities</h3>
+                    <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
+                      Analyzing global databases for your ideal academic matches...
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">No Universities Discovered</h3>
-                  <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
-                    You haven't run the Discovery Engine yet. Trigger a scan to search the web for your ideal programs.
-                  </p>
+              ) : (
+                <div className="p-12 border border-border/40 bg-background/40 backdrop-blur-sm rounded-2xl h-full flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+                  <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+                    <Search className="w-8 h-8 text-indigo-400 opacity-80" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">No Universities Discovered</h3>
+                    <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
+                      You haven't run the Discovery Engine yet. Trigger a scan to search the web for your ideal programs.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )
             ) : (
               Object.entries(
                 displayPrograms.reduce((acc: any, curr: any) => {
@@ -420,36 +452,51 @@ export default function Dashboard() {
                 return (
                 <div 
                   key={university} 
+                  className="p-6 border border-border/60 bg-background/85 rounded-2xl hover:border-indigo-500/50 hover:bg-secondary/40 cursor-pointer transition-all group flex items-center justify-between shadow-sm hover:shadow"
                   onClick={() => {
                     setSelectedUniversityName(university);
                     setSelectedUniversityPrograms(universityPrograms);
                     setIsDeepDiveOpen(true);
                   }}
-                  className="p-6 border border-border/60 bg-background/80 rounded-2xl hover:border-indigo-500/50 hover:bg-secondary/40 cursor-pointer transition-all group flex items-center justify-between"
                 >
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-bold text-foreground text-xl flex items-center gap-2">
                       <Building2 className="w-5 h-5 text-indigo-400 group-hover:text-indigo-300" />
                       {university}
                     </h3>
                     <div className="flex items-center gap-4 mt-2">
                       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <Globe className="w-4 h-4" />
+                        <Globe className="w-4 h-4 text-zinc-400" />
                         {universityPrograms[0].location}
                       </div>
                       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <GraduationCap className="w-4 h-4" />
+                        <GraduationCap className="w-4 h-4 text-zinc-400" />
                         {universityPrograms.length} Programs
                       </div>
                       {totalSecured > 0 && (
-                        <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-500">
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-400">
                           <Database className="w-4 h-4" />
                           {totalSecured} Funding Matches
                         </div>
                       )}
                     </div>
                   </div>
-                  <ChevronRight className="w-6 h-6 text-muted-foreground group-hover:text-indigo-400 transition-colors" />
+                  
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Are you sure you want to blacklist the entire university: ${university}? This hides existing programs and skips it in future scans.`)) {
+                          blacklistUniversityMutation.mutate(university);
+                        }
+                      }}
+                      title="Blacklist University"
+                      className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all active:scale-95 duration-200"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                    <ChevronRight className="w-6 h-6 text-muted-foreground group-hover:text-indigo-400 transition-colors" />
+                  </div>
                 </div>
               )})
             )}
@@ -497,12 +544,18 @@ export default function Dashboard() {
           setIsDeepDiveOpen(false);
           toast.success("Opportunity moved to blacklist!");
         }}
+        onBlacklistUniversity={(uniName) => {
+          if (confirm(`Are you sure you want to blacklist all programs from ${uniName}? This hides existing programs and skips it in future scans.`)) {
+            blacklistUniversityMutation.mutate(uniName);
+            setIsDeepDiveOpen(false);
+          }
+        }}
       />
 
       {/* Collapsed Discrete Blacklisted Opportunities */}
-      {programs.filter((p: any) => p.status === "Discarded").length > 0 && (
-        <div className="mt-12 border-t border-border/40 pt-8">
-          <div className="bg-secondary/10 dark:bg-zinc-900/20 border border-border/40 rounded-3xl overflow-hidden">
+      {(programs.filter((p: any) => p.status === "Discarded").length > 0 || blacklistedUniversities.length > 0) && (
+        <div className="mt-12 border-t border-border/40 pt-8 animate-fade-in">
+          <div className="bg-secondary/10 dark:bg-zinc-900/20 border border-border/40 rounded-3xl overflow-hidden shadow-inner">
             <button
               onClick={() => setIsBlacklistOpen(!isBlacklistOpen)}
               className="w-full flex items-center justify-between p-6 hover:bg-secondary/20 transition-colors text-left"
@@ -511,28 +564,65 @@ export default function Dashboard() {
                 <span className="text-lg">🛡️</span>
                 <div>
                   <h3 className="font-bold text-foreground text-sm">Blacklisted Opportunities</h3>
-                  <p className="text-xs text-muted-foreground">{programs.filter((p: any) => p.status === "Discarded").length} programs hidden from matches</p>
+                  <p className="text-xs text-muted-foreground">
+                    {programs.filter((p: any) => p.status === "Discarded").length} programs & {blacklistedUniversities.length} universities blocked
+                  </p>
                 </div>
               </div>
               <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${isBlacklistOpen ? 'rotate-90' : ''}`} />
             </button>
 
             {isBlacklistOpen && (
-              <div className="px-6 pb-6 border-t border-border/20 pt-4 space-y-3 max-h-80 overflow-y-auto">
-                {programs.filter((p: any) => p.status === "Discarded").map((p: any) => (
-                  <div key={p.id} className="flex justify-between items-center p-4 bg-background/60 border border-border/50 rounded-2xl hover:border-indigo-500/20 transition-colors">
-                    <div>
-                      <span className="font-bold text-foreground text-sm block">{p.title}</span>
-                      <span className="text-xs text-muted-foreground">{p.university} • {p.country}</span>
-                    </div>
-                    <button 
-                      onClick={() => restoreProgramMutation.mutate(p.id)}
-                      className="font-bold text-xs bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/25 px-4 py-2 rounded-xl border border-indigo-500/25 active:scale-95 duration-200"
-                    >
-                      Restore Opportunity
-                    </button>
-                  </div>
-                ))}
+              <div className="px-6 pb-6 border-t border-border/20 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-96 overflow-y-auto">
+                {/* Left Column: Programs */}
+                <div className="space-y-3">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <span>📋</span> Blacklisted Programs ({programs.filter((p: any) => p.status === "Discarded").length})
+                  </h4>
+                  {programs.filter((p: any) => p.status === "Discarded").length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-2 italic">No programs blacklisted.</p>
+                  ) : (
+                    programs.filter((p: any) => p.status === "Discarded").map((p: any) => (
+                      <div key={p.id} className="flex justify-between items-center p-4 bg-background/60 border border-border/50 rounded-2xl hover:border-indigo-500/20 transition-colors gap-2">
+                        <div className="min-w-0">
+                          <span className="font-bold text-foreground text-sm block truncate" title={p.title}>{p.title}</span>
+                          <span className="text-xs text-muted-foreground block truncate">{p.university} • {p.country}</span>
+                        </div>
+                        <button 
+                          onClick={() => restoreProgramMutation.mutate(p.id)}
+                          className="font-bold text-xs bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/25 px-4 py-2 rounded-xl border border-indigo-500/25 active:scale-95 duration-200 shrink-0"
+                        >
+                          Restore
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                
+                {/* Right Column: Universities */}
+                <div className="space-y-3">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <span>🏢</span> Blacklisted Universities ({blacklistedUniversities.length})
+                  </h4>
+                  {blacklistedUniversities.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-2 italic">No universities blacklisted.</p>
+                  ) : (
+                    blacklistedUniversities.map((u: any) => (
+                      <div key={u.id} className="flex justify-between items-center p-4 bg-background/60 border border-border/50 rounded-2xl hover:border-red-500/20 transition-colors gap-2">
+                        <div className="min-w-0">
+                          <span className="font-bold text-foreground text-sm block truncate" title={u.name}>{u.name}</span>
+                          <span className="text-[10px] text-muted-foreground block">Blocked at: {new Date(u.blacklisted_at).toLocaleDateString()}</span>
+                        </div>
+                        <button 
+                          onClick={() => restoreUniversityMutation.mutate(u.name)}
+                          className="font-bold text-xs bg-red-500/10 text-red-400 hover:bg-red-500/25 px-4 py-2 rounded-xl border border-red-500/25 active:scale-95 duration-200 shrink-0"
+                        >
+                          Restore
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </div>

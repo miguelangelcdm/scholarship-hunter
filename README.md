@@ -417,6 +417,13 @@ Welcome to the central documentation hub for the **Educational Pathfinder** plat
   - **Scout AI Relative URL Resolution**: Added an absolute URL parser using `urljoin` in the worker scan loop to resolve relative URLs selected by the LLM, preventing crawler navigations from crashing.
   - **LLM Schema output confusion**: Supplemented prompt templates with a concrete JSON object example to guide local models (like `llama3.1`) away from returning empty JSON schema definitions containing `$ref` or `$defs`.
   - **Human-Readable Logs & Metrics**: Added a scan time formatter to show elapsed duration in hours, minutes, and seconds (`Xh Ym Zs`) and real-time average processing times per page (`Avg: Z.Zs/page`) in the background worker logs.
+- **Matches Visibility & University Blacklisting (June 27, 2026)**:
+  - **University Blacklist Model & API**: Implemented a `BlacklistedUniversity` database table and three endpoints (`POST`, `DELETE`, `GET`) to allow users to block entire institutions, preventing future scans from crawling them.
+  - **Split Blacklist UI Drawer**: Updated the bottom collapsible drawer in the dashboard to show separate columns/tabs for "Blacklisted Programs" (individual soft-deleted options) and "Blacklisted Universities" (fully blocked institutions) with immediate "Restore" buttons.
+  - **Matches Visibility During Scan**: Removed the scanning block overlay in the dashboard. Previously discovered university matches remain visible and interactive while a mass scan runs in the background.
+  - **Scout AI Specialized Skipping (Hybrid Relevance Filter)**: Configured the Scout AI to auto-skip highly specialized universities in unrelated fields (e.g. purely medical, conservatory, art, or theology schools) based on their names and domains. For general/comprehensive universities, it defaults to crawling them normally, applying a python-side threshold filter to discard programs with a `desire_score < 50`.
+  - **Career Switch Matching Logic**: Mapped `target_disciplines` in the profile dictionary and introduced a prompt-level `Career Switch Rule` instructing local models to prioritize target areas (MBA, Product Management, etc.) over technical undergraduate majors (Systems Engineering), preventing irrelevant technical matches.
+  - **Readable Job ID & Log Filenames**: Updated the scan `job_id` format to incorporate a 3-digit sequential index (e.g. `001`, `002`) and a local date (`YYYYMMDD`), resulting in filenames like `job_001_20260627.json`. This ensures log files are chronologically sortable and easy to recognize in the `discovery_logs/` folder.
 
 ---
 

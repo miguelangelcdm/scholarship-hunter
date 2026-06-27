@@ -41,5 +41,8 @@ export const api = {
   },
   parseDocument: (docType: string) => fetch(`${API_BASE}/profile/parse-doc/${docType}`, {
     method: 'POST'
-  }).then(handleResponse)
+  }).then(handleResponse),
+  blacklistUniversity: (name: string) => fetch(`${API_BASE}/universities/${encodeURIComponent(name)}/blacklist`, { method: 'POST' }).then(handleResponse),
+  restoreUniversity: (name: string) => fetch(`${API_BASE}/universities/${encodeURIComponent(name)}/blacklist`, { method: 'DELETE' }).then(handleResponse),
+  getBlacklistedUniversities: () => fetch(`${API_BASE}/universities/blacklist`).then(handleResponse)
 };

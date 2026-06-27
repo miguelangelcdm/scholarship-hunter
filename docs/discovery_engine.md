@@ -91,8 +91,10 @@ To accurately reflect the real-world admissions journey, the UI is heavily **Uni
 
 **Already-Scanned & Blacklist Filters**:
 - **Scanned Domain Registry**: When a university is processed (regardless of success, rejection, or failure), it is added to the `scanned_universities` table. Future scans automatically skip registered domains to prevent redundant crawling and API token usage.
-- **Blacklisted Universities**: If a university contains any program marked as `Discarded` by the user, the entire university domain is blacklisted and skipped in future mass discovery scans.
-- **Discrete Blacklist Panel**: Discarded programs are automatically filtered out from matches and rendered under a collapsible, discrete "Blacklisted Opportunities" panel at the bottom of the dashboard, where they can be restored back to "Discovered" status.
+- **University-Level Blacklisting**: Users can block entire universities in the UI (either from dashboard cards or within the Deep Dive modal). This stores the university in the `blacklisted_universities` table and marks all its current programs as `"Discarded"`. Future scans skip blacklisted universities entirely.
+- **Scout AI Specialized Skipping (Hybrid Relevance Filter)**: During crawling setup, the Scout AI evaluates the university's name and domain. If it is highly specialized in fields unrelated to the user (e.g. purely medical, conservatory, art, or theology schools), the worker automatically skips the university to save crawl time.
+- **Split Blacklist Drawer**: The collapsible drawer at the bottom of the dashboard is split into two columns: **Blacklisted Programs** (individual soft-deleted options) and **Blacklisted Universities** (fully blocked institutions), each supporting immediate restoration.
+- **Matches Visibility During Scan**: The dashboard no longer hides matches behind a scanning overlay. Previously discovered matches remain visible and interactive while background mass scans process.
 
 **Asynchronous Job Cancellation**:
 - Users can abort enqueued or running scans via the "Cancel Search" button. This triggers `POST /discovery/mass-scan/{job_id}/cancel`, updating the job's status file to `"canceled"`.

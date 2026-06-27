@@ -140,3 +140,9 @@ class ScannedUniversity(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
     scanned_at = Column(DateTime, default=datetime.utcnow)
+
+class BlacklistedUniversity(Base):
+    __tablename__ = "blacklisted_universities"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    blacklisted_at = Column(DateTime, default=datetime.utcnow)

@@ -1,0 +1,870 @@
+{
+  "status": "completed",
+  "progress": 100,
+  "message": "Mass discovery scan complete in 2632.0s. Scanned: 100, Passed Gatekeeper: 61, Errors: 7. Discovered 44 programs and 26 scholarships.",
+  "timestamp": "2026-06-27 09:37:24",
+  "stats": {
+    "crawled": 100,
+    "gatekeeper_passed": 61,
+    "gatekeeper_rejected": 38,
+    "errors": 7,
+    "programs_found": 44,
+    "scholarships_found": 26
+  },
+  "processed_pages": [
+    {
+      "url": "https://isec.universitas.pt/pt/programas-de-graduacao",
+      "uni_name": "Instituto Superior de Educa\u00e7\u00e3o e Ci\u00eancias",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://isec.universitas.pt/pt/cursos-de-p\u00f3s-gradua\u00e7\u00e3o",
+      "uni_name": "Instituto Superior de Educa\u00e7\u00e3o e Ci\u00eancias",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://isec.universitas.pt/pt/doutorado",
+      "uni_name": "Instituto Superior de Educa\u00e7\u00e3o e Ci\u00eancias",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://iscia.edu.pt/mba-business-5-0/",
+      "uni_name": "Instituto Superior de Ci\u00eancias da Informa\u00e7\u00e3o e da Administra\u00e7\u00e3o",
+      "status": "completed",
+      "keyword_density": 20.6061,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://iscia.edu.pt/mestrado-gestao-de-emergencia-e-socorro/",
+      "uni_name": "Instituto Superior de Ci\u00eancias da Informa\u00e7\u00e3o e da Administra\u00e7\u00e3o",
+      "status": "completed",
+      "keyword_density": 5.35,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://iscia.edu.pt/licenciatura-gestao-industrial-e-logistica/",
+      "uni_name": "Instituto Superior de Ci\u00eancias da Informa\u00e7\u00e3o e da Administra\u00e7\u00e3o",
+      "status": "completed",
+      "keyword_density": 6.4418,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://islaleiria.pt/pt/programas-de-graduacao",
+      "uni_name": "Instituto Superior de L\u00ednguas e Administra\u00e7\u00e3o",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://islaleiria.pt/pt/cursos-de-p\u00f3s-gradua\u00e7\u00e3o",
+      "uni_name": "Instituto Superior de L\u00ednguas e Administra\u00e7\u00e3o",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://islaleiria.pt/pt/doutorado",
+      "uni_name": "Instituto Superior de L\u00ednguas e Administra\u00e7\u00e3o",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents",
+      "uni_name": "Instituto Superior de Pa\u00e7os de Brand\u00e3o",
+      "status": "completed",
+      "keyword_density": 4.3924,
+      "is_valid": false,
+      "relevance_rejection_reason": "The webpage appears to be a Wikipedia article and does not contain any relevant information about academic programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Help:Contents",
+      "uni_name": "Instituto Superior de Pa\u00e7os de Brand\u00e3o",
+      "status": "completed",
+      "keyword_density": 5.3971,
+      "is_valid": false,
+      "relevance_rejection_reason": "The page appears to be a generic Wikipedia article about help contents.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Special:SpecialPages",
+      "uni_name": "Instituto Superior de Pa\u00e7os de Brand\u00e3o",
+      "status": "completed",
+      "keyword_density": 8.2237,
+      "is_valid": false,
+      "relevance_rejection_reason": "The webpage appears to be a Wikipedia special page listing various maintenance reports and tools, unrelated to university programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "http://www.domainname.de/domain/pupilos.eu",
+      "uni_name": "Institute of the Pupils of the Army",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://ismat.pt/pt/estudar/cursos/licenciaturas/sistemas-de-engenharia",
+      "uni_name": "Instituto Superior Manuel Teixeira Gomes",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://ismat.pt/pt/estudar/mestrados/detalhes/sistemas-de-engenharia",
+      "uni_name": "Instituto Superior Manuel Teixeira Gomes",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://ismat.pt/pt/estudar/doutoramentos/detalhes/sistemas-de-engenharia",
+      "uni_name": "Instituto Superior Manuel Teixeira Gomes",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://isdom.pt/oferta-formativa",
+      "uni_name": "Instituto Superior D. Dinis",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://isdom.pt/licenciaturas",
+      "uni_name": "Instituto Superior D. Dinis",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://isdom.pt/mestrados",
+      "uni_name": "Instituto Superior D. Dinis",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.essa.pt/ensino/licenciaturas/",
+      "uni_name": "Escola Superior de Sa\u00fade do Alcoit\u00e3o",
+      "status": "completed",
+      "keyword_density": 18.7266,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 3,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.essa.pt/ensino/mestrados/",
+      "uni_name": "Escola Superior de Sa\u00fade do Alcoit\u00e3o",
+      "status": "completed",
+      "keyword_density": 9.2497,
+      "is_valid": false,
+      "relevance_rejection_reason": "No relevant university program, scholarship, or financial aid grant found on this page.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.essa.pt/ensino/prr-pedagogia-xxi/",
+      "uni_name": "Escola Superior de Sa\u00fade do Alcoit\u00e3o",
+      "status": "completed",
+      "keyword_density": 4.9302,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://www.europeia.pt/sobre-ue/doutoramento-honoris-causa/",
+      "uni_name": "Universidade Europeia",
+      "status": "completed",
+      "keyword_density": 14.5985,
+      "is_valid": false,
+      "relevance_rejection_reason": "No explicit information about academic programs or scholarships found on this webpage.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.europeia.pt/experiencia/vida-universitaria/",
+      "uni_name": "Universidade Europeia",
+      "status": "completed",
+      "keyword_density": 10.0865,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://inp.pt/programas-de-graduacao",
+      "uni_name": "Instituto Superior de Novas Profiss\u00f5es",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://inp.pt/cursos-de-p\u00f3s-gradua\u00e7\u00e3o",
+      "uni_name": "Instituto Superior de Novas Profiss\u00f5es",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://inp.pt/maestrias",
+      "uni_name": "Instituto Superior de Novas Profiss\u00f5es",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://esetn.pt/",
+      "uni_name": "Escola Superior de Educa\u00e7\u00e3o de Torres Novas",
+      "status": "completed",
+      "keyword_density": 0.8767,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://esetn.pt/about/",
+      "uni_name": "Escola Superior de Educa\u00e7\u00e3o de Torres Novas",
+      "status": "completed",
+      "keyword_density": 2.4722,
+      "is_valid": false,
+      "relevance_rejection_reason": "The page appears to be about a gaming platform and does not contain any relevant university programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://esetn.pt/contact/",
+      "uni_name": "Escola Superior de Educa\u00e7\u00e3o de Torres Novas",
+      "status": "completed",
+      "keyword_density": 3.6563,
+      "is_valid": false,
+      "relevance_rejection_reason": "Page does not contain any relevant university program or scholarship information.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.iade.europeia.pt/candidaturas/",
+      "uni_name": "IADE Superior de Marketing e Publicidade",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.iade.europeia.pt/bolsas-de-estudo-e-financiamento/",
+      "uni_name": "IADE Superior de Marketing e Publicidade",
+      "status": "completed",
+      "keyword_density": 29.5359,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.iade.europeia.pt/programas-mobilidade/",
+      "uni_name": "IADE Superior de Marketing e Publicidade",
+      "status": "completed",
+      "keyword_density": 13.0048,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://curml.ch/formation-et-recherche",
+      "uni_name": "University Centre of Legal Medicine",
+      "status": "completed",
+      "keyword_density": 8.83,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://curml.ch/publications-du-curml",
+      "uni_name": "University Centre of Legal Medicine",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://curml.ch/acces-et-contact",
+      "uni_name": "University Centre of Legal Medicine",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://bucks.ac.uk/courses/undergraduate/courses-by-department/engineering-and-computer-science/",
+      "uni_name": "Buckinghamshire New University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://bucks.ac.uk/courses/postgraduate/masters-courses/business-and-management/",
+      "uni_name": "Buckinghamshire New University",
+      "status": "completed",
+      "keyword_density": 7.2993,
+      "is_valid": false,
+      "relevance_rejection_reason": "The page appears to be an error page with no relevant university programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://bucks.ac.uk/courses/postgraduate/masters-courses/computing-and-it/",
+      "uni_name": "Buckinghamshire New University",
+      "status": "completed",
+      "keyword_density": 7.2993,
+      "is_valid": false,
+      "relevance_rejection_reason": "The webpage contains a 'Page not found' error and does not provide any relevant university programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org",
+      "uni_name": "Buskerud University College",
+      "status": "completed",
+      "keyword_density": 1.205,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://sevsu.ru/univers/ifeiu/",
+      "uni_name": "Sevastopol National Technical University",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://sevsu.ru/univers/ifeiu/\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://sevsu.ru/univers/institut_perspektivnykh_issledovaniy/",
+      "uni_name": "Sevastopol National Technical University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://sh.se/program--kurser",
+      "uni_name": "S\u00f6dert\u00f6rn University",
+      "status": "completed",
+      "keyword_density": 10.929,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://sh.se/institutioner--amnen",
+      "uni_name": "S\u00f6dert\u00f6rn University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://sh.se/student",
+      "uni_name": "S\u00f6dert\u00f6rn University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents",
+      "uni_name": "Vestfold University College",
+      "status": "completed",
+      "keyword_density": 4.5045,
+      "is_valid": false,
+      "relevance_rejection_reason": "This webpage is a Wikipedia article containing general information about categories and lists of articles, but does not contain any relevant university programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Help:Your_first_article",
+      "uni_name": "Vestfold University College",
+      "status": "completed",
+      "keyword_density": 6.9646,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:About_Today%27s_featured_article",
+      "uni_name": "Vestfold University College",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://tiho-hannover.de/en/",
+      "uni_name": "University of Veterinary Medicine Hannover, Foundation",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 16.4384
+    },
+    {
+      "url": "https://tiho-hannover.de/notdienst",
+      "uni_name": "University of Veterinary Medicine Hannover, Foundation",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 18.0723
+    },
+    {
+      "url": "https://tiho-hannover.de/anfahrt",
+      "uni_name": "University of Veterinary Medicine Hannover, Foundation",
+      "status": "completed",
+      "keyword_density": 5.102,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Help:Your_first_article",
+      "uni_name": "University of Veterinary Medicine in Ko\u0161ice",
+      "status": "completed",
+      "keyword_density": 6.9646,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents/Portals",
+      "uni_name": "University of Veterinary Medicine in Ko\u0161ice",
+      "status": "completed",
+      "keyword_density": 5.814,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents",
+      "uni_name": "University of Defence",
+      "status": "completed",
+      "keyword_density": 4.5113,
+      "is_valid": false,
+      "relevance_rejection_reason": "The webpage is a Wikipedia page listing various topics and categories, and does not contain any relevant university programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Help:Your_first_article",
+      "uni_name": "University of Defence",
+      "status": "completed",
+      "keyword_density": 6.9991,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://easp.es/cursos?idCurso=1001010026",
+      "uni_name": "Andalusian School of Public Health",
+      "status": "completed",
+      "keyword_density": 24.6246,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://easp.es/cursos?idCurso=1204010026",
+      "uni_name": "Andalusian School of Public Health",
+      "status": "completed",
+      "keyword_density": 32.2581,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://easp.es/cursos?idCurso=1208010026",
+      "uni_name": "Andalusian School of Public Health",
+      "status": "completed",
+      "keyword_density": 22.0386,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents",
+      "uni_name": "Brighton and Sussex Medical School",
+      "status": "completed",
+      "keyword_density": 4.5045,
+      "is_valid": false,
+      "relevance_rejection_reason": "Page does not contain relevant university programs or scholarships",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Help:Your_first_article",
+      "uni_name": "Brighton and Sussex Medical School",
+      "status": "completed",
+      "keyword_density": 6.9646,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:About",
+      "uni_name": "Brighton and Sussex Medical School",
+      "status": "completed",
+      "keyword_density": 1.2048,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://portal.ipvz.cz/vzdelavaci-akce",
+      "uni_name": "Institute for Postgraduate Medical Education",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.ipvz.cz/zadosti-a-formulare",
+      "uni_name": "Institute for Postgraduate Medical Education",
+      "status": "completed",
+      "keyword_density": 2.1413,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.ipvz.cz/o-ipvz/kontakty/pedagogicka-pracoviste",
+      "uni_name": "Institute for Postgraduate Medical Education",
+      "status": "completed",
+      "keyword_density": 2.1413,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://nsph.gr#block-28a770b1-1567-4409-bf1d-a8370fbf1214",
+      "uni_name": "National School of Public Health",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents",
+      "uni_name": "Nordic School of Public Health",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 4.5045
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Help:Your_first_article",
+      "uni_name": "Nordic School of Public Health",
+      "status": "completed",
+      "keyword_density": 6.9646,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://www.ccdrdag.com/expertise/",
+      "uni_name": "Cooperative Clinical Drug Research and Development",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.ccdrdag.com/services/",
+      "uni_name": "Cooperative Clinical Drug Research and Development",
+      "status": "completed",
+      "keyword_density": 63.8298,
+      "is_valid": false,
+      "relevance_rejection_reason": "Page contains only services offered by CCDRD, no academic programs or scholarships found.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.ccdrdag.com/phase-1-units/",
+      "uni_name": "Cooperative Clinical Drug Research and Development",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://univ-catholille.fr/etu/formations/ingenierie-systemes",
+      "uni_name": "Universit\u00e9 Catholique de Lille",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://univ-catholille.fr/etu/formations/master-management-technique",
+      "uni_name": "Universit\u00e9 Catholique de Lille",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://univ-catholille.fr/etu/formations/master-innovation-management",
+      "uni_name": "Universit\u00e9 Catholique de Lille",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.bpp.com/our-university",
+      "uni_name": "BPP University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 17.7122
+    },
+    {
+      "url": "https://www.bpp.com/courses/systems-engineering-mba",
+      "uni_name": "BPP University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 17.7122
+    },
+    {
+      "url": "https://en.wikipedia.org",
+      "uni_name": "Harper Adams University",
+      "status": "completed",
+      "keyword_density": 1.2048,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://www.stmarys-belfast.ac.uk/study/",
+      "uni_name": "St Mary's University College",
+      "status": "completed",
+      "keyword_density": 10.1862,
+      "is_valid": false,
+      "relevance_rejection_reason": "This page does not contain any relevant university programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.stmarys-belfast.ac.uk/study/postgraduate-programmes/",
+      "uni_name": "St Mary's University College",
+      "status": "completed",
+      "keyword_density": 10.1862,
+      "is_valid": false,
+      "relevance_rejection_reason": "The page does not contain any relevant university programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://www.stmarys-belfast.ac.uk/international/",
+      "uni_name": "St Mary's University College",
+      "status": "completed",
+      "keyword_density": 10.1862,
+      "is_valid": false,
+      "relevance_rejection_reason": "This page does not contain any relevant university programs or scholarships.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://fke-do.de",
+      "uni_name": "Forschungsinstitut f\u00fcr Kinderern\u00e4hrung",
+      "status": "completed",
+      "keyword_density": 1.1319,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://fke-do.de/fachbereiche/kinder-und-jugendmedizin/prof-dr-thomas-luecke.html",
+      "uni_name": "Forschungsinstitut f\u00fcr Kinderern\u00e4hrung",
+      "status": "completed",
+      "keyword_density": 1.1319,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://onwar.nl/training-program/",
+      "uni_name": "Graduate School Neurosciences Amsterdam Rotterdam",
+      "status": "completed",
+      "keyword_density": 26.5211,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://onwar.nl/courses/experimental-neurophysiology-theory-and-practice/",
+      "uni_name": "Graduate School Neurosciences Amsterdam Rotterdam",
+      "status": "completed",
+      "keyword_density": 53.7975,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://esbs.unistra.fr/formations/",
+      "uni_name": "\u00c9cole Sup\u00e9rieure de Biotechnologie de Strasbourg",
+      "status": "completed",
+      "keyword_density": 26.8007,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 3,
+      "scholarships_found": 2
+    },
+    {
+      "url": "https://esbs.unistra.fr/formations/master/",
+      "uni_name": "\u00c9cole Sup\u00e9rieure de Biotechnologie de Strasbourg",
+      "status": "completed",
+      "keyword_density": 26.287,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://esbs.unistra.fr/formations/diplomes-dingenieur/",
+      "uni_name": "\u00c9cole Sup\u00e9rieure de Biotechnologie de Strasbourg",
+      "status": "completed",
+      "keyword_density": 29.7927,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://biochim.ro/phd/",
+      "uni_name": "Institute of Biochemistry",
+      "status": "completed",
+      "keyword_density": 5.0074,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://biochim.ro/post-doc/",
+      "uni_name": "Institute of Biochemistry",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 10.4923
+    },
+    {
+      "url": "https://biochim.ro/training-courses/",
+      "uni_name": "Institute of Biochemistry",
+      "status": "completed",
+      "keyword_density": 29.8507,
+      "is_valid": false,
+      "relevance_rejection_reason": "No specific academic programs or scholarships found on this page.",
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://ncipd.org/index.php/bg/information/courses-sdo",
+      "uni_name": "National Center of Infectious and Parasitic Diseases",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 6.3091
+    },
+    {
+      "url": "https://ncipd.org/index.php/bg/competence-centre",
+      "uni_name": "National Center of Infectious and Parasitic Diseases",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://kentalis.com/courses",
+      "uni_name": "Royal Dutch Kentalis",
+      "status": "completed",
+      "keyword_density": 10.1862,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://kentalis.com/knowledge-base",
+      "uni_name": "Royal Dutch Kentalis",
+      "status": "completed",
+      "keyword_density": 10.1862,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://rcsed.ac.uk",
+      "uni_name": "Royal College of Surgeons of Edinburgh",
+      "status": "completed",
+      "keyword_density": 11.7647,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://manu.edu.mk/education/undergraduate-programs",
+      "uni_name": "Macedonian Academy of Sciences and Arts",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://manu.edu.mk/education/graduate-programs",
+      "uni_name": "Macedonian Academy of Sciences and Arts",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://manu.edu.mk/education/phd-programs",
+      "uni_name": "Macedonian Academy of Sciences and Arts",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://maich.gr/en-gb",
+      "uni_name": "Mediterranean Agronomic Institute of Chania",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://maich.gr/pt-pt",
+      "uni_name": "Mediterranean Agronomic Institute of Chania",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://maich.gr/fr-fr",
+      "uni_name": "Mediterranean Agronomic Institute of Chania",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    }
+  ]
+}

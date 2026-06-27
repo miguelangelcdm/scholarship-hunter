@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pypdf import PdfReader
 from database import init_db, get_db
-from models import Profile, Scholarship, ProfileDocument, TargetProgram
+from models import Profile, Scholarship, ProfileDocument, TargetProgram, BlacklistedUniversity
 from schemas import ProfileUpdate, ProfileResponse, ScholarshipResponse, ProfileDocumentResponse, TargetProgramResponse
 from scraper import fetch_scholarships_real
 from search_seeder import get_seed_urls
@@ -579,8 +579,26 @@ def trigger_mass_discovery_scan(db: Session = Depends(get_db)):
     profile = db.query(Profile).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile required to scan")
+    import glob
     import uuid
-    job_id = str(uuid.uuid4())
+    from datetime import datetime
+    
+    logs_dir = os.path.join(os.path.dirname(__file__), "discovery_logs")
+    os.makedirs(logs_dir, exist_ok=True)
+    existing_jobs = glob.glob(os.path.join(logs_dir, "job_*.json"))
+    
+    indices = []
+    for f in existing_jobs:
+        basename = os.path.basename(f)
+        parts = basename.split("_")
+        if len(parts) >= 2 and parts[1].isdigit():
+            indices.append(int(parts[1]))
+            
+    next_idx = max(indices) + 1 if indices else 1
+    seq_str = f"{next_idx:03d}"
+    date_str = datetime.now().strftime("%Y%m%d")
+    
+    job_id = f"{seq_str}_{date_str}"
     # Enqueue the job
     run_mass_discovery_job(job_id, profile.id)
     
@@ -644,3 +662,33 @@ def cancel_mass_discovery_scan(job_id: str):
         return {"status": "cancelling", "message": "Cancellation request received."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to cancel job: {e}")
+
+# --- University Blacklist Endpoints ---
+@app.post("/universities/{university_name}/blacklist")
+def blacklist_university(university_name: str, db: Session = Depends(get_db)):
+    existing = db.query(BlacklistedUniversity).filter(BlacklistedUniversity.name == university_name).first()
+    if not existing:
+        new_block = BlacklistedUniversity(name=university_name)
+        db.add(new_block)
+        
+    # Mark all programs of this university as Discarded so they are hidden from dashboard
+    programs = db.query(TargetProgram).filter(TargetProgram.university == university_name).all()
+    for prog in programs:
+        prog.status = "Discarded"
+        
+    db.commit()
+    return {"status": "blacklisted", "university": university_name}
+
+@app.delete("/universities/{university_name}/blacklist")
+def restore_university(university_name: str, db: Session = Depends(get_db)):
+    item = db.query(BlacklistedUniversity).filter(BlacklistedUniversity.name == university_name).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="University not found on blacklist")
+    db.delete(item)
+    db.commit()
+    return {"status": "restored", "university": university_name}
+
+@app.get("/universities/blacklist")
+def get_blacklisted_universities(db: Session = Depends(get_db)):
+    items = db.query(BlacklistedUniversity).all()
+    return [{"id": x.id, "name": x.name, "blacklisted_at": x.blacklisted_at} for x in items]

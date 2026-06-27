@@ -243,6 +243,7 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
         profile_dict = {
             "major": profile.major,
             "target_areas": profile.target_areas,
+            "target_disciplines": profile.target_areas,
             "gpa": profile.gpa,
             "career_goals": profile.career_goals
         }
@@ -254,10 +255,10 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
         from ai_agent import evaluate_navigation_links
         
         target_unis = []
-        from models import ScannedUniversity
+        from models import ScannedUniversity, BlacklistedUniversity
         try:
             scanned_list = {su.name for su in db.query(ScannedUniversity).all()}
-            blacklisted_unis = {p.university for p in db.query(TargetProgram).filter(TargetProgram.status == "Discarded").all()}
+            blacklisted_unis = {bu.name for bu in db.query(BlacklistedUniversity).all()}
         except Exception as se:
             logger.error(f"Failed to query scanned/blacklisted universities: {se}")
             scanned_list = set()
@@ -334,7 +335,11 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
                         
                 logger.info(f"[Scout] Extracted {len(unique_links)} internal links for {uni_name}. Sending to AI for routing decision...")
                 
-                selected = evaluate_navigation_links(unique_links, profile_dict, uni_name)
+                is_relevant, selected = evaluate_navigation_links(unique_links, profile_dict, uni_name)
+                
+                if not is_relevant:
+                    logger.info(f"[Scout] AI determined {uni_name} is specialized/irrelevant to profile. Skipping.")
+                    continue
                 
                 if not selected:
                     logger.warning(f"[Scout] AI returned no links for {uni_name}. Falling back to homepage.")
@@ -455,9 +460,19 @@ def run_mass_discovery_job(job_id: str, profile_id: int, scan_limit: int = None)
                     try:
                         extracted = extract_page_content(profile_dict, page, target_program_context=target_context, is_mass_scan=True)
                         if extracted:
+                            # Filter out low-relevance matching programs (desire_score < 50)
+                            filtered_programs = [p for p in extracted.get("programs", []) if p.get("desire_score", 0) >= 50]
+                            extracted["programs"] = filtered_programs
+                            
                             is_valid = extracted.get("is_valid", False)
-                            p_count = len(extracted.get("programs", []))
+                            p_count = len(filtered_programs)
                             s_count = len(extracted.get("scholarships", []))
+                            
+                            # If no relevant programs or scholarships remain, mark page as invalid
+                            if p_count == 0 and s_count == 0:
+                                is_valid = False
+                                extracted["is_valid"] = False
+                                extracted["relevance_rejection_reason"] = "No programs matched the user's field of interest (desire score below threshold)."
                             
                             processed_pages.append({
                                 "url": url,

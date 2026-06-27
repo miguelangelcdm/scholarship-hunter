@@ -1,0 +1,715 @@
+{
+  "status": "completed",
+  "progress": 100,
+  "message": "Mass discovery scan complete in 3498.6s. Scanned: 106, Passed Gatekeeper: 45, Errors: 40. Discovered 9 programs and 4 scholarships.",
+  "timestamp": "2026-06-27 00:48:09",
+  "stats": {
+    "crawled": 106,
+    "gatekeeper_passed": 45,
+    "gatekeeper_rejected": 43,
+    "errors": 40,
+    "programs_found": 9,
+    "scholarships_found": 4
+  },
+  "processed_pages": [
+    {
+      "url": "https://epipsi.gr/index.php/31-programs/86-en-publications",
+      "uni_name": "University Mental Health Research Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://epipsi.gr/index.php/31-programs/85-gr-publications",
+      "uni_name": "University Mental Health Research Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "/courses/undergraduate/courses-by-department/engineering-and-design/systems-engineering-beng-hons",
+      "uni_name": "London South Bank University",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/courses/undergraduate/courses-by-department/engineering-and-design/systems-engineering-beng-hons\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/courses/postgraduate/masters-courses/business-information-management-mba",
+      "uni_name": "London South Bank University",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/courses/postgraduate/masters-courses/business-information-management-mba\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/courses/postgraduate/masters-courses/master-of-business-administration-mba",
+      "uni_name": "London South Bank University",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/courses/postgraduate/masters-courses/master-of-business-administration-mba\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://unwe.bg/bg/pages/11854/%D0%BD%D0%B0%D1%80%D1%83%D0%B6%D0%B4%D0%B5%D0%BD%D0%B8-%D0%B8-%D1%81%D0%BF%D0%B5%D1%86%D0%B8%D0%B0%D0%BB%D0%BD%D0%BE%D1%81%D1%82%D0%B8.html",
+      "uni_name": "University of National and World Economy",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.1348
+    },
+    {
+      "url": "https://unwe.bg/bg/pages/11854/%D0%BD%D0%B0%D1%80%D1%83%D0%B6%D0%B4%D0%B5%D0%BD%D0%B8-%D0%B8-%D1%81%D0%BF%D0%B5%D1%86%D0%B8%D0%B0%D0%BB%D0%BD%D0%BE%D1%81%D1%82%D0%B8.html",
+      "uni_name": "University of National and World Economy",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.1348
+    },
+    {
+      "url": "https://unwe.bg/bg/pages/11854/%D0%BD%D0%B0%D1%80%D1%83%D0%B6%D0%B4%D0%B5%D0%BD%D0%B8-%D0%B8-%D1%81%D0%BF%D0%B5%D1%86%D0%B8%D0%B0%D0%BB%D0%BD%D0%BE%D1%81%D1%82%D0%B8.html",
+      "uni_name": "University of National and World Economy",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.1348
+    },
+    {
+      "url": "https://uantwerpen.be/nl/studeren/aanbod/",
+      "uni_name": "University of Antwerp",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 71.7085
+    },
+    {
+      "url": "https://www.uantwerpen.be/nl/studeren/studiekeuze/infomomenten/sos-studiekeuze/",
+      "uni_name": "University of Antwerp",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 2.8736
+    },
+    {
+      "url": "https://uantwerpen.be/nl/studeren/",
+      "uni_name": "University of Antwerp",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 2.8736
+    },
+    {
+      "url": "/study/programmes",
+      "uni_name": "London School of Hygiene & Tropical Medicine",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/study/programmes\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/study/masters-degrees",
+      "uni_name": "London School of Hygiene & Tropical Medicine",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/study/masters-degrees\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/study/phd",
+      "uni_name": "London School of Hygiene & Tropical Medicine",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/study/phd\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents/Portals",
+      "uni_name": "Universit\u00e0 Campus Bio-Medico",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.743
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Help_desk",
+      "uni_name": "Universit\u00e0 Campus Bio-Medico",
+      "status": "completed",
+      "keyword_density": 3.0007,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents",
+      "uni_name": "Universit\u00e0 Campus Bio-Medico",
+      "status": "completed",
+      "keyword_density": 4.3924,
+      "is_valid": false,
+      "relevance_rejection_reason": null,
+      "programs_found": 0,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://lp.edu.ua/news/lvivska-politekhnika-pidtverdyla-status-odnoho-z-naivplyvovishykh-ta-naistalishykh",
+      "uni_name": "Lviv Polytechnic National University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://lp.edu.ua/events/mizhnarodna-konferentsiia-hsci2026-u-lvivskii-politekhnitsi",
+      "uni_name": "Lviv Polytechnic National University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://westminster.ac.uk/study/postgraduate",
+      "uni_name": "University of Westminster",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 18.2403
+    },
+    {
+      "url": "https://westminster.ac.uk/course-search?f[0]=course_type%3A26",
+      "uni_name": "University of Westminster",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 20.4604
+    },
+    {
+      "url": "https://westminster.ac.uk/study/postgraduate/research-degrees",
+      "uni_name": "University of Westminster",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 28.7908
+    },
+    {
+      "url": "https://en.wikipedia.org",
+      "uni_name": "University of the Arts London",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 1.205
+    },
+    {
+      "url": "https://ltu.bg/university/\u0444\u0430\u043a\u0443\u043b\u0442\u0435\u0442\u0438-\u0438-\u043a\u0430\u0442\u0435\u0434\u0440\u0438/",
+      "uni_name": "University of Forestry",
+      "status": "failed (scraping failed)",
+      "error_detail": "Unknown scraping error"
+    },
+    {
+      "url": "https://ltu.bg/news-and-events/%D0%BB%D0%B5%D1%81%D0%BE%D1%82%D0%B5%D1%85%D0%BD%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D1%8F%D1%82-%D1%83%D0%BD%D0%B8%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%82%D0%B5%D1%82-%D0%BF%D0%BE%D0%B4%D0%B3%D0%BE%D1%82/",
+      "uni_name": "University of Forestry",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://ltu.bg/visit/",
+      "uni_name": "University of Forestry",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents",
+      "uni_name": "London Metropolitan University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 4.5045
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Help:Introduction_to_Wikipedia",
+      "uni_name": "London Metropolitan University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 4.5767
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:About",
+      "uni_name": "London Metropolitan University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 1.2048
+    },
+    {
+      "url": "https://www.isunet.edu/masters/",
+      "uni_name": "International Space University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 10.6762
+    },
+    {
+      "url": "https://www.isunet.edu/?page_id=2516",
+      "uni_name": "International Space University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 11.3636
+    },
+    {
+      "url": "https://www.isunet.edu/admissions-requirements/",
+      "uni_name": "International Space University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 27.1454
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikipedia:Contents/Portals",
+      "uni_name": "University of Roehampton",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.743
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Wikimedia_Foundation",
+      "uni_name": "University of Roehampton",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 11.3636
+    },
+    {
+      "url": "https://stats.wikimedia.org/#/en.wikipedia.org",
+      "uni_name": "University of Roehampton",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://meduniversity-plovdiv.bg",
+      "uni_name": "Medical University Plovdiv",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 20.1149
+    },
+    {
+      "url": "https://meduniversity-plovdiv.bg/www.facebook.com/BASDM.PLD/",
+      "uni_name": "Medical University Plovdiv",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 20.1149
+    },
+    {
+      "url": "https://nubip.edu.ua/news/seminar-narada-shchodo-pidhotovky-naukovykh-proyektiv-dlya-konkursnoho-vidboru-mon-ukrayiny-na",
+      "uni_name": "National University of Life and Environmental Sciences of Ukraine",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://nubip.edu.ua/news/chas-pidsumkiv-bakalavry-hotelno-restorannoyi-spravy-uspishno-proyshly-atestatsiyu",
+      "uni_name": "National University of Life and Environmental Sciences of Ukraine",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://umit.at/page.cfm?vpath=universitaet/aktuell&genericpageid=223040",
+      "uni_name": "UMIT - Private Universit\u00e4t f\u00fcr Gesundheitswissenschaften, Medizinische Informatik und Technik",
+      "status": "completed",
+      "keyword_density": 7.0922,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 5,
+      "scholarships_found": 0
+    },
+    {
+      "url": "https://umit.at/page.cfm?vpath=universitaet/aktuell&genericpageid=223033",
+      "uni_name": "UMIT - Private Universit\u00e4t f\u00fcr Gesundheitswissenschaften, Medizinische Informatik und Technik",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 7.0922
+    },
+    {
+      "url": "https://www.hsu-hh.de/studium/",
+      "uni_name": "Helmut Schmidt University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 11.4306
+    },
+    {
+      "url": "https://www.hsu-hh.de/studieng\u00e4nge",
+      "uni_name": "Helmut Schmidt University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.hsu-hh.de/karriere/",
+      "uni_name": "Helmut Schmidt University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 11.4306
+    },
+    {
+      "url": "https://iuse.it/2011/09/",
+      "uni_name": "University Institute of European Studies",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://iuse.it/2018/12/",
+      "uni_name": "University Institute of European Studies",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://lnu.edu.ua/about/faculties/",
+      "uni_name": "Lviv University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 4.2644
+    },
+    {
+      "url": "https://ipodp.lnu.edu.ua/",
+      "uni_name": "Lviv University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://admission.lnu.edu.ua/",
+      "uni_name": "Lviv University",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://uzhnu.edu.ua/uk/news/cat/science",
+      "uni_name": "Uzhhorod National University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 21.692
+    },
+    {
+      "url": "https://uzhnu.edu.ua/uk/anounce/2996.htm",
+      "uni_name": "Uzhhorod National University",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 1.6863
+    },
+    {
+      "url": "https://bsuir.by/ru/news/archive/rubric/102243",
+      "uni_name": "Belarusian State University of Informatics and Radioelectronics",
+      "status": "failed (scraping failed)",
+      "error_detail": "Growing input buffer, line 1, column 1 (https://www.bsuir.by/ru/news/archive/rubric/102243, line 1)"
+    },
+    {
+      "url": "https://abitur.bsuir.by/tselevaya-pogotovka",
+      "uni_name": "Belarusian State University of Informatics and Radioelectronics",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://ubt.edu.al/en/studies",
+      "uni_name": "Agricultural University of Tirana",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://ubt.edu.al/en/master",
+      "uni_name": "Agricultural University of Tirana",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://ubt.edu.al/en/bachelor",
+      "uni_name": "Agricultural University of Tirana",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://ice.edu.pt/estruturas-de-orientacao-educativa/",
+      "uni_name": "Instituto Superior de Ci\u00eancias Educativas",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.1546
+    },
+    {
+      "url": "https://ice.edu.pt/servico-de-psicologia-e-orientacao/",
+      "uni_name": "Instituto Superior de Ci\u00eancias Educativas",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 15.5763
+    },
+    {
+      "url": "https://ice.edu.pt/pre-inscricao/",
+      "uni_name": "Instituto Superior de Ci\u00eancias Educativas",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.291
+    },
+    {
+      "url": "https://www.worcester.ac.uk/study/find-a-course/?level=52",
+      "uni_name": "University of Worcester",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 70.5128
+    },
+    {
+      "url": "https://www.worcester.ac.uk/study/find-a-course/home.aspx?term=apprenticeship",
+      "uni_name": "University of Worcester",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 70.5128
+    },
+    {
+      "url": "https://www.worcester.ac.uk/study/International/international-applicants/",
+      "uni_name": "University of Worcester",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 2.193
+    },
+    {
+      "url": "https://ipa.univ.pt#mobile-menu",
+      "uni_name": "Instituto Superior Aut\u00f3nomo de Estudos Polit\u00e9cnicos",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: net::ERR_SSL_VERSION_OR_CIPHER_MISMATCH at https://ipa.univ.pt/#mobile-menu\nCall log:\n  - navigating to \"https://ipa.univ.pt/#mobile-menu\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://gembloux.ulg.ac.be/prog-cours",
+      "uni_name": "Gembloux Agro-Bio Tech",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 11.6086
+    },
+    {
+      "url": "https://gembloux.ulg.ac.be/cms/c_4039827/en/gembloux-agro-bio-tech",
+      "uni_name": "Gembloux Agro-Bio Tech",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 11.6086
+    },
+    {
+      "url": "https://www.iukb.ch/enseignement-et-recherche",
+      "uni_name": "Institut Universitaire Kurt B\u00f6sch",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.iukb.ch/acces",
+      "uni_name": "Institut Universitaire Kurt B\u00f6sch",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://www.iukb.ch/unige",
+      "uni_name": "Institut Universitaire Kurt B\u00f6sch",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://assistant.khai.edu/",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.4945
+    },
+    {
+      "url": "https://it-college.khai.edu",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/fakultet-litakobuduvanna",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/fakultet-aviacijnih-dviguniv",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/fakultet-sistem-upravlinna-litalnih-aparativ",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/fakultet-raketno-kosmicnoi-tehniki",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/fakultet-radioelektroniki-komputernih-sistem-ta-infokomunikacij",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/fakultet-programnoi-inzenerii-ta-biznesu",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/gumanitarno-pravovij-fakultet",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/fakultet-miznarodnoi-integracii-ta-akademicnoi-mobilnosti",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/miznarodna-strategia-universitetu",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/miznarodni-osvitni-programi-i-proekti",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/miznarodne-naukove-spivrobitnictvo",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/ucast-v-miznarodnih-asociaciah-ta-obednannah",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/miznarodni-partneri",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/viddili-miznarodnogo-spivrobitnictva",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/dokumenti-z-miznarodnim-spivrobitnictvom",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/pidtrimka-inozemnih-studentiv",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/post/diktant-oberig-nashoyi-voli-vidbuvsya",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/post/skhid-i-zakhid-razom",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/post/uspishniy-zakhist-disertatsiyi-aspiranta-stanislava-skorobogatko",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/post/zakhisti-kvalifikatsiynikh-robit-studentiv",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "https://khai.edu/news",
+      "uni_name": "National Aerospace University \u2013 Kharkiv Aviation Institute",
+      "status": "rejected (gatekeeper)",
+      "keyword_density": 0.0,
+      "min_required_density": 0.2
+    },
+    {
+      "url": "/ru/education/academic_programs",
+      "uni_name": "Mogilev State University of Food Technologies",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/ru/education/academic_programs\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/ru/admissions",
+      "uni_name": "Mogilev State University of Food Technologies",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/ru/admissions\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/ru/programs/master",
+      "uni_name": "Mogilev State University of Food Technologies",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/ru/programs/master\", waiting until \"load\"\n"
+    },
+    {
+      "url": "https://conservatoriodegaia.org/pt/grupos/centro-internacional-de-aperfeicoamento-artistico",
+      "uni_name": "Gaia Regional Conservatory Foundation",
+      "status": "completed",
+      "keyword_density": 1.4038,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 2,
+      "scholarships_found": 2
+    },
+    {
+      "url": "https://conservatoriodegaia.org#vw-dialog-form-registar",
+      "uni_name": "Gaia Regional Conservatory Foundation",
+      "status": "completed",
+      "keyword_density": 0.793,
+      "is_valid": true,
+      "relevance_rejection_reason": null,
+      "programs_found": 1,
+      "scholarships_found": 1
+    },
+    {
+      "url": "https://conservatoriodegaia.org/pt/home",
+      "uni_name": "Gaia Regional Conservatory Foundation",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 0.793
+    },
+    {
+      "url": "https://esg.pt/oferta-formativa/",
+      "uni_name": "Gallaecia Higher School",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 13.8648
+    },
+    {
+      "url": "https://esg.pt/estudantes/calendario-academico/",
+      "uni_name": "Gallaecia Higher School",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 12.2888
+    },
+    {
+      "url": "https://esg.pt/bolsas-de-estudo/",
+      "uni_name": "Gallaecia Higher School",
+      "status": "failed (LLM returned None)",
+      "keyword_density": 5.3476
+    },
+    {
+      "url": "/pt/estudar/cursos-de-graduacao",
+      "uni_name": "Instituto Superior de Gest\u00e3o e Administra\u00e7\u00e3o de Santar\u00e9m",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/pt/estudar/cursos-de-graduacao\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/pt/estudar/cursos-de-mestrado",
+      "uni_name": "Instituto Superior de Gest\u00e3o e Administra\u00e7\u00e3o de Santar\u00e9m",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/pt/estudar/cursos-de-mestrado\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/pt/estudar/cursos-de-doutoramento",
+      "uni_name": "Instituto Superior de Gest\u00e3o e Administra\u00e7\u00e3o de Santar\u00e9m",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/pt/estudar/cursos-de-doutoramento\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/programas-de-graduacao",
+      "uni_name": "Instituto Superior de Comunica\u00e7\u00e3o Empresarial",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/programas-de-graduacao\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/programas-de-p\u00f3s-gradua\u00e7\u00e3o",
+      "uni_name": "Instituto Superior de Comunica\u00e7\u00e3o Empresarial",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/programas-de-p\u00f3s-gradua\u00e7\u00e3o\", waiting until \"load\"\n"
+    },
+    {
+      "url": "/cursos",
+      "uni_name": "Instituto Superior de Comunica\u00e7\u00e3o Empresarial",
+      "status": "failed (scraping failed)",
+      "error_detail": "Page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n  - navigating to \"/cursos\", waiting until \"load\"\n"
+    }
+  ]
+}

@@ -23,9 +23,17 @@ def get_llm():
     return ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key)
 
 class ScoutNavigationResponse(BaseModel):
-    selected_urls: List[str] = Field(description="The top 2-3 most relevant URLs selected from the list")
+    is_institution_relevant: bool = Field(
+        description=(
+            "Compare the university name and its link structure against the User Profile's target disciplines/major. "
+            "Set to False ONLY if this institution is highly specialized in fields completely unrelated to the user's profile "
+            "(e.g., a music conservatory when the user wants IT/engineering, or a medical institute when the user wants Business). "
+            "Otherwise, if it is a comprehensive/general university or might contain relevant courses, default to True."
+        )
+    )
+    selected_urls: List[str] = Field(description="The top 2-3 most relevant URLs selected from the list. Return empty list if is_institution_relevant is False.")
 
-def evaluate_navigation_links(links: list, profile_data: dict, university_name: str) -> list:
+def evaluate_navigation_links(links: list, profile_data: dict, university_name: str) -> tuple:
     llm = get_primary_llm()
     if not llm:
         raise RuntimeError("No active LLM available. Please ensure Ollama is running or prioritized cloud LLM is configured.")
@@ -43,6 +51,12 @@ def evaluate_navigation_links(links: list, profile_data: dict, university_name: 
         
         The user is looking for a program/degree that matches their profile.
         User Profile: {profile}
+        
+        CRITICAL INSTITUTION RELEVANCE RULE:
+        Evaluate if this university offers ANY education in the user's field.
+        - If the institution is highly specialized in fields that do NOT overlap with the user's target disciplines/major (e.g., a purely clinical medical school, a music conservatory, or an art institute, while the user's profile is focused on Systems Engineering/Business/IT), set is_institution_relevant to false.
+        - If the institution is a general or comprehensive university (e.g. 'University of Geneva'), or if it has departments that might match the user's target disciplines (e.g. a Tech department, a Business school), set is_institution_relevant to true.
+        - This decision MUST adapt dynamically to the user's profile: a music school is irrelevant to a Systems Engineer, but highly relevant to a Music major.
         
         Given the following list of links, identify the top 2-3 most relevant links that are highly likely to contain information about the academic programs, degrees, or admissions for this user's field.
         Do NOT guess or hallucinate links. Only return exact URLs that exist in the provided list.
@@ -76,10 +90,10 @@ def evaluate_navigation_links(links: list, profile_data: dict, university_name: 
             raw_content = raw_content.split("```json")[1].split("```")[0].strip()
             
         parsed = parser.parse(raw_content)
-        return parsed.selected_urls
+        return parsed.is_institution_relevant, parsed.selected_urls
     except Exception as e:
         print(f"Error in scout evaluation: {e}")
-        return []
+        return True, []
 
 class PivotSuggestionsResponse(BaseModel):
     suggestions: List[str] = Field(description="A list of 20 to 40 target disciplines or career pivots")
@@ -359,7 +373,8 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
         if target_program_context:
             target_info += f" Context provided by Scout AI: This page belongs to {target_program_context.get('university')}."
             
-        rejection_rule = """You MUST strictly reject and discard ANY program or scholarship that does NOT strongly align with the User's Target Disciplines (or major if Target Disciplines are missing) and career goals. 
+        rejection_rule = """You MUST strictly reject and discard ANY program or scholarship that does NOT strongly align with the User's Target Disciplines (Target Areas) and career goals. 
+        CAREER SWITCH RULE: The user is looking to transition from their undergraduate major into their Target Disciplines/Areas (e.g. going from Systems Engineering into Business Management, MBA, or Product Management). Therefore, prioritize programs that match the Target Disciplines/Areas over programs that merely match the user's undergraduate Major. If a program matches the undergraduate Major but has no business/management alignment, it should be scored very low or rejected.
         PROGRAM PRIORITY RULE: Your primary goal is to find Academic Programs (Bachelors, Masters, PhDs). Scholarships are secondary bonuses. Do not reject a valid academic program just because it doesn't have a scholarship attached.
         CRITICAL INSTITUTION RULE: Ensure you associate the extracted program with the correct university. If the context gives you a university name, use it."""
 

@@ -4,6 +4,26 @@ All notable changes to the **Educational Pathfinder** platform, organized by rep
 
 ---
 
+## [Phase 2.1] - Mass Scan Stability, Relevance Filtering & University Blacklisting (June 27, 2026)
+### Added
+- **Explicit University Blacklist Model & Endpoints:** Added `BlacklistedUniversity` model/SQLite table and `POST`, `DELETE`, `GET` endpoints in `main.py` to allow blocking entire universities separately from individual program soft-deletions.
+- **Split Blacklist Drawer UI:** Upgraded the collapsible bottom drawer in the dashboard to show separate lists/tabs for "Blacklisted Programs" (individual soft-deleted options) and "Blacklisted Universities" (fully blocked institutions) with immediate "Restore" buttons.
+- **Scout AI specialized Skipping:** Updated `evaluate_navigation_links` in `ai_agent.py` to include `is_institution_relevant: bool`. The Scout AI evaluates the university name and domain against the user's profile. If it is highly specialized in unrelated fields (e.g. purely medical, art, or theology schools), the worker skips crawling it immediately.
+- **Matches Visibility During Scan:** Removed the scanning block overlay in the dashboard. Previously discovered matches remain visible and interactive while mass scans run in the background.
+- **Log Metrics Format**: Added scan time formatting to show elapsed duration in hours, minutes, and seconds (`Xh Ym Zs`) and real-time average processing speeds per page (`Avg: Z.Zs/page`) in background worker logs.
+- **Career Switch Matching Logic**: Mapped `target_disciplines` in the background worker's profile dictionary and implemented a `Career Switch Rule` in the LLM extraction prompt. This directs local models to prioritize target areas (like Tech MBA or Product Management) over the user's undergraduate major (Systems Engineering), preventing irrelevant technical matches.
+- **Readable Job ID & Log Filenames**: Updated `trigger_mass_discovery_scan` in `main.py` to generate `job_id` containing a 3-digit correlative index (e.g. `001`, `002`) and a local date (`YYYYMMDD`), resulting in filenames like `job_001_20260627.json`. This makes log files chronologically sortable and easy to recognize without using UUIDs or timestamp tails.
+
+### Fixed
+- **FastAPI /programs Response Serialization**: Added a Pydantic `@field_validator` to `TargetProgramBase` to dynamically parse database comma-separated strings into standard lists, resolving a 500 error that blocked discovered programs from showing in the dashboard UI.
+- **Scout AI Relative URL Resolution**: Added an absolute URL parser using `urljoin` in the worker scan loop to resolve relative URLs selected by the LLM, preventing crawler navigations from crashing.
+- **LLM Schema output confusion**: Supplemented prompt templates with a concrete JSON object example to guide local models (like `llama3.1`) away from returning empty JSON schema definitions containing `$ref` or `$defs`.
+
+### Changed
+- **Backend Relevance Match Threshold**: Enforced a python-side threshold in `worker.py` that automatically drops individual programs with a `desire_score < 50`.
+
+---
+
 ## [Phase 2] - Query Optimization, Continent Expansion & Scan Control
 ### Added
 - **Active Job Status Endpoint:** Added `GET /discovery/active-job` to `main.py` to allow client-side progress recovery on page mount/reload.

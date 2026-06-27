@@ -20,6 +20,7 @@ interface UniversityDeepDiveModalProps {
   onFindFunding: (programId: number) => void;
   isFundingLoading: number | null;
   onDiscardProgram: (programId: number) => void;
+  onBlacklistUniversity: (universityName: string) => void;
 }
 
 export default function UniversityDeepDiveModal({ 
@@ -30,7 +31,8 @@ export default function UniversityDeepDiveModal({
   scholarships,
   onFindFunding,
   isFundingLoading,
-  onDiscardProgram
+  onDiscardProgram,
+  onBlacklistUniversity
 }: UniversityDeepDiveModalProps) {
   const [data, setData] = useState<DeepDiveData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -241,7 +243,19 @@ export default function UniversityDeepDiveModal({
               </div>
             </ModalBody>
 
-            <ModalFooter className="border-t border-border/20 px-8 py-4">
+            <ModalFooter className="border-t border-border/20 px-8 py-4 justify-between">
+              <Button 
+                color="danger" 
+                variant="flat" 
+                className="font-semibold text-xs border border-danger/10 hover:bg-danger hover:text-white"
+                onPress={() => {
+                  if (universityName) {
+                    onBlacklistUniversity(universityName);
+                  }
+                }}
+              >
+                Blacklist Entire University
+              </Button>
               <Button color="default" variant="light" onPress={onClose} className="font-medium">
                 Close
               </Button>
