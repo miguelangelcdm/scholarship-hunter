@@ -4,6 +4,27 @@ import urllib.request
 import zipfile
 import tempfile
 
+BLACKLISTED_DOMAINS = {
+    "wikipedia.org",
+    "wikidata.org",
+    "facebook.com",
+    "twitter.com",
+    "linkedin.com",
+    "instagram.com",
+    "youtube.com",
+    "google.com",
+    "github.com",
+    "researchgate.net"
+}
+
+def is_blacklisted_domain(domain: str) -> bool:
+    domain_lower = domain.lower()
+    for blacklisted in BLACKLISTED_DOMAINS:
+        if blacklisted in domain_lower:
+            return True
+    return False
+
+
 def fetch_and_process_ror_data():
     output_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "universities.json")
     
@@ -99,8 +120,17 @@ def fetch_and_process_ror_data():
                             domain = link.split("//")[-1].split("/")[0]
                             urls.append(domain)
                             
-                    # Remove duplicates and clean
-                    urls = list(set([u.replace("www.", "") for u in urls if u]))
+                    # Remove duplicates and clean, preserving order and filtering out wikipedia/social media
+                    seen = set()
+                    cleaned_urls = []
+                    for u in urls:
+                        if not u:
+                            continue
+                        u_clean = u.replace("www.", "").lower().strip()
+                        if u_clean not in seen and not is_blacklisted_domain(u_clean):
+                            seen.add(u_clean)
+                            cleaned_urls.append(u_clean)
+                    urls = cleaned_urls
                     
                     # 3. Extract Country
                     country = None

@@ -37,6 +37,27 @@ def on_startup():
         db.add(default_profile)
         db.commit()
 
+    # Reset stale/running scan jobs on backend restart
+    try:
+        logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "discovery_logs")
+        if os.path.exists(logs_dir):
+            for f in os.listdir(logs_dir):
+                if f.startswith("job_") and f.endswith(".json"):
+                    file_path = os.path.join(logs_dir, f)
+                    if os.path.getsize(file_path) > 0:
+                        try:
+                            with open(file_path, "r", encoding="utf-8") as rf:
+                                data = json.load(rf)
+                            if data.get("status") in ["running", "pending"]:
+                                data["status"] = "failed"
+                                data["message"] = "Scan was interrupted due to backend restart."
+                                with open(file_path, "w", encoding="utf-8") as wf:
+                                    json.dump(data, wf, indent=2)
+                        except Exception:
+                            pass
+    except Exception:
+        pass
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Educational Pathfinder API"}
@@ -197,9 +218,68 @@ def discard_scholarship(id: int, db: Session = Depends(get_db)):
     return {"status": "discarded"}
 
 # --- Target Program Endpoints ---
+def check_and_purge_expired_programs(db: Session):
+    import os
+    try:
+        expiration_days = int(os.getenv("UNCHECKED_EXPIRATION_DAYS", "7"))
+    except ValueError:
+        expiration_days = 7
+        
+    from datetime import datetime, timedelta
+    from models import ScannedUniversity, TargetProgram, Scholarship, BlacklistedUniversity
+    
+    threshold_date = datetime.utcnow() - timedelta(days=expiration_days)
+    
+    # Find universities scanned before the threshold
+    old_scans = db.query(ScannedUniversity).filter(ScannedUniversity.scanned_at < threshold_date).all()
+    
+    purged_count = 0
+    for scan in old_scans:
+        # Check if the university has any programs that have been checked or are not Discovered
+        programs = db.query(TargetProgram).filter(TargetProgram.university == scan.name).all()
+        
+        has_checked_or_saved = any(prog.is_checked or prog.status != "Discovered" for prog in programs)
+        all_unchecked = not has_checked_or_saved
+        
+        if all_unchecked:
+            purged_count += 1
+            # Delete programs & nested scholarships
+            for prog in programs:
+                db.query(Scholarship).filter(Scholarship.target_program_id == prog.id).delete()
+                db.delete(prog)
+            
+            # Add to blacklist
+            exists = db.query(BlacklistedUniversity).filter(BlacklistedUniversity.name == scan.name).first()
+            if not exists:
+                db.add(BlacklistedUniversity(name=scan.name))
+                
+            # Remove from scanned universities
+            db.delete(scan)
+            
+    if purged_count > 0:
+        try:
+            db.commit()
+            print(f"[QOA Engine] Auto-purged and blacklisted {purged_count} universities due to inactivity.")
+        except Exception as e:
+            db.rollback()
+            print(f"[QOA Engine] Error during auto-purge commit: {e}")
+
 @app.get("/programs", response_model=list[TargetProgramResponse])
 def get_all_programs(db: Session = Depends(get_db)):
-    return db.query(TargetProgram).all()
+    # 1. Run the inactivity auto-purge check
+    check_and_purge_expired_programs(db)
+    
+    # 2. Query target programs
+    programs = db.query(TargetProgram).all()
+    
+    # 3. Resolve ScannedUniversity scanned_at timestamps and attach them
+    from models import ScannedUniversity
+    scanned_unis = {su.name: su.scanned_at for su in db.query(ScannedUniversity).all()}
+    
+    for p in programs:
+        p.scanned_at = scanned_unis.get(p.university)
+        
+    return programs
 
 @app.patch("/programs/{id}/discard")
 def discard_program(id: int, db: Session = Depends(get_db)):
@@ -216,8 +296,22 @@ def restore_program(id: int, db: Session = Depends(get_db)):
     if not item:
         raise HTTPException(status_code=404, detail="Program not found")
     item.status = "Discovered"
+    item.is_checked = True  # Mark as checked when restored
     db.commit()
     return {"status": "restored"}
+
+@app.patch("/programs/{id}/interest")
+def toggle_program_interest(id: int, db: Session = Depends(get_db)):
+    item = db.query(TargetProgram).filter(TargetProgram.id == id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Program not found")
+    if item.status == "Interested":
+        item.status = "Discovered"
+    else:
+        item.status = "Interested"
+    item.is_checked = True  # Mark as checked when toggled
+    db.commit()
+    return {"status": item.status}
 
 @app.get("/discovery/last-scan")
 def get_last_scan():
@@ -252,19 +346,33 @@ def get_university_deep_dive(university_name: str, db: Session = Depends(get_db)
     import logging
 
     decoded_name = urllib.parse.unquote(university_name)
+    
+    # Mark all programs matching this university as checked
+    try:
+        programs = db.query(TargetProgram).filter(TargetProgram.university == decoded_name).all()
+        for p in programs:
+            p.is_checked = True
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Error marking programs of {decoded_name} as checked: {e}")
+
     image_url = None
     description = f"Detailed information and application steps for programs at {decoded_name}."
 
     # Fetch official photograph using Wikidata Semantic API (Property P18)
     try:
+        headers = {
+            "User-Agent": "EducationalPathfinderBot/1.0 (migue@example.com) httpx/0.24"
+        }
         search_url = f"https://www.wikidata.org/w/api.php?action=wbsearchentities&search={urllib.parse.quote(decoded_name)}&language=en&format=json"
-        res = httpx.get(search_url, timeout=5.0)
+        res = httpx.get(search_url, headers=headers, timeout=5.0)
         data = res.json()
         
         if data.get("search") and len(data["search"]) > 0:
             entity_id = data["search"][0]["id"]
             claims_url = f"https://www.wikidata.org/w/api.php?action=wbgetclaims&entity={entity_id}&property=P18&format=json"
-            res2 = httpx.get(claims_url, timeout=5.0)
+            res2 = httpx.get(claims_url, headers=headers, timeout=5.0)
             claims_data = res2.json()
             
             if "claims" in claims_data and "P18" in claims_data["claims"]:
@@ -275,13 +383,110 @@ def get_university_deep_dive(university_name: str, db: Session = Depends(get_db)
                 image_url = f"https://upload.wikimedia.org/wikipedia/commons/{md5_hash[0]}/{md5_hash[0:2]}/{urllib.parse.quote(image_name)}"
     except Exception as e:
         logging.info(f"Could not fetch image for {decoded_name} via Wikidata: {e}")
+
+    # Fallback to Wikipedia PageImages API if Wikidata failed
+    if not image_url:
+        try:
+            wiki_search_url = f"https://en.wikipedia.org/w/api.php?action=opensearch&search={urllib.parse.quote(decoded_name)}&limit=1&format=json"
+            res_wiki = httpx.get(wiki_search_url, headers=headers, timeout=5.0)
+            data_wiki = res_wiki.json()
+            wiki_title = data_wiki[1][0] if len(data_wiki) > 1 and data_wiki[1] else None
+            if wiki_title:
+                img_api_url = f"https://en.wikipedia.org/w/api.php?action=query&titles={urllib.parse.quote(wiki_title)}&prop=pageimages&format=json&pithumbsize=1000&redirects=1"
+                res_img = httpx.get(img_api_url, headers=headers, timeout=5.0)
+                pages = res_img.json().get("query", {}).get("pages", {})
+                if pages:
+                    first_page = next(iter(pages.values()))
+                    image_url = first_page.get("thumbnail", {}).get("source")
+        except Exception as e:
+            logging.info(f"Could not fetch Wikipedia PageImage fallback for {decoded_name}: {e}")
         
-    # We could also use an LLM call here to generate a short description if we wanted to
-    return {
+    import json
+    from models import ScannedUniversity, TargetProgram
+    
+    # Check cache first
+    try:
+        scanned_uni = db.query(ScannedUniversity).filter(ScannedUniversity.name == decoded_name).first()
+        if scanned_uni and scanned_uni.profile_cache:
+            return json.loads(scanned_uni.profile_cache)
+    except Exception as e:
+        logging.info(f"Failed to read deep dive cache for {decoded_name}: {e}")
+        scanned_uni = None
+
+    # Grab scanned page URL and country from database to prevent name collisions
+    prog_sample = db.query(TargetProgram).filter(TargetProgram.university == decoded_name).first()
+    general_info_url = prog_sample.url if prog_sample else None
+    country = prog_sample.country if prog_sample else "Global"
+
+    # We use an LLM call here to generate a short description, strengths, location, and international insights
+    description = f"Detailed information and application steps for academic programs at {decoded_name}."
+    location_str = f"{country}"
+    strengths_str = "Comprehensive academic coursework and research track options."
+    intl_insights = "Welcomes international student applications with supportive orientation programs."
+
+    try:
+        from ai_agent import get_primary_llm
+        from pydantic import BaseModel, Field
+        from langchain_core.prompts import PromptTemplate
+        from langchain_core.output_parsers import PydanticOutputParser
+
+        llm = get_primary_llm()
+        if llm:
+            class UniversityDeepDiveDetails(BaseModel):
+                description: str = Field(description="A 2-3 sentence overview of the university")
+                location: str = Field(description="Precise location details (City, Region, Country)")
+                strengths: str = Field(description="Key strengths, focus areas, or reputation of the institution")
+                international_insights: str = Field(description="Summary of support, culture, or requirements for international students")
+                
+            parser = PydanticOutputParser(pydantic_object=UniversityDeepDiveDetails)
+            prompt = PromptTemplate(
+                template="""
+                You are an academic researcher. Provide high-quality structural information about the following university:
+                University Name: {university}
+                Expected Country: {country}
+                Website Context: {website_url}
+                
+                Provide details in English. Make sure all location and description details match the expected country.
+                
+                {format_instructions}
+                """,
+                input_variables=["university", "country", "website_url"],
+                partial_variables={"format_instructions": parser.get_format_instructions()}
+            )
+            formatted = prompt.format(university=decoded_name, country=country, website_url=general_info_url or "Unknown")
+            res = llm.invoke(formatted)
+            raw = res.content
+            if "```json" in raw:
+                raw = raw.split("```json")[1].split("```")[0].strip()
+            parsed = json.loads(raw)
+            description = parsed.get("description", description)
+            location_str = parsed.get("location", location_str)
+            strengths_str = parsed.get("strengths", strengths_str)
+            intl_insights = parsed.get("international_insights", intl_insights)
+    except Exception as e:
+        logging.info(f"Failed to generate LLM deep dive for {decoded_name}: {e}")
+
+    result_data = {
         "university": decoded_name,
         "image_url": image_url,
-        "description": description
+        "description": description,
+        "location": location_str,
+        "strengths": strengths_str,
+        "international_insights": intl_insights,
+        "general_info_url": general_info_url
     }
+
+    # Save to cache
+    try:
+        if not scanned_uni:
+            scanned_uni = ScannedUniversity(name=decoded_name)
+            db.add(scanned_uni)
+        scanned_uni.profile_cache = json.dumps(result_data)
+        db.commit()
+    except Exception as e:
+        logging.info(f"Failed to save deep-dive profile cache for {decoded_name}: {e}")
+
+    return result_data
 
 @app.post("/programs/{program_id}/deep-scan")
 def run_deep_program_scan(program_id: int, db: Session = Depends(get_db)):
@@ -536,7 +741,7 @@ def check_for_active_job():
                     
                 if status in ["running", "pending"]:
                     current_time = time.time()
-                    if current_time - mtime > 900: # 15 minutes
+                    if current_time - mtime > 180: # 3 minutes (stale task recovery)
                         # Mark as failed/stale so it's ignored in the future
                         try:
                             data["status"] = "failed"
@@ -692,3 +897,90 @@ def restore_university(university_name: str, db: Session = Depends(get_db)):
 def get_blacklisted_universities(db: Session = Depends(get_db)):
     items = db.query(BlacklistedUniversity).all()
     return [{"id": x.id, "name": x.name, "blacklisted_at": x.blacklisted_at} for x in items]
+
+
+# --- Targeted University Scan Endpoints ---
+from pydantic import BaseModel as PydanticBaseModel
+class TargetedScanRequest(PydanticBaseModel):
+    targets: list[dict] # list of {"name": "...", "domain": "..."}
+
+@app.get("/discovery/search-universities")
+def search_universities(q: str = ""):
+    """Searches the local ROR database for university names matching the query q."""
+    if not q or len(q.strip()) < 2:
+        return []
+        
+    import os
+    import json
+    
+    universities_file = os.path.join(os.path.dirname(__file__), "universities.json")
+    if not os.path.exists(universities_file):
+        return []
+        
+    try:
+        with open(universities_file, "r", encoding="utf-8") as f:
+            universities = json.load(f)
+            
+        q_lower = q.lower().strip()
+        results = []
+        for uni in universities:
+            name = uni.get("name", "")
+            domains = uni.get("domains", [])
+            if q_lower in name.lower():
+                results.append({
+                    "name": name,
+                    "domain": domains[0] if domains else ""
+                })
+                if len(results) >= 20: # Limit to top 20 results for autocomplete performance
+                    break
+        return results
+    except Exception as e:
+        print(f"Error searching universities: {e}")
+        return []
+
+@app.post("/discovery/targeted-scan")
+def trigger_targeted_discovery_scan(req: TargetedScanRequest, db: Session = Depends(get_db)):
+    active_job = check_for_active_job()
+    if active_job:
+        raise HTTPException(
+            status_code=400,
+            detail="A mass discovery scan is already running. Please cancel or wait for it to finish."
+        )
+
+    from ai_agent import get_primary_llm
+    if not get_primary_llm():
+        raise HTTPException(
+            status_code=400,
+            detail="No active LLM available. Please ensure Ollama is running and has the llama3 model, or configure prioritized cloud LLM in your .env."
+        )
+        
+    from worker import run_targeted_discovery_job
+    profile = db.query(Profile).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile required to scan")
+        
+    import glob
+    import uuid
+    from datetime import datetime
+    
+    logs_dir = os.path.join(os.path.dirname(__file__), "discovery_logs")
+    os.makedirs(logs_dir, exist_ok=True)
+    existing_jobs = glob.glob(os.path.join(logs_dir, "job_*.json"))
+    
+    indices = []
+    for f in existing_jobs:
+        basename = os.path.basename(f)
+        parts = basename.split("_")
+        if len(parts) >= 2 and parts[1].isdigit():
+            indices.append(int(parts[1]))
+            
+    next_idx = max(indices) + 1 if indices else 1
+    seq_str = f"{next_idx:03d}"
+    date_str = datetime.now().strftime("%Y%m%d")
+    
+    job_id = f"target_{seq_str}_{date_str}"
+    
+    # Enqueue the job
+    run_targeted_discovery_job(job_id, profile.id, req.targets)
+    
+    return {"job_id": job_id, "message": "Targeted discovery job enqueued"}

@@ -58,6 +58,10 @@ def evaluate_navigation_links(links: list, profile_data: dict, university_name: 
         - If the institution is a general or comprehensive university (e.g. 'University of Geneva'), or if it has departments that might match the user's target disciplines (e.g. a Tech department, a Business school), set is_institution_relevant to true.
         - This decision MUST adapt dynamically to the user's profile: a music school is irrelevant to a Systems Engineer, but highly relevant to a Music major.
         
+        CRITICAL LINK SELECTION RULE (STRICT):
+        - You MUST prioritize links that list specific postgraduate taught courses, degree programs, or study areas (e.g. '/courses/', '/postgraduate-courses/', '/study/postgraduate/courses/', '/a-z-courses/').
+        - Avoid selecting generic "International Students" or "How to Apply" pages if specific "Courses", "Program Finder", or "Postgraduate Study" links are available in the list.
+        
         Given the following list of links, identify the top 2-3 most relevant links that are highly likely to contain information about the academic programs, degrees, or admissions for this user's field.
         Do NOT guess or hallucinate links. Only return exact URLs that exist in the provided list.
         
@@ -289,6 +293,7 @@ class ExtractedProgram(BaseModel):
     title: str = Field(description="Name of the academic program or degree (e.g., MSc Systems Engineering)")
     university: str = Field(description="Name of the University")
     country: str = Field(description="Country where the university is located")
+    url: Optional[str] = Field(None, description="The direct URL/link for this specific program/course page if mentioned in the page text, or null")
     is_online: bool = Field(False, description="True if the program can be taken fully online")
     is_hybrid: bool = Field(False, description="True if the program is hybrid")
     accepts_international: bool = Field(True, description="True if international students can apply")
@@ -373,8 +378,26 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
         if target_program_context:
             target_info += f" Context provided by Scout AI: This page belongs to {target_program_context.get('university')}."
             
-        rejection_rule = """You MUST strictly reject and discard ANY program or scholarship that does NOT strongly align with the User's Target Disciplines (Target Areas) and career goals. 
-        CAREER SWITCH RULE: The user is looking to transition from their undergraduate major into their Target Disciplines/Areas (e.g. going from Systems Engineering into Business Management, MBA, or Product Management). Therefore, prioritize programs that match the Target Disciplines/Areas over programs that merely match the user's undergraduate Major. If a program matches the undergraduate Major but has no business/management alignment, it should be scored very low or rejected.
+        target_degree_level = profile_data.get("target_degree_level", "Masters")
+        target_study_type = profile_data.get("target_study_type", "Taught")
+        major = profile_data.get("major", "None")
+        target_areas = profile_data.get("target_areas", "None")
+
+        rejection_rule = f"""You MUST strictly reject and discard ANY program or scholarship that does NOT strongly align with the User's Target Disciplines (Target Areas) and career goals. 
+        
+        STUDY LEVEL & TYPE CONSTRAINT (STRICT):
+        - Target Degree Level: The user is ONLY looking for programs at the following degree level: '{target_degree_level}'. Discard any program that does not match this level (e.g. if target level is Masters, discard Bachelor's programs, and discard PhD/Doctoral programs).
+        - Target Study Type: The user prefers '{target_study_type}' programs.
+          * If 'Taught' is specified: prioritize coursework-based degrees (MSc taught, MBA, PGDip) and discard pure research/thesis-only PhD or doctoral research programs.
+          * If 'Research' is specified: prioritize PhD/MPhil/research-only programs.
+          * If 'Any' is specified: accept both.
+
+        DYNAMIC PIVOT & INTEGRATION RULE:
+        1. Identify the User's undergraduate background ('major': {major}) and desired directions ('target_disciplines' or 'target_areas': {target_areas}).
+        2. Evaluate the program's affinity and score it as follows:
+           - HIGH AFFINITY (85%-100%): Hybrid/integrative programs that synthesize or bridge the user's background ('major') with their desired direction ('target_disciplines') (e.g. bridging technical engineering with business management, or music with technology).
+           - MEDIUM-HIGH AFFINITY (70%-84%): Programs representing a pure pivot into their desired direction ('target_disciplines') even if they do not incorporate the 'major' background. Do NOT discard these, but score them slightly lower than hybrid integrations.
+           - LOW AFFINITY / DISCARD (<50%): Programs that only match the 'major' with zero pivot alignment (e.g., a pure technical engineering degree when the user's targets are business-oriented), or programs completely unrelated to both. Discard these programs.
         PROGRAM PRIORITY RULE: Your primary goal is to find Academic Programs (Bachelors, Masters, PhDs). Scholarships are secondary bonuses. Do not reject a valid academic program just because it doesn't have a scholarship attached.
         CRITICAL INSTITUTION RULE: Ensure you associate the extracted program with the correct university. If the context gives you a university name, use it."""
 
@@ -414,6 +437,7 @@ def extract_page_content(profile_data: dict, page_data: dict, target_program_con
               "title": "MSc Systems Engineering",
               "university": "Example University",
               "country": "United Kingdom",
+              "url": "https://www.example.edu/courses/msc-systems-engineering",
               "is_online": false,
               "is_hybrid": false,
               "accepts_international": true,

@@ -244,6 +244,7 @@ Tracks all university domains that have already been explored by the Scout AI en
 | `id` | `Integer` | `PK` | `No` | *None* | Primary Key. Unique auto-incrementing row ID. |
 | `name` | `String` | | `No` | *None* | Unique name/domain of the scanned university. |
 | `scanned_at` | `DateTime` | | `No` | `utcnow` | Timestamp indicating when the university homepage was explored. |
+| `profile_cache` | `String` | | `Yes` | *None* | Cached JSON string of the LLM-generated university profile details (location, strengths, description, international insights, official URL) for instant dashboard retrieval. |
 
 ### 7. `blacklisted_universities` Table
 Tracks all universities explicitly blocked by the user to skip them entirely in future crawler executions.

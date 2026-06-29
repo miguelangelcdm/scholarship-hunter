@@ -28,3 +28,12 @@ This document serves as the master director for the AI coding assistant. Dependi
 1. **Orbix Foundation:** Always ensure that the Orbix Health Dashboard base remains structurally sound while injecting these specific skills into new components (e.g., the Scholarship matching views).
 2. **Automatic Documentation:** Whenever you finish implementing a new feature or patching a bug, you MUST automatically identify and update ALL relevant markdown files in the `docs/` folder (and the root `README.md`) to reflect the changes. Do this immediately before or alongside presenting your final walkthrough, without waiting for the user to explicitly ask you to document it.
 3. **Task List Tracking:** When creating a `task.md` checklist during planning, ALWAYS explicitly add a final task to "Document changes in docs/ and README.md" to ensure documentation is formally tracked and completed before finishing.
+
+## Workspace Rules
+
+1. **Dropdowns & Select Components**: ALWAYS use the Shadcn Select component (@/components/ui/select) for ALL dropdowns and selects across the application. DO NOT use the HeroUI @heroui/react Select component or standard HTML <select> tags. The user prefers the specific styling, layout, and neon green accent highlight (focus:bg-accent) provided by the Shadcn component. Ensure any new dropdowns replicate this exact look.
+
+2. **Dynamic Pivot Matching & Integration Flexibility**: Future iterations must support flexibility for users seeking purely technical paths (rather than a career pivot).
+   * **Mechanism**: The UI should expose a preference toggle (e.g., "Seeking Career Pivot" vs "Deepening Major") in the Profile Academic Core, saving this as a parameter (`is_pivoting` or `scan_intent`) in the database.
+   * **Engine Routing**: If the user is NOT pivoting, the backend LLM scoring model must adapt and score pure major-only programs (technical paths) with high affinity (85%-100%) and keep them active.
+   * **Future Audit**: Schedule an audit of the Profile UI to analyze and optimize how target preferences are collected to feed the LLM discovery scan accurately.

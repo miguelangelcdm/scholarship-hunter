@@ -39,6 +39,8 @@ class ProfileBase(BaseModel):
     preferred_modality: Optional[str] = None
     relocation_feasibility_score: Optional[int] = None
     target_diaspora_regions: Optional[str] = None
+    target_degree_level: Optional[str] = "Masters"
+    target_study_type: Optional[str] = "Taught"
 
 class ProfileUpdate(ProfileBase):
     pass
@@ -115,5 +117,9 @@ class TargetProgramResponse(TargetProgramBase):
     desire_score: float
     probability_score: float
     improvement_projection: Optional[str] = None
+    created_at: Optional[datetime] = None
+    scanned_at: Optional[datetime] = None
+    is_checked: Optional[bool] = False
+    is_targeted: Optional[bool] = False
     class Config:
         from_attributes = True

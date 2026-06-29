@@ -3,9 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, API_BASE } from "@/lib/api";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GraduationCap, Sparkles, Building2, Globe, ShieldCheck, AlertTriangle, Lock, ArrowRight, Radar, CheckCircle2, Database, Search, Loader2, X, ChevronRight } from "lucide-react";
+import { GraduationCap, Sparkles, Building2, Globe, ShieldCheck, AlertTriangle, Lock, ArrowRight, Radar, CheckCircle2, Database, Search, Loader2, X, ChevronRight, Heart, Clock, Inbox, Check } from "lucide-react";
+import UniversityDetailDrawer from "@/components/dashboard/UniversityDetailDrawer";
 import { useNavigate } from "react-router-dom";
-import UniversityDeepDiveModal from "@/components/dashboard/UniversityDeepDiveModal";
+
 const formatScanTime = (isoString: string) => {
   if (!isoString) return "";
   try {
@@ -32,18 +33,61 @@ export default function Dashboard() {
   const [scanStatus, setScanStatus] = useState("Initiating scan...");
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [isBlacklistOpen, setIsBlacklistOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<'all' | 'shortlisted' | 'targeted'>('all');
   
-  const [isDeepDiveOpen, setIsDeepDiveOpen] = useState(false);
-  const [selectedUniversityName, setSelectedUniversityName] = useState<string | null>(null);
-  const [selectedUniversityPrograms, setSelectedUniversityPrograms] = useState<any[]>([]);
-  const [isFundingLoading, setIsFundingLoading] = useState<number | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedUniversityName, setSelectedUniversityName] = useState<string>("");
+
+  // Targeted Quick Scan States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<Array<{ name: string; domain: string }>>([]);
+  const [selectedUnis, setSelectedUnis] = useState<Array<{ name: string; domain: string }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const delayDebounce = setTimeout(async () => {
+      try {
+        const response = await api.searchUniversities(searchQuery);
+        setSuggestions(response);
+      } catch (err) {
+        console.error("Error fetching university suggestions:", err);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
+
+  const targetedScanMutation = useMutation({
+    mutationFn: async (targets: { name: string; domain: string }[]) => {
+      setScanProgress(0);
+      setScanStatus("Initiating targeted scan...");
+      setIsScanning(true);
+      
+      const response = await api.triggerTargetedScan(targets);
+      return response.job_id;
+    },
+    onSuccess: (jobId) => {
+      startPolling(jobId);
+      setSelectedUnis([]);
+      setSearchQuery("");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to start targeted scan.");
+      setIsScanning(false);
+      setActiveJobId(null);
+    }
+  });
   
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: api.getProfile
   });
 
-  const { data: scholarships = [], isLoading: isLoadingScholarships } = useQuery({
+  const { data: scholarships = [], isLoading: isLoadingScholarships, refetch: refetchScholarships } = useQuery({
     queryKey: ['scholarships'],
     queryFn: api.getFunding
   });
@@ -78,14 +122,14 @@ export default function Dashboard() {
           break;
         }
       }
-      toast.success("Discovery scan complete! Results updated.");
-      queryClient.invalidateQueries({ queryKey: ['scholarships'] });
-      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      toast.success(jobId.startsWith("target_") ? "Targeted scan complete! Results updated." : "Discovery scan complete! Results updated.");
+      refetchScholarships();
+      refetchPrograms();
       refetchLastScan();
       setIsScanning(false);
       setActiveJobId(null);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to run discovery scan.");
+      toast.error(err?.message || (jobId.startsWith("target_") ? "Failed to run targeted scan." : "Failed to run discovery scan."));
       setIsScanning(false);
       setActiveJobId(null);
     }
@@ -146,8 +190,8 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       toast.success("Discovery scan cancelled. Partial results saved!");
-      queryClient.invalidateQueries({ queryKey: ['scholarships'] });
-      queryClient.invalidateQueries({ queryKey: ['programs'] });
+      refetchScholarships();
+      refetchPrograms();
       refetchLastScan();
       setIsScanning(false);
       setActiveJobId(null);
@@ -165,7 +209,7 @@ export default function Dashboard() {
     }
   });
 
-  const { data: programs = [], isLoading: isLoadingPrograms } = useQuery({
+  const { data: programs = [], isLoading: isLoadingPrograms, refetch: refetchPrograms } = useQuery({
     queryKey: ['programs'],
     queryFn: api.getPrograms
   });
@@ -175,6 +219,19 @@ export default function Dashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['programs'] });
     }
+  });
+
+  const toggleInterestMutation = useMutation({
+    mutationFn: api.toggleProgramInterest,
+    onSuccess: (res) => {
+      if (res.status === "Interested") {
+        toast.success("Program added to shortlist!");
+      } else {
+        toast.success("Program removed from shortlist.");
+      }
+      queryClient.invalidateQueries({ queryKey: ['programs'] });
+    },
+    onError: () => toast.error("Failed to update program shortlist.")
   });
 
   const discardFundingMutation = useMutation({
@@ -211,7 +268,23 @@ export default function Dashboard() {
 
   const desireMatches = scholarships.filter((s: any) => s.desire_score > 70).sort((a: any, b: any) => b.desire_score - a.desire_score);
   
-  const displayPrograms = programs.filter((p: any) => p.status !== "Discarded").map((p: any) => ({
+  const uncheckedUnisCount = Object.entries(
+    programs.filter((p: any) => p.status !== "Discarded").reduce((acc: any, curr: any) => {
+      if (!acc[curr.university]) acc[curr.university] = [];
+      acc[curr.university].push(curr);
+      return acc;
+    }, {})
+  ).filter(([_, progs]: [string, any]) => progs.every((p: any) => !p.is_checked && p.status === 'Discovered')).length;
+
+  const displayPrograms = programs.filter((p: any) => {
+    if (activeCategory === 'shortlisted') {
+      return p.status === 'Interested';
+    } else if (activeCategory === 'targeted') {
+      return p.is_targeted && p.status !== 'Discarded';
+    } else {
+      return p.status !== "Discarded";
+    }
+  }).map((p: any) => ({
     id: p.id,
     title: p.title,
     institution: p.university,
@@ -222,9 +295,13 @@ export default function Dashboard() {
     improvementProjection: p.improvement_projection || null,
     tuition: p.country === "Germany" ? "Free (Public)" : p.country === "Switzerland" ? "CHF 1,500 / yr" : "$25,000 / yr",
     status: p.status,
+    url: p.url,
     instructionLanguages: Array.isArray(p.instruction_languages) ? p.instruction_languages : (p.instruction_languages ? (() => { try { return JSON.parse(p.instruction_languages); } catch { try { return p.instruction_languages.split(","); } catch { return []; } } })() : []),
     offersLanguageTraining: p.offers_language_training,
-    foreignerFriendly: p.foreigner_friendly
+    foreignerFriendly: p.foreigner_friendly,
+    scannedAt: p.scanned_at ? new Date(p.scanned_at) : null,
+    isChecked: p.is_checked || false,
+    isTargeted: p.is_targeted || false
   })).sort((a: any, b: any) => b.desireScore - a.desireScore);
 
   const feasibilityScore = profile?.relocation_feasibility_score || 0;
@@ -390,15 +467,169 @@ export default function Dashboard() {
         )}
 
         {/* LANE 1: UNIVERSITY MATCHES */}
-        <section className={`bg-card/40 backdrop-blur-md p-6 rounded-3xl border border-border/50 shadow-sm transition-all flex flex-col relative overflow-hidden lg:col-span-2 ${!isProfileComplete ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+        <section className={`bg-card/40 backdrop-blur-md p-6 rounded-3xl border border-border/50 shadow-sm transition-all flex flex-col relative overflow-visible lg:col-span-2 ${!isProfileComplete ? 'opacity-40 pointer-events-none select-none' : ''}`}>
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
           
-          <h2 className="text-2xl font-display text-card-foreground mb-2 flex items-center">
-            <Building2 className="w-6 h-6 text-indigo-500 mr-2" />
+          <h2 className="text-2xl font-display text-card-foreground mb-2 flex items-center gap-2">
+            <Building2 className="w-6 h-6 text-indigo-500" />
             University Matches
+            {uncheckedUnisCount > 0 && (
+              <span className="text-[10px] flex items-center gap-1 font-bold bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded-full animate-pulse shrink-0">
+                <Inbox className="w-3 h-3" />
+                {uncheckedUnisCount} new
+              </span>
+            )}
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">Target universities with matching programs based on your modality: <strong className="text-foreground">{profile?.preferred_modality || "Pending"}</strong></p>
+          <p className="text-sm text-muted-foreground mb-4">Target universities with matching programs based on your modality: <strong className="text-foreground">{profile?.preferred_modality || "Pending"}</strong></p>
           
+          <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-6 border-b border-border/40 pb-5">
+            <div className="flex flex-wrap gap-1.5 bg-secondary/15 p-1 rounded-xl border border-border/30 w-fit shrink-0">
+              <button
+                type="button"
+                onClick={() => setActiveCategory('all')}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${
+                  activeCategory === 'all'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                All Matches
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveCategory('shortlisted')}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                  activeCategory === 'shortlisted'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${activeCategory === 'shortlisted' ? 'fill-rose-500 text-rose-500' : ''}`} />
+                Shortlisted
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveCategory('targeted')}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                  activeCategory === 'targeted'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                Direct Searches
+              </button>
+            </div>
+
+            {/* Combined Search & Quick Scan Bar */}
+            <div className="relative flex flex-col gap-1.5 min-w-[280px] lg:w-[360px] max-w-full z-30">
+              <div className="flex items-center gap-2 bg-background/50 border border-border/60 rounded-xl px-3 py-1.5 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all duration-200">
+                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Filter matches or search new uni..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="bg-transparent border-0 text-sm focus:outline-none focus:ring-0 w-full placeholder:text-muted-foreground/60 text-foreground p-0"
+                />
+                {selectedUnis.length > 0 && (
+                  <button
+                    onClick={() => targetedScanMutation.mutate(selectedUnis)}
+                    disabled={isScanning}
+                    className="flex items-center gap-1 bg-primary text-primary-foreground font-extrabold text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg hover:bg-primary/95 active:scale-95 transition-all duration-150 disabled:opacity-50 shrink-0"
+                  >
+                    {targetedScanMutation.isPending ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Radar className="w-3 h-3" />
+                    )}
+                    Scan ({selectedUnis.length})
+                  </button>
+                )}
+              </div>
+
+              {/* Autocomplete suggestions dropdown */}
+              {showSuggestions && (searchQuery.trim().length >= 2 || suggestions.length > 0) && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
+                  {suggestions.length === 0 && searchQuery.trim().length >= 2 ? (
+                    <div className="p-3 text-xs text-muted-foreground text-center">
+                      No universities found in ROR.
+                      {searchQuery.includes(".") && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newUni = { name: searchQuery.trim(), domain: searchQuery.trim() };
+                            if (!selectedUnis.some(x => x.domain === newUni.domain)) {
+                              setSelectedUnis([...selectedUnis, newUni]);
+                            }
+                            setSearchQuery("");
+                            setShowSuggestions(false);
+                          }}
+                          className="block w-full mt-2 py-1.5 px-3 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-bold transition-all"
+                        >
+                          Add custom domain: "{searchQuery.trim()}"
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    suggestions.map((uni) => (
+                      <button
+                        key={uni.name + uni.domain}
+                        type="button"
+                        onClick={() => {
+                          if (!selectedUnis.some(x => x.domain === uni.domain)) {
+                            setSelectedUnis([...selectedUnis, uni]);
+                          }
+                          setSearchQuery("");
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-accent text-sm text-foreground transition-all duration-150 flex items-center justify-between border-b border-border/20 last:border-b-0"
+                      >
+                        <span className="font-medium truncate">{uni.name}</span>
+                        <span className="text-[10px] bg-secondary px-2 py-0.5 rounded text-muted-foreground truncate">{uni.domain}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Selected badges inline */}
+              {selectedUnis.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1 max-w-full">
+                  {selectedUnis.map((uni) => (
+                    <span key={uni.domain} className="inline-flex items-center gap-1 text-[10px] font-bold bg-secondary text-foreground border border-border pl-2 pr-1 py-0.5 rounded-lg shrink-0">
+                      <span className="truncate max-w-[120px]">{uni.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUnis(selectedUnis.filter(x => x.domain !== uni.domain))}
+                        className="text-muted-foreground hover:text-foreground hover:bg-secondary rounded p-0.5"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
+                    </span>
+                  ))}
+                  <button
+                    onClick={() => setSelectedUnis([])}
+                    className="text-[9px] font-bold text-muted-foreground hover:text-foreground underline pl-1"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-xs text-muted-foreground font-semibold">
+              Showing <strong className="text-foreground">{displayPrograms.length}</strong> matching programs
+            </span>
+          </div>
+
           <div className="space-y-6">
             {isLoadingPrograms ? (
               <div className="p-5 border border-border/50 bg-background/50 rounded-2xl space-y-3">
@@ -438,57 +669,124 @@ export default function Dashboard() {
                 </div>
               )
             ) : (
-              Object.entries(
-                displayPrograms.reduce((acc: any, curr: any) => {
-                  if (!acc[curr.institution]) acc[curr.institution] = [];
-                  acc[curr.institution].push(curr);
-                  return acc;
-                }, {})
-              ).map(([university, universityPrograms]: [string, any]) => {
-                const totalSecured = scholarships.filter((s: any) => 
-                  universityPrograms.some((p: any) => p.id === s.target_program_id)
-                ).length;
+              (() => {
+                // Find the latest scanned_at date
+                const maxScannedAt = displayPrograms.reduce((max: Date | null, p: any) => {
+                  if (!p.scannedAt) return max;
+                  if (!max) return p.scannedAt;
+                  return p.scannedAt > max ? p.scannedAt : max;
+                }, null);
 
-                return (
-                <div 
-                  key={university} 
-                  className="p-6 border border-border/60 bg-background/85 rounded-2xl hover:border-indigo-500/50 hover:bg-secondary/40 cursor-pointer transition-all group flex items-center justify-between shadow-sm hover:shadow"
-                  onClick={() => {
-                    setSelectedUniversityName(university);
-                    setSelectedUniversityPrograms(universityPrograms);
-                    setIsDeepDiveOpen(true);
-                  }}
-                >
-                  <div className="flex-1">
-                    <h3 className="font-bold text-foreground text-xl flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-indigo-400 group-hover:text-indigo-300" />
-                      {university}
-                    </h3>
-                    <div className="flex items-center gap-4 mt-2">
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <Globe className="w-4 h-4 text-zinc-400" />
-                        {universityPrograms[0].location}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <GraduationCap className="w-4 h-4 text-zinc-400" />
-                        {universityPrograms.length} Programs
-                      </div>
-                      {totalSecured > 0 && (
-                        <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-400">
-                          <Database className="w-4 h-4" />
-                          {totalSecured} Funding Matches
+                let groupedUnis = Object.entries(
+                  displayPrograms.reduce((acc: any, curr: any) => {
+                    if (!acc[curr.institution]) acc[curr.institution] = [];
+                    acc[curr.institution].push(curr);
+                    return acc;
+                  }, {})
+                );
+
+                if (searchQuery.trim().length > 0) {
+                  const q = searchQuery.toLowerCase().trim();
+                  groupedUnis = groupedUnis.filter(([uni, progs]: [string, any]) => 
+                    uni.toLowerCase().includes(q) || 
+                    progs.some((p: any) => p.title.toLowerCase().includes(q) || p.location.toLowerCase().includes(q))
+                  );
+                }
+
+                // Sort: last scan at the top, older scans pushed to bottom
+                groupedUnis.sort(([uniA, progsA]: [string, any], [uniB, progsB]: [string, any]) => {
+                  const maxA = progsA.reduce((maxVal: Date | null, p: any) => !p.scannedAt ? maxVal : (!maxVal || p.scannedAt > maxVal ? p.scannedAt : maxVal), null);
+                  const maxB = progsB.reduce((maxVal: Date | null, p: any) => !p.scannedAt ? maxVal : (!maxVal || p.scannedAt > maxVal ? p.scannedAt : maxVal), null);
+                  
+                  const isLastScanA = maxA && maxScannedAt && (maxScannedAt.getTime() - maxA.getTime()) <= 10 * 60 * 1000;
+                  const isLastScanB = maxB && maxScannedAt && (maxScannedAt.getTime() - maxB.getTime()) <= 10 * 60 * 1000;
+
+                  if (isLastScanA && !isLastScanB) return -1;
+                  if (!isLastScanA && isLastScanB) return 1;
+
+                  // Fallback: sort by highest desire score
+                  const maxScoreA = Math.max(...progsA.map((p: any) => p.desireScore));
+                  const maxScoreB = Math.max(...progsB.map((p: any) => p.desireScore));
+                  return maxScoreB - maxScoreA;
+                });
+
+                return groupedUnis.map(([university, universityPrograms]: [string, any]) => {
+                  const totalSecured = scholarships.filter((s: any) => 
+                    universityPrograms.some((p: any) => p.id === s.target_program_id)
+                  ).length;
+
+                  const isUnchecked = universityPrograms.every((p: any) => !p.isChecked && p.status === 'Discovered');
+                  const isTargeted = universityPrograms.some((p: any) => p.isTargeted);
+                  const scannedAt = universityPrograms[0]?.scannedAt;
+
+                  const getExpirationText = (date: Date) => {
+                    const expDays = 7;
+                    const expiryTime = date.getTime() + expDays * 24 * 60 * 60 * 1000;
+                    const timeLeftMs = expiryTime - Date.now();
+                    if (timeLeftMs <= 0) return "Expired / Purging";
+                    
+                    const timeLeftHours = Math.ceil(timeLeftMs / (1000 * 60 * 60));
+                    if (timeLeftHours > 24) {
+                      const days = Math.floor(timeLeftHours / 24);
+                      return `Expires in ${days}d`;
+                    }
+                    return `Expires in ${timeLeftHours}h`;
+                  };
+
+                  return (
+                  <div 
+                    key={university} 
+                    className="p-6 border border-border/60 bg-background/85 rounded-2xl hover:border-indigo-500/50 hover:bg-secondary/40 cursor-pointer transition-all group flex items-center justify-between shadow-sm hover:shadow"
+                    onClick={() => {
+                      setSelectedUniversityName(university);
+                      setIsDrawerOpen(true);
+                    }}
+                  >
+                    <div className="flex-1">
+                      <h3 className="font-bold text-foreground text-xl flex items-center gap-2 flex-wrap">
+                        <Building2 className="w-5 h-5 text-indigo-400 group-hover:text-indigo-300 shrink-0" />
+                        <span>{university}</span>
+                        {isUnchecked && (
+                          <span className="text-[10px] inline-flex items-center gap-1 font-extrabold bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded-md animate-pulse">
+                            NEW
+                          </span>
+                        )}
+                        {isTargeted && (
+                          <span className="text-[10px] inline-flex items-center gap-1 font-extrabold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-md">
+                            Targeted
+                          </span>
+                        )}
+                      </h3>
+                      <div className="flex items-center gap-4 mt-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Globe className="w-4 h-4 text-zinc-400" />
+                          {universityPrograms[0].location}
                         </div>
-                      )}
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <GraduationCap className="w-4 h-4 text-zinc-400" />
+                          {universityPrograms.length} Programs
+                        </div>
+                        {totalSecured > 0 && (
+                          <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-400">
+                            <Database className="w-4 h-4" />
+                            {totalSecured} Funding Matches
+                          </div>
+                        )}
+                        {isUnchecked && scannedAt && (
+                          <div className="flex items-center gap-1 text-xs text-amber-500/80 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-md shrink-0">
+                            <Clock className="w-3.5 h-3.5 animate-pulse" />
+                            {getExpirationText(scannedAt)}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
                   
                   <div className="flex items-center gap-3">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm(`Are you sure you want to blacklist the entire university: ${university}? This hides existing programs and skips it in future scans.`)) {
-                          blacklistUniversityMutation.mutate(university);
-                        }
+                        blacklistUniversityMutation.mutate(university);
+                        toast.success(`${university} blacklisted! Undo from the bottom drawer.`);
                       }}
                       title="Blacklist University"
                       className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all active:scale-95 duration-200"
@@ -498,59 +796,14 @@ export default function Dashboard() {
                     <ChevronRight className="w-6 h-6 text-muted-foreground group-hover:text-indigo-400 transition-colors" />
                   </div>
                 </div>
-              )})
-            )}
+                );
+              })} )())}
           </div>
         </section>
 
       </div>
 
-      {/* Deep Dive Modal */}
-      <UniversityDeepDiveModal
-        isOpen={isDeepDiveOpen}
-        onOpenChange={setIsDeepDiveOpen}
-        universityName={selectedUniversityName}
-        programs={selectedUniversityPrograms}
-        scholarships={scholarships}
-        isFundingLoading={isFundingLoading}
-        onFindFunding={async (programId) => {
-          setIsFundingLoading(programId);
-          toast.info(`Running full deep dive for program and funding...`);
-          try {
-            await Promise.all([
-              api.deepScanProgram(programId),
-              api.findFunding(programId)
-            ]);
-            toast.success("Deep scan and funding search complete!");
-            queryClient.invalidateQueries({ queryKey: ['scholarships'] });
-            queryClient.invalidateQueries({ queryKey: ['programs'] });
-            
-            // Update the selected programs locally so the modal updates without closing
-            api.getPrograms().then(data => {
-              const updatedUniversityPrograms = data.filter((p: any) => p.institution === selectedUniversityName || p.university === selectedUniversityName);
-              if (updatedUniversityPrograms.length > 0) {
-                setSelectedUniversityPrograms(updatedUniversityPrograms);
-              }
-            });
-            
-          } catch (e) {
-            toast.error("Failed to complete deep dive.");
-          } finally {
-            setIsFundingLoading(null);
-          }
-        }}
-        onDiscardProgram={(programId) => {
-          discardProgramMutation.mutate(programId);
-          setIsDeepDiveOpen(false);
-          toast.success("Opportunity moved to blacklist!");
-        }}
-        onBlacklistUniversity={(uniName) => {
-          if (confirm(`Are you sure you want to blacklist all programs from ${uniName}? This hides existing programs and skips it in future scans.`)) {
-            blacklistUniversityMutation.mutate(uniName);
-            setIsDeepDiveOpen(false);
-          }
-        }}
-      />
+
 
       {/* Collapsed Discrete Blacklisted Opportunities */}
       {(programs.filter((p: any) => p.status === "Discarded").length > 0 || blacklistedUniversities.length > 0) && (
@@ -628,6 +881,12 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      <UniversityDetailDrawer 
+        isOpen={isDrawerOpen} 
+        onClose={() => setIsDrawerOpen(false)} 
+        universityName={selectedUniversityName} 
+      />
     </div>
   );
 }

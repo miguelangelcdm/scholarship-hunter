@@ -57,7 +57,9 @@ export default function Profile() {
     target_tags: "",
     preferred_modality: "",
     primary_goal: "",
-    target_diaspora_regions: ""
+    target_diaspora_regions: "",
+    target_degree_level: "Masters",
+    target_study_type: "Taught"
   });
 
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
@@ -100,7 +102,9 @@ export default function Profile() {
         target_tags: profile.target_tags || "",
         preferred_modality: profile.preferred_modality || "",
         primary_goal: profile.primary_goal || "",
-        target_diaspora_regions: profile.target_diaspora_regions || ""
+        target_diaspora_regions: profile.target_diaspora_regions || "",
+        target_degree_level: profile.target_degree_level || "Masters",
+        target_study_type: profile.target_study_type || "Taught"
       });
     }
   }, [profile]);
@@ -815,6 +819,45 @@ export default function Profile() {
                     </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">This is what you have already studied. The AI will use this to determine eligibility for Masters/PhDs.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-2">Target Degree Level</label>
+                  <Select 
+                    value={formData.target_degree_level || "Masters"} 
+                    onValueChange={v => setFormData({...formData, target_degree_level: v})}
+                    disabled={isAutofilling}
+                  >
+                    <SelectTrigger className="w-full bg-background border border-border/50 rounded-xl px-4 py-3 text-sm hover:bg-muted/40 h-[42px]">
+                      <SelectValue placeholder="Target Degree" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border/85 rounded-xl">
+                      <SelectItem value="Bachelors">Bachelors</SelectItem>
+                      <SelectItem value="Masters">Masters</SelectItem>
+                      <SelectItem value="PGDip">Postgrad Diploma (PGDip)</SelectItem>
+                      <SelectItem value="PhD">PhD / Doctorate</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground mt-1">Select the level of study you want the scan to search for.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-2">Target Study Type</label>
+                  <Select 
+                    value={formData.target_study_type || "Taught"} 
+                    onValueChange={v => setFormData({...formData, target_study_type: v})}
+                    disabled={isAutofilling}
+                  >
+                    <SelectTrigger className="w-full bg-background border border-border/50 rounded-xl px-4 py-3 text-sm hover:bg-muted/40 h-[42px]">
+                      <SelectValue placeholder="Study Type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border/85 rounded-xl">
+                      <SelectItem value="Taught">Taught (Coursework / Projects)</SelectItem>
+                      <SelectItem value="Research">Research (Thesis / MPhil / PhD)</SelectItem>
+                      <SelectItem value="Any">Any Study Type</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground mt-1">Specify if you want coursework-only taught programs or research tracks.</p>
                 </div>
 
                 <div className="md:col-span-2">

@@ -43,6 +43,8 @@ class Profile(Base):
     preferred_modality = Column(String, nullable=True) # Online, Hybrid, In-Person (Local), In-Person (Abroad)
     relocation_feasibility_score = Column(Integer, nullable=True) # 0-100
     target_diaspora_regions = Column(String, nullable=True) # JSON array string
+    target_degree_level = Column(String, default="Masters", nullable=True)
+    target_study_type = Column(String, default="Taught", nullable=True)
     
     requirements = relationship("UserRequirement", back_populates="profile")
     documents = relationship("ProfileDocument", back_populates="profile", cascade="all, delete-orphan")
@@ -133,6 +135,10 @@ class TargetProgram(Base):
     
     status = Column(String, default="Discovered") # Discovered, Preparing, Applied, Rejected, Accepted, Discarded
     
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_checked = Column(Boolean, default=False)
+    is_targeted = Column(Boolean, default=False)
+    
     scholarships = relationship("Scholarship", back_populates="program")
 
 class ScannedUniversity(Base):
@@ -140,6 +146,7 @@ class ScannedUniversity(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
     scanned_at = Column(DateTime, default=datetime.utcnow)
+    profile_cache = Column(String, nullable=True)
 
 class BlacklistedUniversity(Base):
     __tablename__ = "blacklisted_universities"

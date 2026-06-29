@@ -35,7 +35,7 @@ sequenceDiagram
 ### Wave 1: Broad Discovery Scan (Asynchronous Background Task)
 To ensure comprehensive coverage and discover as many opportunities as possible, broad discovery operates exclusively through the background Mass Scan pipeline:
 - **Task Queue System**: We utilize **Huey** backed by **SQLite** (`SqliteHuey`). This offloads the heavy AI scraping from FastAPI's request cycle to a background `worker.py` process.
-- **University Domain Database (ROR)**: The **Research Organization Registry (ROR)** serves as the database seeding source. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR dataset, filtering it down to ~24,000 educational domains (`universities.json`).
+- **University Domain Database (ROR)**: The **Research Organization Registry (ROR)** serves as the database seeding source. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR dataset, filtering it down to ~24,000 educational domains (`universities.json`). The script applies domain blacklisting (filtering out `wikipedia.org`, `wikidata.org`, and social media domains) and preserves domain insertion order so the official university website domain is always prioritized.
 - **Homepage Crawling**: The Mass Scan worker uses lightweight `requests` + `BeautifulSoup` to fetch each university's homepage and extract all internal `<a href>` navigation links.
 - **AI Scout Navigation**: The extracted link list is fed to the Scout AI, which selects the top 2-3 specific URLs most likely to contain academic programs or admissions info matching the user's profile.
 - **Frontend Interfacing**: The frontend receives a `job_id` and runs an active polling loop against `GET /discovery/mass-scan/{job_id}/status`, reading static JSON log files without stressing the backend.
@@ -64,6 +64,7 @@ Pages that pass Tier 1 are fed to the primary LLM, resolved through the priority
 **Data Standardization (Pre-LLM)**
 To maximize accuracy, we feed the LLM highly curated seed data:
 - **Categorized Major Standardization**: The UI explicitly groups 40+ recognized global academic majors (e.g. Engineering, Business). By forcing the user to pick from this structured `CATEGORIZED_MAJORS` dictionary (in `majors.ts`), the LLM avoids misinterpreting niche or non-translatable degree titles, granting it a universally understood anchor point.
+- **Link Preservation as Markdown**: The crawler body content anchor links (`<a>` tags) are transformed into absolute markdown links `[Link Text](absolute_url)` before raw text extraction. This allows the LLM to access the specific course program URLs, resolving 404s and preventing the database from falling back to generic query search URLs.
 
 **Text Truncation Layers (Pre-LLM)**
 To minimize token usage, scraped page text passes through three sequential truncation stages before reaching the LLM:
@@ -96,6 +97,12 @@ To accurately reflect the real-world admissions journey, the UI is heavily **Uni
 - **Split Blacklist Drawer**: The collapsible drawer at the bottom of the dashboard is split into two columns: **Blacklisted Programs** (individual soft-deleted options) and **Blacklisted Universities** (fully blocked institutions), each supporting immediate restoration.
 - **Matches Visibility During Scan**: The dashboard no longer hides matches behind a scanning overlay. Previously discovered matches remain visible and interactive while background mass scans process.
 
+**Targeted University Scan & QOA Life Cycle Management**:
+- **Targeted Quick Scan**: Users can perform targeted scans for specific universities by typing their names or pasting domains. The engine runs a high-priority, dedicated scan that bypasses the `scanned_universities` skip-list check to fetch fresh program data.
+- **QOA Expiration Timer & Inbox Zero**: To maintain high-quality matches, new unreviewed university matches are marked with a `"NEW"` badge and a countdown indicator (e.g. `Expires in 7d`). If the user does not open the university details (which calls the deep-dive endpoint and marks them reviewed) within `UNCHECKED_EXPIRATION_DAYS` (default: 7), the matches are automatically purged from the database, and the university is blacklisted.
+- **Scan Sorting Separation**: The results of the last scan are anchored at the top of the matches feed, while any matches discovered in previous scans are pushed to the bottom of the list.
+- **Inbox-like Unread Counter**: The dashboard displays a notification badge (`N new`) indicating how many newly scanned universities have unchecked matches.
+
 **Asynchronous Job Cancellation**:
 - Users can abort enqueued or running scans via the "Cancel Search" button. This triggers `POST /discovery/mass-scan/{job_id}/cancel`, updating the job's status file to `"canceled"`.
 - The background worker checks the cancellation flag before processing each university and gracefully exits the loops, saving whatever partial matching results were found prior to cancellation.
@@ -104,6 +111,7 @@ To accurately reflect the real-world admissions journey, the UI is heavily **Uni
 - **Scan Status Recovery:** On mount, the frontend queries `GET /discovery/active-job` to check if a mass discovery scan is already active in the background. If one is found, it automatically displays the progress bar and resumes polling the status endpoint `GET /discovery/mass-scan/{job_id}/status`, allowing seamless page reloads and browser restarts without losing track of progress.
 - **Backend Failsafe:** To prevent overloading the local system with multiple concurrent LLM/scraping jobs, `POST /discovery/mass-scan` checks for any existing job logs with a `"running"` or `"pending"` status. If an active job is found, it blocks execution and returns an `HTTP 400 Bad Request` error.
 - **Elapsed Time & Processing Metrics Formatting:** Elapsed time tracking during the crawling phase is formatted into a human-readable duration (e.g. `1h 12m 30s`) and includes a real-time average processing speed per page (e.g. `Avg: 33.0s/page`) to give users transparent, precise progress updates.
+- **Immediate UI Refetching & Synchronization:** To ensure newly crawled matches appear in the dashboard immediately upon completion or cancellation of a scan without requiring a manual page reload, the polling function directly invokes the `refetch` query methods for both programs and scholarships. This bypasses React Query's default background-invalidation delay and updates the React state immediately.
 
 **Machine Learning Feedback Loop**:
 - Discarded opportunities are preserved under the soft-delete status `"Discarded"` to allow offline or asynchronous ML models to search for preference patterns and improve subsequent discovery scores.

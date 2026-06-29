@@ -21,6 +21,7 @@ export const api = {
   getPrograms: () => fetch(`${API_BASE}/programs`).then(handleResponse),
   discardProgram: (id: number) => fetch(`${API_BASE}/programs/${id}/discard`, { method: 'PATCH' }).then(handleResponse),
   restoreProgram: (id: number) => fetch(`${API_BASE}/programs/${id}/restore`, { method: 'PATCH' }).then(handleResponse),
+  toggleProgramInterest: (id: number) => fetch(`${API_BASE}/programs/${id}/interest`, { method: 'PATCH' }).then(handleResponse),
   discardFunding: (id: number) => fetch(`${API_BASE}/funding/${id}/discard`, { method: 'PATCH' }).then(handleResponse),
   getLastScan: () => fetch(`${API_BASE}/discovery/last-scan`).then(handleResponse),
   getActiveScan: () => fetch(`${API_BASE}/discovery/active-job`).then(handleResponse),
@@ -44,5 +45,11 @@ export const api = {
   }).then(handleResponse),
   blacklistUniversity: (name: string) => fetch(`${API_BASE}/universities/${encodeURIComponent(name)}/blacklist`, { method: 'POST' }).then(handleResponse),
   restoreUniversity: (name: string) => fetch(`${API_BASE}/universities/${encodeURIComponent(name)}/blacklist`, { method: 'DELETE' }).then(handleResponse),
-  getBlacklistedUniversities: () => fetch(`${API_BASE}/universities/blacklist`).then(handleResponse)
+  getBlacklistedUniversities: () => fetch(`${API_BASE}/universities/blacklist`).then(handleResponse),
+  searchUniversities: (q: string) => fetch(`${API_BASE}/discovery/search-universities?q=${encodeURIComponent(q)}`).then(handleResponse),
+  triggerTargetedScan: (targets: { name: string; domain: string }[]) => fetch(`${API_BASE}/discovery/targeted-scan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targets })
+  }).then(handleResponse)
 };

@@ -80,6 +80,19 @@ def fetch_scholarships_real(urls, profile_dict):
                 for elem in soup(["script", "style", "nav", "footer", "header"]):
                     elem.extract()
                     
+                # Preserve inline links in markdown format so the LLM can extract direct URLs
+                from urllib.parse import urljoin
+                for a in list(soup.find_all('a', href=True)):
+                    href = a.get('href', '').strip()
+                    if href:
+                        link_text = a.get_text().strip()
+                        if link_text:
+                            try:
+                                absolute_url = urljoin(url, href)
+                                a.replace_with(f" [{link_text}]({absolute_url}) ")
+                            except Exception:
+                                pass
+                    
                 text = soup.get_text(separator=' ', strip=True)
                 
                 # We no longer strictly reject pages based on narrow keywords.

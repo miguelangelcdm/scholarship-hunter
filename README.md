@@ -92,15 +92,16 @@ This will launch the interactive **Educational Pathfinder Developer Menu**:
 ==================================================
        ★  EDUCATIONAL PATHFINDER DEVELOPER MENU  ★    
 ==================================================
-  [1] Run Full Project (Frontend + Backend Concurrently)
-  [2] Run FastAPI Backend Only
-  [3] Run React Frontend Only
-  [4] Run Playwright E2E Tests
-  [5] Seed Database with Mock Programs & Applications
-  [6] Unseed Database
-  [7] Clean Invalid Programs from Database
-  [8] Wipe ALL Discovered Programs & Funding Data
-  [9] Exit
+  [1] Start Services & Open PM2 Dashboard
+  [2] Start Services & Open App in New Edge Window
+  [3] Stop All Services
+  [4] Restart All Services
+  [5] Run Playwright E2E Tests
+  [6] Seed Database with Mock Programs & Applications
+  [7] Unseed Database
+  [8] Clean Invalid Programs from Database
+  [9] Wipe ALL Discovered Programs & Funding Data
+  [10] Exit
 ==================================================
 ```
 
@@ -110,7 +111,7 @@ You can also bypass the menu and execute targets directly from your shell at the
 | Task / Feature | Command | Description |
 |---|---|---|
 | **Run Full Project** | `node menu.js` | Runs Vite, FastAPI, Huey Worker, and the Local Ollama server concurrently using PM2. |
-| **Run Backend Only** | `node menu.js` | Select Option 2 to start FastAPI on port 8000 using the python virtual environment. |
+| **Run & Open in Edge** | `node menu.js --edge` or `node menu.js --open-edge` | Starts all services and opens the app in a new Microsoft Edge window. |
 | **Run Frontend Only** | `node menu.js --run-frontend` | Starts Vite development server on port 5173. |
 | **Run E2E Tests** | `node menu.js --run-tests` | Runs the Playwright E2E test suite. |
 | **Seed Database** | `node menu.js --seed` | Clears and seeds database tables with mock academic programs and scholarship applications. |
@@ -257,7 +258,7 @@ To prevent frontend crashes and keep the user informed during long scanning proc
 - **Robust API Response Checking**: In `frontend/src/lib/api.ts`, a unified `handleResponse` helper processes all fetch requests. If the backend returns a non-2xx code (e.g., a 500 server error or validation failure), it extracts the detail field and raises a descriptive `Error` that is propagated directly to React Query query and mutation callbacks (e.g. displaying error toast notifications instead of failing silently).
 - **Systematic Discovery Scan (Asynchronous Background Task)**: For a comprehensive search, the user triggers the Discovery Scan from the dashboard.
   - **Task Queue System**: We utilize **Huey** backed by **SQLite** (`SqliteHuey`). This offloads the heavy AI scraping from FastAPI's request cycle to a background `worker.py` process.
-  - **University Domain Database (ROR)**: Instead of DDG, we rely on the **Research Organization Registry (ROR)**. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR open-source data dump, filtering it down to ~24,000 educational domains (`universities.json`). 
+  - **University Domain Database (ROR)**: Instead of DDG, we rely on the **Research Organization Registry (ROR)**. A script (`fetch_ror.py`) queries the Zenodo API for the latest ROR open-source data dump, filtering it down to ~24,000 educational domains (`universities.json`). It applies domain blacklisting (filtering out `wikipedia.org`, `wikidata.org`, and social media domains) and preserves domain insertion order so the official university website domain is always prioritized.
   - **AI Scout Navigation**: The background worker fetches the homepage of each matching domain, extracts all internal links, and feeds them to an AI "Scout". The Scout evaluates the links and returns the top 2-3 specific URLs most likely to contain academic programs, organically mapping the website.
   - **Frontend Interfacing**: The frontend receives a `job_id` and runs an active polling loop against `GET /discovery/mass-scan/{job_id}/status`, reading static JSON log files without stressing the backend.
   - **Failsafe & Scan Recovery**: 
@@ -321,6 +322,27 @@ To ensure pristine data extraction from CVs, the AI Agent employs a robust multi
 - **Mock Data Leakage Prevention**: When parsing a new document, any fields not present in the CV are explicitly overwritten and cleared in the database to prevent leftover mock user values (like Jane Doe's hobbies/publications) from persisting on the active profile.
 - **Robust API Type Coercion**: To prevent FastAPI `ResponseValidationError` when GPA values are stored or parsed as floats/integers, the backend response schemas utilize a custom Pydantic `field_validator` (`coerce_gpa`) to dynamically cast any numeric GPAs to string formats before returning them to the client.
 
+
+## 🔍 Real-Time Service Monitoring (PM2-Hawkeye)
+
+In addition to the standard terminal `pm2 monit` dashboard, the project includes the open-source web dashboard **PM2-Hawkeye** for real-time monitoring and process control.
+
+It is configured to run automatically as part of the PM2 ecosystem on port `3030`.
+
+### Features:
+- **Resource Graph**: Monitors CPU, memory, and uptime history for `frontend`, `backend`, `worker`, `ollama`, and itself.
+- **Log Streaming**: Stream logs directly in your browser.
+- **Service Control**: Restart or stop individual services with a single click.
+
+### How to Access:
+1. Ensure the services are running: `node menu.js` or `pm2 start ecosystem.config.js`.
+2. Open your browser and navigate to: **http://localhost:3030**
+3. Log in with the default credentials:
+   - **Username**: `admin`
+   - **Password**: `Hawkeye-Monitor-2026`
+
+> [!TIP]
+> To change the default password or customize settings, edit the environment variables in [external_repos/pm2-hawkeye/.env](file:///c:/Users/migue/.gemini/antigravity/scratch/Scholarship-hunter/external_repos/pm2-hawkeye/.env).
 
 ## 📖 Project Documentation Hub
 
@@ -409,6 +431,23 @@ Welcome to the central documentation hub for the **Educational Pathfinder** plat
 - [x] Connect the remaining frontend UI components to the FastAPI backend endpoints (Dashboard and Tracker).
 
 ### Recent Updates
+- **Scraper Link Preservation & Direct URL Extraction (June 29, 2026)**:
+  - **Markdown Link Preservation in Scraper**: Modified the BeautifulSoup HTML text pre-processing inside `scraper.py` to convert body anchor tags (`<a>`) into markdown-formatted absolute links (`[Link Text](absolute_url)`) before extracting raw text. This preserves direct program page links on course search/listing pages.
+  - **Direct URL LLM Extraction**: Enables the LLM to discover and extract correct program-specific URLs directly from the scraped text, preventing the database from falling back to generic search query URLs and resolving 404 links in the UI.
+  - **Unit Test Coverage**: Added a mock-based test suite (`test_scraper_with_mocks.py`) validating the conversion of relative and absolute links into markdown absolute links.
+- **Speed Optimization, Target Constraints & Dynamic Pivot Integration (Phase 3 - June 28, 2026)**:
+  - **ThreadPool Concurrency in Scout AI Crawler**: Replaced the serial crawler loop in `worker.py` with a concurrent pool (`ThreadPoolExecutor`), processing 5 domains in parallel to fetch homepages and route URLs concurrently, significantly reducing scan latency.
+  - **Dynamic Pivot & Integration Matching Logic**: Refactored `rejection_rule` in `ai_agent.py` to run a profile-agnostic evaluation matching `{major}` and `{target_disciplines}`, scoring hybrid tech-business integrations highest, pure pivots medium-high, and discarding unrelated/major-only programs.
+  - **Target Degree & Study Type Selectors**: Added database columns, automatic migrations, API schemas, and frontend selectors (using Shadcn Select) in the Academic Core profile section for "Target Degree Level" (Bachelors, Masters, PGDip, PhD) and "Target Study Type" (Taught Coursework vs Research Track).
+  - **Program Shortlist / Whitelist (Heart Toggle)**: Added database-backed status support, API toggle PATCH endpoints, and client api wrappers to toggle program status to `"Interested"`. Matched opportunities can be whitelisted with a heart.
+  - **Shortlisted Dashboard Tab**: Added a tab filter group ("All Matches" vs "Shortlisted") at the top of the matches lane. Whitelisted programs are preserved across scans and displayed under the Shortlisted tab.
+  - **Strict Specialized Topic Filters**: Implemented pre-scan specialized blacklist checks in `main.py`/`worker.py` and post-scraped subject keyword checks in `worker.py` (e.g. discarding pharmaceutical/veterinary/arts programs for tech profiles) that dynamically bypass themselves if matching the user's profile major or targets.
+  - **Wikipedia PageImages search Fallback**: Configured Wikipedia article searches and pageimages thumbnail fallback lookups inside the `/deep-dive` API endpoint to query page thumbnails when Wikidata campus images are missing.
+  - **Scanned Source URL displays**: Persisted the scanned URL source page to the database `TargetProgram` and rendered a clickable source icon next to program details inside the deep dive modal accordion.
+  - **Jira-Style Lateral Slide Drawer (Replaced Modal)**: Created a lateral side panel (`UniversityDetailDrawer.tsx`) that slides in from the right edge with a dark backdrop blur overlay, preserving dashboard scroll position and context-switching without forcing page route reloads.
+  - **Database Profile Caching Layer**: Added a `profile_cache` text column to `ScannedUniversity` inside `models.py`. The `/deep-dive` API endpoint checks this cache first, enabling subsequent hits to load the university profile instantly (under 5ms) instead of executing slow on-the-fly LLM queries.
+  - **Visual Header Padding & Parallax Hero**: Pushed the university name and program chips down inside the drawer header (`pt-72` padding) and expanded the hero background to `28rem` to keep the top half of the photograph clear.
+  - **Simplified Blacklist UX**: Removed native browser `confirm()` modal popups from the matches grid and modal footer callbacks, enabling instant blacklisting paired with success toasts and immediate bottom-drawer undo options. Whitelisted programs display a direct `"I'm not interested anymore"` button inside their accordion cards that immediately blacklists and discards them.
 - **Structured Experience Tracking**: The profile section now captures exact Start/End dates (Month/Year) and Employment Types (Full-time, Freelance, etc.) via Shadcn Select components. 
 - **Chronological Experience Calculation**: Overlapping roles are accurately merged so that 1 calendar year of working 2 jobs concurrently counts as exactly 1 year of total professional experience. 
 - **Future Pinning Logic**: Programs where the user lacks the required years of professional experience are no longer hidden. They are surfaced with a low probability score (20%) and a specific prompt to "pin" them for future consideration once the experience requirement is met.
@@ -424,6 +463,11 @@ Welcome to the central documentation hub for the **Educational Pathfinder** plat
   - **Scout AI Specialized Skipping (Hybrid Relevance Filter)**: Configured the Scout AI to auto-skip highly specialized universities in unrelated fields (e.g. purely medical, conservatory, art, or theology schools) based on their names and domains. For general/comprehensive universities, it defaults to crawling them normally, applying a python-side threshold filter to discard programs with a `desire_score < 50`.
   - **Career Switch Matching Logic**: Mapped `target_disciplines` in the profile dictionary and introduced a prompt-level `Career Switch Rule` instructing local models to prioritize target areas (MBA, Product Management, etc.) over technical undergraduate majors (Systems Engineering), preventing irrelevant technical matches.
   - **Readable Job ID & Log Filenames**: Updated the scan `job_id` format to incorporate a 3-digit sequential index (e.g. `001`, `002`) and a local date (`YYYYMMDD`), resulting in filenames like `job_001_20260627.json`. This ensures log files are chronologically sortable and easy to recognize in the `discovery_logs/` folder.
+- **Targeted Scan & QOA Life Cycle Management (June 29, 2026)**:
+  - **Integrated Autocomplete & Filter Input**: Integrated a glassmorphic dual-purpose search bar directly into the matches toolbar. Filters existing matches dynamically as you type, and queries ROR to let you select and run on-demand targeted scans.
+  - **QOA Auto-Purge & Blacklist Engine**: Implemented an inactivity purge checker. Unreviewed matched cards display a warning and are automatically deleted (and their host university blacklisted) after a configurable time in days (`UNCHECKED_EXPIRATION_DAYS`, default: 7) if they remain unchecked.
+  - **Last Scan Anchoring**: Groups and sorts match cards so that the last scan's results are anchored at the top of the Matches feed, while older previous scan results are demoted to the bottom.
+  - **Inbox Unread Counter**: Renders a pulsing green `"NEW"` dot on unchecked university cards and shows an inbox counter badge (e.g. `3 new`) near the lane header. Match reviews are automatically marked as checked in the database when the user clicks to view their details or toggles their status.
 
 ---
 

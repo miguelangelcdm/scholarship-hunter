@@ -29,6 +29,16 @@ module.exports = {
       args: "start_ollama.js",
       cwd: ".",
       watch: false,
+    },
+    {
+      name: "pm2-hawkeye",
+      script: "lib/transport/server.js",
+      cwd: "./external_repos/pm2-hawkeye",
+      watch: false,
+      env: {
+        PORT: 3030,
+        NODE_ENV: "production"
+      }
     }
   ]
 };

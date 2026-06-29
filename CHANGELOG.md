@@ -4,6 +4,28 @@ All notable changes to the **Educational Pathfinder** platform, organized by rep
 
 ---
 
+## [Phase 3] - Speed Optimization, Target Study Constraints & Dynamic Pivot Integration (June 28, 2026)
+### Added
+- **ThreadPool Concurrency in Scout AI Crawler**: Refactored the sequential website analyzer loop in `worker.py` to process university domains concurrently using `concurrent.futures.ThreadPoolExecutor` (defaulting to 5 worker threads), significantly reducing scan latency.
+- **Thread-safe DB and Status Logging**: Implemented synchronized status file read/writes using a thread lock to prevent file sharing violations on Windows, and configured separate SQLAlchemy session pools per worker thread.
+- **Dynamic Pivot & Integration Matching Logic**: Upgraded the LLM extraction prompt in `ai_agent.py` to evaluate program affinity dynamically based on the user's undergraduate `{major}` and `{target_disciplines}`. The model now prioritizes hybrid tech-business integrations (85-100% score), scores pure pivots lower (70-84% score), and discards unrelated or major-only matches (<50% score).
+- **Target Degree & Study Type Selectors**: Added database columns, automatic migrations, API schemas, and frontend selectors (using Shadcn Select) in the Academic Core profile section for "Target Degree Level" (Bachelors, Masters, PGDip, PhD) and "Target Study Type" (Taught Coursework vs Research Track).
+- **Wikidata User-Agent Header Fix**: Configured a custom `User-Agent` header for all Wikidata API queries in `main.py`. This resolves the 403 HTTP block and restores the campus photographs inside the university deep dive modals.
+- **Exemplar Leakage Guardrail**: Implemented a python-side sanitization check in `worker.py` that catches whenever the LLM outputs `"Example University"` (leaked from the prompt's examples) and replaces it with the actual website's university name.
+
+- **Program Whitelist / Shortlist (Heart Toggle)**: Added database-backed status support, API toggle PATCH endpoints, and client api wrappers to toggle program status to `"Interested"`. Mark matched opportunities with a heart to whitelist and save them.
+- **Shortlisted Dashboard Tab**: Added a tab filter group ("All Matches" vs "Shortlisted") at the top of the matches lane. whitelisted programs are preserved across scans and displayed under the Shortlisted tab for dedicated deep-dive executions.
+- **Strict Specialized Topic Filters**: Implemented pre-scan specialized blacklist checks in `main.py`/`worker.py` and post-scraped subject keyword checks in `worker.py` (e.g. discarding pharmaceutical/veterinary/arts programs for tech profiles) that dynamically bypass themselves if matching the user's profile major or targets.
+- **Wikipedia PageImages search Fallback**: Configured Wikipedia article searches and pageimages thumbnail fallback lookups inside the `/deep-dive` API endpoint to query page thumbnails when Wikidata campus images are missing.
+- **Scanned Source URL displays**: Persisted the scanned URL source page to the database `TargetProgram` and rendered a clickable source icon next to program details inside the deep dive modal accordion.
+- **Frictionless Modal Card Blend**: Updated deep dive modal scroll behavior to `"outside"`, allowing the entire modal frame to scroll together. Removed the abrupt black divider cuts, and set an Unsplash premium campus building photograph as the ultimate header hero fallback.
+
+### Changed
+- **Simplified Blacklist Click UX**: Removed native browser `confirm()` modal popups from the matches grid and modal footer callbacks, enabling instant blacklisting paired with success toasts and immediate bottom-drawer undo options.
+- **Dynamic "Not Interested Anymore" button**: Whitelisted programs display a direct `"I'm not interested anymore"` button inside their accordion cards that immediately blacklists and discards them.
+
+---
+
 ## [Phase 2.1] - Mass Scan Stability, Relevance Filtering & University Blacklisting (June 27, 2026)
 ### Added
 - **Explicit University Blacklist Model & Endpoints:** Added `BlacklistedUniversity` model/SQLite table and `POST`, `DELETE`, `GET` endpoints in `main.py` to allow blocking entire universities separately from individual program soft-deletions.

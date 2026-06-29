@@ -144,7 +144,27 @@ function checkProcessesStatus() {
   }, 1000);
 }
 
-function runPM2Start() {
+function openInEdge() {
+  console.log('\x1b[36m[System] Opening application in a new Microsoft Edge window...\x1b[0m');
+  const url = 'http://localhost:8080';
+  if (isWin) {
+    exec(`start msedge --new-window "${url}"`, (err) => {
+      if (err) {
+        exec(`start microsoft-edge:"${url}"`);
+      }
+    });
+  } else if (process.platform === 'darwin') {
+    exec(`open -a "Microsoft Edge" --args --new-window "${url}"`, (err) => {
+      if (err) exec(`open "${url}"`);
+    });
+  } else {
+    exec(`microsoft-edge --new-window "${url}"`, (err) => {
+      if (err) exec(`xdg-open "${url}"`);
+    });
+  }
+}
+
+function runPM2Start(openBrowser = false) {
   console.log('\x1b[36m[System] Launching PM2 Services...\x1b[0m');
   const pm2Cmd = isWin ? 'pm2.cmd' : 'pm2';
   // Start the services
@@ -153,7 +173,13 @@ function runPM2Start() {
       console.error(`\x1b[31m[System Error] Failed to start PM2: ${error.message}\x1b[0m`);
       return;
     }
-    console.log('\x1b[32m[System] Services started successfully. Opening PM2 Dashboard...\x1b[0m');
+    console.log('\x1b[32m[System] Services started successfully.\x1b[0m');
+    
+    if (openBrowser) {
+      setTimeout(openInEdge, 1500);
+    }
+    
+    console.log('\x1b[32m[System] Opening PM2 Dashboard...\x1b[0m');
     // Launch the pm2 monit interactive dashboard
     const proc = spawn(pm2Cmd, ['monit'], { stdio: 'inherit', shell: true });
     proc.on('close', () => {
@@ -264,19 +290,20 @@ function showMenu() {
   console.log('\x1b[1;36m       ★  EDUCATIONAL PATHFINDER DEVELOPER MENU  ★    \x1b[0m');
   console.log('\x1b[36m==================================================\x1b[0m');
   console.log('  \x1b[32m[1]\x1b[0m Start Services & Open PM2 Dashboard');
-  console.log('  \x1b[32m[2]\x1b[0m Stop All Services');
-  console.log('  \x1b[32m[3]\x1b[0m Restart All Services');
-  console.log('  \x1b[32m[4]\x1b[0m Run Playwright E2E Tests');
-  console.log('  \x1b[32m[5]\x1b[0m Seed Database with Mock Programs & Applications');
-  console.log('  \x1b[32m[6]\x1b[0m Unseed Database');
-  console.log('  \x1b[32m[7]\x1b[0m Clean Invalid Programs from Database');
-  console.log('  \x1b[31m[8]\x1b[0m Wipe ALL Discovered Programs & Funding Data');
-  console.log('  \x1b[31m[9]\x1b[0m Exit');
+  console.log('  \x1b[32m[2]\x1b[0m Start Services & Open App in New Edge Window');
+  console.log('  \x1b[32m[3]\x1b[0m Stop All Services');
+  console.log('  \x1b[32m[4]\x1b[0m Restart All Services');
+  console.log('  \x1b[32m[5]\x1b[0m Run Playwright E2E Tests');
+  console.log('  \x1b[32m[6]\x1b[0m Seed Database with Mock Programs & Applications');
+  console.log('  \x1b[32m[7]\x1b[0m Unseed Database');
+  console.log('  \x1b[32m[8]\x1b[0m Clean Invalid Programs from Database');
+  console.log('  \x1b[31m[9]\x1b[0m Wipe ALL Discovered Programs & Funding Data');
+  console.log('  \x1b[31m[10]\x1b[0m Exit');
   console.log('\x1b[36m==================================================\x1b[0m');
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  rl.question('\x1b[33mSelect an option [1-9]: \x1b[0m', (answer) => {
+  rl.question('\x1b[33mSelect an option [1-10]: \x1b[0m', (answer) => {
     rl.close();
     handleOption(answer.trim());
   });
@@ -284,19 +311,20 @@ function showMenu() {
 
 function handleOption(option) {
   switch (option) {
-    case '1': runPM2Start(); break;
-    case '2': runPM2Stop(); break;
-    case '3': runPM2Restart(); break;
-    case '4': runTests(); break;
-    case '5': runSeed(false); break;
-    case '6': runSeed(true); break;
-    case '7': runCleanDB(); break;
-    case '8': runWipeDB(); break;
-    case '9':
+    case '1': runPM2Start(false); break;
+    case '2': runPM2Start(true); break;
+    case '3': runPM2Stop(); break;
+    case '4': runPM2Restart(); break;
+    case '5': runTests(); break;
+    case '6': runSeed(false); break;
+    case '7': runSeed(true); break;
+    case '8': runCleanDB(); break;
+    case '9': runWipeDB(); break;
+    case '10':
       console.log('\x1b[32mExiting. Have a great coding session!\x1b[0m');
       // Ensure we don't leave PM2 running indefinitely unless desired, 
       // but typically developers might want it running. We will leave it running, 
-      // they can stop it with [2].
+      // they can stop it with [3].
       process.exit(0);
       break;
     default:
@@ -308,5 +336,6 @@ function handleOption(option) {
 }
 
 const args = process.argv.slice(2);
-if (args.includes('--start-dashboard')) { runPM2Start(); }
+if (args.includes('--start-dashboard')) { runPM2Start(false); }
+else if (args.includes('--open-edge') || args.includes('--edge')) { runPM2Start(true); }
 else { showMenu(); }

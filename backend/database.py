@@ -28,7 +28,9 @@ def run_migrations(engine):
         "preferred_modality": "VARCHAR",
         "relocation_feasibility_score": "INTEGER",
         "target_diaspora_regions": "VARCHAR",
-        "nationalities": "VARCHAR"
+        "nationalities": "VARCHAR",
+        "target_degree_level": "VARCHAR DEFAULT 'Masters'",
+        "target_study_type": "VARCHAR DEFAULT 'Taught'"
     }
     
     # Define columns that need to exist on scholarships table
@@ -52,7 +54,10 @@ def run_migrations(engine):
         "foreigner_friendly": "BOOLEAN DEFAULT 1",
         "desire_score": "FLOAT DEFAULT 0.0",
         "probability_score": "FLOAT DEFAULT 0.0",
-        "improvement_projection": "VARCHAR"
+        "improvement_projection": "VARCHAR",
+        "created_at": "DATETIME",
+        "is_checked": "BOOLEAN DEFAULT 0",
+        "is_targeted": "BOOLEAN DEFAULT 0"
     }
     
     with engine.begin() as conn:
